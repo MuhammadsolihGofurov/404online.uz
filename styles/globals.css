@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 🌞 Light Mode */
+    --color-main: #23bdee;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #999999;
+    --color-input-placeholder: rgba(102, 102, 102, 0.6);
+    --color-menu: #a3aed0;
+    --color-button-grey: #e5e7eb;
+
+    --color-active: #00b947;
+    --color-active-bg: #e8f9ef;
+
+    --color-blocked: #ff383c;
+    --color-blocked-bg: rgba(255, 56, 60, 0.14);
+
+    --color-progress: #2684ff;
+    --color-progress-bg: #edf5ff;
+
+    --color-dashboard-bg: #fafafa;
+  }
+
+  .dark {
+    /* 🌙 Dark Mode */
+    --color-main: #23bdee;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #a3aed0;
+    --color-input-placeholder: rgba(166, 166, 166, 0.6);
+    --color-menu: #818fb5;
+    --color-button-grey: #374151;
+
+    --color-active: #00b947;
+    --color-active-bg: rgba(0, 185, 71, 0.15);
+
+    --color-blocked: #ff383c;
+    --color-blocked-bg: rgba(255, 56, 60, 0.25);
+
+    --color-progress: #2684ff;
+    --color-progress-bg: rgba(38, 132, 255, 0.15);
+
+    --color-dashboard-bg: #0f172a;
+  }
+}

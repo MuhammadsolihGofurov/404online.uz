@@ -1,0 +1,15 @@
+User-Agent: *
+Disallow: /*compare
+Disallow: /*login
+Disallow: /*cart
+Disallow: /*profile
+Disallow: /*wishlist
+Disallow: /*?quantity=
+Disallow: /*sort=
+Disallow: /*price
+Disallow: /*register
+Disallow: /*search
+Disallow: /*?sort=
+Disallow: /*page
+
+Sitemap: must be a link
