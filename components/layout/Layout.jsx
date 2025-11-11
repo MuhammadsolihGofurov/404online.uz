@@ -4,9 +4,11 @@ import Script from "next/script";
 import { Footer, Header, Scripts } from "..";
 import useSWR from "swr";
 import fetcher from "../../utils/fetcher";
+import { useRouter } from "next/router";
 
 const Layout = ({ children }) => {
   // const { data: settings } = useSWR("/settings", fetcher);
+  const router = useRouter();
 
   return (
     <>
@@ -66,6 +68,7 @@ const Layout = ({ children }) => {
 
       {/* Body */}
       <div className="wrapper">
+        {router?.asPath?.startsWith("/dashboard") ?? <p>salom</p>}
         <div className="content-wrapper">{children}</div>
       </div>
 

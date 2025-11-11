@@ -22,7 +22,7 @@ function page({ info }) {
         description={info?.data?.seo_home_description}
         keywords={info?.data?.seo_home_keywords}
       />
-      <AuthWrapper image="/images/login.png" page="login"/>
+      <AuthWrapper image="/images/login.png" page="forgot-password-username" />
     </>
   );
 }
@@ -31,7 +31,7 @@ export async function getServerSideProps({ params, locale }) {
   // fetch product
   // const info = "salom";
   const info = {
-    seo_home_title: "Login",
+    seo_home_title: "Forgot password username",
     seo_home_keywords: "",
     seo_home_description: "",
   };

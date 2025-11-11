@@ -1,3 +1,24 @@
 {
-  "login": "Login"
+  "login": "Login",
+  "Submit": "Submit",
+  "Username": "Username",
+  "Password": "Password",
+  "Username is  required": "Username is required",
+  "Password is required": "Password is required",
+  "Login is successfully": "Login is successfully",
+  "Change Password": "Change password",
+  "We have sent a link to your email. Please check your email": "We have sent a link to your email. Please check your email",
+  "Old password": "Old password",
+  "New password": "New password",
+  "New password is required": "New password is required",
+  "Old password is required": "Old password is required",
+  "Old password is not equal": "Old password is not equal",
+  "Please enter a valid email address": "Please enter a valid email address",
+  "Full name": "Full name",
+  "Full name is requried": "Full name is requried",
+  "Register": "Register",
+  "Invitation code is requried": "Invitation code is requried",
+  "Invitation code": "Invitation code",
+  "Waiting...": "Waiting...",
+  "Your request is sending. please wait a bit. Then you can login to platform": "Your request is sending. please wait a bit. Then you can login to platform"
 }
