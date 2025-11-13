@@ -47,10 +47,23 @@
   }
 }
 
+::selection{
+  color: #0f172a;
+  background: #23bdee;
+}
+
 .font-roboto {
   font-family: "Roboto", sans-serif;
 }
 
 .font-poppins {
   font-family: "Poppins", sans-serif;
+}
+
+
+/* CSS qoidasini tekshiring */
+table, tr, td, tbody {
+  overflow: visible !important;
+  position: static !important;
+  z-index: auto !important;
 }

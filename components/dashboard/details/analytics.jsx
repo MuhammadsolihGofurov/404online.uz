@@ -196,7 +196,7 @@ export const OwnerAnalytics = ({
                         <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border border-buttonGrey">
                           {item?.avatar ? (
                             <img
-                              src={item?.avatar}
+                              src={item?.center_avatar}
                               loading="lazy"
                               role="img"
                               alt="avatar"
@@ -204,13 +204,13 @@ export const OwnerAnalytics = ({
                             />
                           ) : (
                             <span className="text-menu text-lg">
-                              {item?.name?.[0]}
+                              {item?.center_name?.[0]}
                             </span>
                           )}
                         </div>
                         <div className="flex flex-col gap-[2px]">
                           <h5 className="text-sm sm:text-base font-medium text-textPrimary">
-                            {item?.name}
+                            {item?.center_name}
                           </h5>
                           <p className="text-xs sm:text-sm text-textSecondary font-normal">
                             {formatDateToLong(item?.created_at)}

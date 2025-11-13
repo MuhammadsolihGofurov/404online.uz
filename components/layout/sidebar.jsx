@@ -2,8 +2,16 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { Home, Settings, LogOut, X } from "lucide-react";
 import { useIntl } from "react-intl";
-import { DASHBOARD_URL } from "@/mock/router";
+import { DASHBOARD_URL, LOGIN_URL } from "@/mock/router";
 import { SidebarLinks } from "./details";
+import { useModal } from "@/context/modal-context";
+import {
+  PRIVATEAUTHKEY,
+  PRIVATEREFRESHKEY,
+  PRIVATEUSERTYPE,
+} from "@/mock/keys";
+import { authAxios } from "@/utils/axios";
+import { toast } from "react-toastify";
 
 export default function Sidebar({
   user,
@@ -13,9 +21,41 @@ export default function Sidebar({
 }) {
   const router = useRouter();
   const intl = useIntl();
+  const { openModal } = useModal();
 
   const handleLogout = () => {
-    // disbatch qilish kerak
+    openModal(
+      "confirmModal",
+      {
+        title: "Logout",
+        description: intl.formatMessage({
+          id: "Are you sure you want to logout?",
+        }),
+        onConfirm: async () => {
+          try {
+            await authAxios.post("/accounts/logout/", {
+              refresh: localStorage.getItem(PRIVATEREFRESHKEY),
+            });
+
+            // localStorage tozalash
+            localStorage.removeItem(PRIVATEAUTHKEY);
+            localStorage.removeItem(PRIVATEREFRESHKEY);
+            localStorage.removeItem(PRIVATEUSERTYPE);
+
+            toast.success(
+              intl.formatMessage({ id: "Successfully logged out!" })
+            );
+
+            setTimeout(() => {
+              router.push(LOGIN_URL);
+            }, 750);
+          } catch (e) {
+            toast.error(intl.formatMessage({ id: "Logout failed!" }));
+          }
+        },
+      },
+      "short"
+    );
   };
 
   return (

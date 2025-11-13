@@ -27,14 +27,14 @@ export default function DashboardLayout({ children, user }) {
 
 
   return (
-    <div className="flex h-screen font-poppins bg-dashboardBg">
+    <div className="flex h-screen font-poppins bg-dashboardBg w-full">
       {/* Sidebar */}
       <Sidebar user={user} isOpen={sidebarOpen} closeSidebar={closeSidebar} />
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 transition-all duration-300">
+      <div className="flex flex-col flex-1 transition-all duration-300 w-full">
         <Header user={user} toggleSidebar={toggleSidebar} />
-        <main className="flex-1 px-5 py-7 overflow-y-auto">{children}</main>
+        <main className="flex-1 px-5 pt-7 pb-20 overflow-y-auto w-full">{children}</main>
       </div>
     </div>
   );

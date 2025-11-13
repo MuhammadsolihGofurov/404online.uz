@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { useForm } from "react-hook-form";
@@ -7,10 +7,11 @@ import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
 
-export default function EduCenterCreateModal() {
+export default function EduCenterModal({ id, initialData }) {
   const intl = useIntl();
   const { closeModal } = useModal();
   const [reqLoading, setReqLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -19,29 +20,37 @@ export default function EduCenterCreateModal() {
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      name: "",
-      description: "",
+      name: initialData?.name || "",
+      description: initialData?.description || "",
     },
   });
 
+  useEffect(() => {
+    if (initialData) reset(initialData);
+  }, [initialData, reset]);
+
   const submitFn = async (data) => {
-    const { name, description } = data;
     try {
       setReqLoading(true);
 
-      const payload = {
-        name,
-        description,
-      };
+      let response;
+      if (id) {
+        // 🔹 Edit
+        response = await authAxios.put(`/owner/centers/${id}/`, data);
+        toast.success(
+          intl.formatMessage({ id: "Center updated successfully!" })
+        );
+      } else {
+        // 🔹 Create
+        response = await authAxios.post("/owner/centers/", data);
+        toast.success(
+          intl.formatMessage({ id: "New Center is successfully created!" })
+        );
+      }
 
-      const response = await authAxios.post("/centers/create/", payload);
-
-      toast.success(
-        intl.formatMessage({ id: "New Center is successfully created!" })
-      );
-
-      closeModal("createEduCenter", response?.data);
-
+      setTimeout(() => {
+        closeModal("createEduCenter", response?.data);
+      }, 500);
     } catch (e) {
       toast.error(e?.response?.data?.error?.detail?.[0]);
     } finally {
@@ -52,7 +61,9 @@ export default function EduCenterCreateModal() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
-        {intl.formatMessage({ id: "Add center" })}
+        {id
+          ? intl.formatMessage({ id: "Edit center" })
+          : intl.formatMessage({ id: "Add center" })}
       </h1>
       <form
         onSubmit={handleSubmit(submitFn)}
@@ -60,30 +71,29 @@ export default function EduCenterCreateModal() {
       >
         <div className="flex flex-col gap-5">
           <Input
-            type={"text"}
+            type="text"
             register={register}
-            name={"name"}
+            name="name"
             title={intl.formatMessage({ id: "Name" })}
-            placeholder={"Edu center name"}
-            id="name"
+            placeholder="Edu center name"
             required
             validation={{
               required: intl.formatMessage({ id: "Name is required" }),
             }}
           />
           <Input
-            type={"text"}
+            type="text"
             register={register}
-            name={"description"}
+            name="description"
             title={intl.formatMessage({ id: "Description" })}
-            placeholder={"IELTS edu center"}
-            id="description"
+            placeholder="IELTS edu center"
             required
             validation={{
               required: intl.formatMessage({ id: "Description is required" }),
             }}
           />
         </div>
+
         <div className="flex flex-col gap-4">
           <button
             type="submit"
@@ -91,6 +101,8 @@ export default function EduCenterCreateModal() {
           >
             {reqLoading ? (
               <ButtonSpinner />
+            ) : id ? (
+              intl.formatMessage({ id: "Update" })
             ) : (
               intl.formatMessage({ id: "Submit" })
             )}

@@ -12,13 +12,16 @@ export default function CentersTableSkeleton({ rows = 10 }) {
             <th className="text-sm font-bold p-4 w-[30%] text-start">
               {intl.formatMessage({ id: "Users" })}
             </th>
-            <th className="text-sm font-bold p-4 w-[25%] text-start">
+            <th className="text-sm font-bold p-4 w-[15%] text-start">
               {intl.formatMessage({ id: "Admins" })}
             </th>
             <th className="text-sm font-bold p-4 w-[15%] text-start">
               {intl.formatMessage({ id: "Teacher’s count" })}
             </th>
-            <th className="text-sm font-bold p-4 w-[20%] text-start">
+            <th className="text-sm font-bold p-4 w-[15%] text-start">
+              {intl.formatMessage({ id: "Status" })}
+            </th>
+            <th className="text-sm font-bold p-4 w-[15%] text-start">
               {intl.formatMessage({ id: "Date" })}
             </th>
             <th className="text-sm font-bold p-4 w-[5%]"></th>
@@ -35,6 +38,9 @@ export default function CentersTableSkeleton({ rows = 10 }) {
               </td>
               <td className="p-5">
                 <div className="h-4 w-2/3 bg-gray-200 rounded"></div>
+              </td>
+              <td className="p-5">
+                <div className="h-4 w-1/2 bg-gray-200 rounded"></div>
               </td>
               <td className="p-5">
                 <div className="h-4 w-1/2 bg-gray-200 rounded"></div>

@@ -1,6 +1,11 @@
-import { EduCenterCreateModal } from "./owner";
+import {
+  ConfirmModal,
+  EduCenterCreateAdminModal,
+  EduCenterModal,
+} from "./owner";
 
 export const ModalComponents = {
-  createEduCenter: EduCenterCreateModal,
-
+  createEduCenter: EduCenterModal,
+  confirmModal: ConfirmModal,
+  eduCenterCreateAdmin: EduCenterCreateAdminModal,
 };
