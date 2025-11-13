@@ -20,5 +20,22 @@
   "Invitation code is requried": "Invitation code is requried",
   "Invitation code": "Invitation code",
   "Waiting...": "Waiting...",
-  "Your request is sending. please wait a bit. Then you can login to platform": "Your request is sending. please wait a bit. Then you can login to platform"
+  "Your request is sending. please wait a bit. Then you can login to platform": "Your request is sending. please wait a bit. Then you can login to platform",
+  "Welcome to Dashboard!": "Welcome to Dashboard!",
+  "Dashboard": "Dashboard",
+  "Settings": "Settings",
+  "Materials hub": "Materials hub",
+  "Education centers": "Education centers",
+  "Hi": "Hi",
+  "Active Centers": "Active Centers",
+  "Total Users": "Total Users",
+  "Total Groups": "Total Groups",
+  "Requests": "Requests",
+  "Wiew all": "Wiew all",
+  "Add center": "Add center",
+  "Name": "Name",
+  "Name is required": "Name is required",
+  "Description": "Description",
+  "Description is required": "Description is required",
+  "New Center is successfully created!": "New Center is successfully created!"
 }

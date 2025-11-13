@@ -17,14 +17,10 @@ import NProgress from "nprogress";
 import { initCollapse } from "../utils/collapse";
 import "react-loading-skeleton/dist/skeleton.css";
 import "@fancyapps/ui/dist/fancybox.css";
-// import AOS from "aos";
-// import "aos/dist/aos.css";
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/globals.css";
 import { Bounce, Flip, ToastContainer } from "react-toastify";
-// import { fetchUserData } from "@/redux/slice/user";
-// import { ModalProvider } from "@/context/modal-provider";
-// import { ConfirmModal, PaymentModal } from "@/components/modals";
+import { ModalProvider } from "@/context/modal-context";
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -76,7 +72,7 @@ export default function App({ Component, pageProps }) {
       >
         <LangProvider>
           <SkeletonTheme>
-            {/* <ModalProvider> */}
+            <ModalProvider>
               <Layout>
                 <Component {...pageProps} />
 
@@ -91,7 +87,7 @@ export default function App({ Component, pageProps }) {
                 theme="light"
                 transition={Flip}
               />
-            {/* </ModalProvider> */}
+            </ModalProvider>
           </SkeletonTheme>
         </LangProvider>
       </IntlProvider>

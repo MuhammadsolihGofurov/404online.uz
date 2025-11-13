@@ -43,3 +43,27 @@ export const updateQueryParam = ({ key, value, router }) => {
 		shallow: true,
 	})
 }
+
+
+export function formatDateToLong(dateString) {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+
+  const options = { day: "2-digit", month: "long", year: "numeric" };
+
+  // "22 September 2025" formatda
+  return date.toLocaleDateString("en-US", options);
+}
+
+export function formatDateToShort(dateString) {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-based index
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${month}/${day}/${year}`;
+}

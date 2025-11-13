@@ -8,6 +8,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"],
+        roboto: ["Roboto", "sans-serif"],
+      },
       colors: {
         main: "var(--color-main)",
         textPrimary: "var(--color-text-primary)",
@@ -27,6 +31,7 @@ module.exports = {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "main-linear": "linear-gradient(-45deg, #868CFF 0%, #23BDEE 100%)",
       },
       screens: {
         small: "360px",

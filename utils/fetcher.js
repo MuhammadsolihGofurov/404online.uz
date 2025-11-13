@@ -1,31 +1,51 @@
-// auth fetcher
-function updateOptions(options, auth) {
-	const update = {
-		...options,
-		headers: {
-			...options.headers,
-			Accept: 'application/json',
-		},
-	}
-	if (localStorage.token && auth) {
-		update.headers = {
-			...update.headers,
-			Authorization: `Bearer ${localStorage.token}`,
-		}
-	}
-	return update
+import { PRIVATEAUTHKEY } from "@/mock/keys";
+
+function getAuthHeader() {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem(PRIVATEAUTHKEY);
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+  }
+  return {};
 }
 
-export default function fetcher(
-	url = '',
-	options = {},
-	params = {},
-	auth = false
-) {
-	const __url = new URL(process.env.API + url)
-	Object.keys(params).forEach((key) =>
-		__url.searchParams.append(key, params[key])
-	);
+// auth fetcher
+function updateOptions(options, auth) {
+  return {
+    ...options,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...options.headers,
+      ...(auth ? getAuthHeader() : {}), // Faqat auth kerak bo‘lsa qo‘shish
+    },
+  };
+}
 
-	return fetch(__url, updateOptions(options, auth)).then((res) => res.json())
+export default async function fetcher(
+  url = "",
+  options = {},
+  params = {},
+  auth = false
+) {
+  try {
+    const __url = new URL(process.env.NEXT_PUBLIC_API_BASE_URL + url);
+
+    Object.keys(params).forEach((key) =>
+      __url.searchParams.append(key, params[key])
+    );
+
+    const response = await fetch(__url, updateOptions(options, auth));
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "API request failed");
+    }
+
+    return await response.json();
+  } catch (error) {
+    // console.error("Fetcher Error:", error);
+    throw error;
+  }
 }

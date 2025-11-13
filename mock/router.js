@@ -7,3 +7,6 @@ export const REGISTERWAITING_URL = "/auth/waiting";
 
 // === DASHBOARD ===
 export const DASHBOARD_URL = "/dashboard";
+export const SETTINGS_URL = "/dashboard/settings";
+export const MATERIALSHUB_URL = "/dashboard/materials-hub";
+export const EDUCATIONCENTERS_URL = "/dashboard/education-centers";

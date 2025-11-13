@@ -1,55 +1,50 @@
-import { useMemo } from 'react'
+import { useState, useEffect } from "react";
+import { useParams } from "./useParams";
 
-export const usePagination = ({
-	totalPageCount,
-	siblingCount = 0,
-	currentPage,
-}) => {
-	const range = (start, end) => {
-		let length = end - start + 1
-		return Array.from({ length }, (_, idx) => idx + start)
-	}
+export const usePagination = (count, pageSize = 10) => {
+  const { updateParams, findParams } = useParams();
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(count / pageSize);
 
-	const paginationRange = useMemo(() => {
-		const totalPageNumbers = siblingCount + 5
+  useEffect(() => {
+    const page = parseInt(findParams("page")) || 1;
+    setCurrentPage(page);
+  }, [findParams("page")]);
 
-		if (totalPageNumbers >= totalPageCount) {
-			return range(1, totalPageCount)
-		}
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    updateParams("page", page);
+  };
 
-		const leftSiblingIndex = Math.max(currentPage - siblingCount, 1)
-		const rightSiblingIndex = Math.min(
-			currentPage + siblingCount,
-			totalPageCount
-		)
+  const nextPage = () => {
+    if (currentPage < totalPages) goToPage(currentPage + 1);
+  };
 
-		const shouldShowLeftDots = leftSiblingIndex > 2
-		const shouldShowRightDots = rightSiblingIndex < totalPageCount - 2
+  const prevPage = () => {
+    if (currentPage > 1) goToPage(currentPage - 1);
+  };
 
-		const firstPageIndex = 1
-		const lastPageIndex = totalPageCount
+  const pagesArray = () => {
+    // Mobile-friendly: show first, last and 2 pages around current
+    const pages = [];
+    const delta = 2;
+    let start = Math.max(2, currentPage - delta);
+    let end = Math.min(totalPages - 1, currentPage + delta);
 
-		if (!shouldShowLeftDots && shouldShowRightDots) {
-			let leftItemCount = 3 + 2 * siblingCount
-			let leftRange = range(1, leftItemCount)
+    if (start > 2) pages.push("...");
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (end < totalPages - 1) pages.push("...");
 
-			return [...leftRange, '...', totalPageCount]
-		}
+    return pages;
+  };
 
-		if (shouldShowLeftDots && !shouldShowRightDots) {
-			let rightItemCount = 3 + 2 * siblingCount
-			let rightRange = range(
-				totalPageCount - rightItemCount + 1,
-				totalPageCount
-			)
-			return [firstPageIndex, '...', ...rightRange]
-		}
-
-		if (shouldShowLeftDots && shouldShowRightDots) {
-			let middleRange = range(leftSiblingIndex, rightSiblingIndex)
-			return [firstPageIndex, '...', ...middleRange, '...', lastPageIndex]
-		}
-	}, [totalPageCount, siblingCount, currentPage])
-
-	return paginationRange
-}
+  return {
+    currentPage,
+    totalPages,
+    goToPage,
+    nextPage,
+    prevPage,
+    pagesArray,
+  };
+};

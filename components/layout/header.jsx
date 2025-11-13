@@ -8,6 +8,7 @@ export default function Header({ user, toggleSidebar }) {
         {/* Hamburger button */}
         <button
           onClick={toggleSidebar}
+          type="button"
           className="p-2 rounded-md hover:bg-gray-100 transition-colors"
         >
           <Menu size={22} />
