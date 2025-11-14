@@ -1,16 +1,24 @@
 import React from "react";
 import { useIntl } from "react-intl";
+import { AvatarForm, FullNameForm, UpdatePasswordForm } from "./details";
 
-export default function MySettings({ user, loading }) {
+export default function MySettings({ user }) {
   const intl = useIntl();
   return (
     <Wrapper>
-      <h2 className="text-textPrimary font-medium text-base">{intl.formatMessage({id: "Profile avatar"})}</h2>
-      
+      <AvatarForm user={user} />
+      <hr />
+      <FullNameForm old_full_name={user?.full_name} />
+      <hr />
+      <UpdatePasswordForm />
     </Wrapper>
   );
 }
 
 export const Wrapper = ({ children }) => {
-  return <div className="p-5 rounded-2xl bg-white">{children}</div>;
+  return (
+    <div className="p-5 rounded-2xl flex flex-col gap-10 bg-white w-full">
+      {children}
+    </div>
+  );
 };

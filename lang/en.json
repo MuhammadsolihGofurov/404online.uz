@@ -67,5 +67,15 @@
   "Successfully logged out!": "Successfully logged out!",
   "Logout failed!": "Logout failed!",
   "My Settings": "My Settings",
-  "Profile avatar": "Profile avatar"
+  "Profile avatar": "Profile avatar",
+  "Avatar updated successfully!": "Avatar updated successfully!",
+  "Something went wrong": "Something went wrong",
+  "Password is successfully updated!": "Password is successfully updated!",
+  "Password update": "Password update",
+  "Full name is successfully updated!": "Full name is successfully updated!",
+  "Details update": "Details update",
+  "Total tasks": "Total tasks",
+  "Total submissions": "Total submissions",
+  "Teachers": "Teachers",
+  "Students": "Students"
 }

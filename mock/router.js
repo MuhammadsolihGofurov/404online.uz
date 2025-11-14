@@ -10,3 +10,9 @@ export const DASHBOARD_URL = "/dashboard";
 export const SETTINGS_URL = "/dashboard/settings";
 export const MATERIALSHUB_URL = "/dashboard/materials-hub";
 export const EDUCATIONCENTERS_URL = "/dashboard/education-centers";
+
+// === TEACHERS ===
+export const TEACHERS_URL = "/dashboard/teachers";
+
+// === STUDENTS ===
+export const STUDENTS_URL = "/dashboard/students";

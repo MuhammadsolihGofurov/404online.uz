@@ -12,7 +12,9 @@ export default function ConfirmModal({ title, description, onConfirm }) {
     try {
       setLoading(true);
       await onConfirm();
-      closeModal("confirmModal", "confirm");
+      setTimeout(() => {
+        closeModal("confirmModal", "confirm");
+      }, 300);
     } catch (err) {
       console.error(err);
     } finally {

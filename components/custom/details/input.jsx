@@ -11,7 +11,7 @@ export default function Input({
   register = () => {},
   validation,
   noSelected = false,
-  error,
+  error
 }) {
   const intl = useIntl();
   const [showPassword, setShowPassword] = useState(false);

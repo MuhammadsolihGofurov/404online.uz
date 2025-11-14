@@ -1,7 +1,12 @@
-import React from 'react'
+import React from "react";
 
-export default function ButtonSpinner() {
+export default function ButtonSpinner({
+  mainColor = "border-t-white",
+  secondColor = "border-gray-300",
+}) {
   return (
-    <div className="w-6 h-6 border-2 border-gray-300 border-t-white rounded-full animate-spin"></div>
-  )
+    <div
+      className={`w-6 h-6 border-2 ${mainColor} ${secondColor} rounded-full animate-spin`}
+    ></div>
+  );
 }
