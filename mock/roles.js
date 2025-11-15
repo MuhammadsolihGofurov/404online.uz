@@ -12,3 +12,17 @@ export const ForCenterAdmin = [
     value: "ASSISTANT",
   },
 ];
+
+export const YesOrNo = [
+  {
+    id: 1,
+    name: "Yes",
+    value: "Yes",
+  },
+
+  {
+    id: 2,
+    name: "No",
+    value: "No",
+  },
+];

@@ -86,5 +86,15 @@
   "Select": "Select",
   "Required": "Required",
   "Invitation codes": "Invitation codes",
-  "Add invite code": "Add invite code"
+  "Add invite code": "Add invite code",
+  "Code": "Code",
+  "Target user": "Target user",
+  "Expires at": "Expires at",
+  "Generate code": "Generate code",
+  "Is guest": "Is guest",
+  "Invitations code is successfully created!": "Invitations code is successfully created!",
+  "Yes": "Yes",
+  "No": "No",
+  "Confirm Approval": "Confirm Approval",
+  "Are you sure you want to approve this request? This action cannot be undone once confirmed.": "Are you sure you want to approve this request? This action cannot be undone once confirmed."
 }

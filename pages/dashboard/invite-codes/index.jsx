@@ -21,7 +21,7 @@ function DashboardPage({ info, user, loading }) {
           isButton
           buttonText={"Add invite code"}
           modalType={"short"}
-          buttonFunc={"addTeacher"}
+          buttonFunc={"generateCode"}
         >
           <InviteCodeListTable loading={loading} />
         </Wrapper>

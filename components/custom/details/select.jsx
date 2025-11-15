@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useIntl } from "react-intl";
 
 export default function Select({
   name,
@@ -12,22 +13,26 @@ export default function Select({
   register = () => {},
   validation,
   error,
+  onChange = () => {},
+  value = multiple ? [] : null,
+  onBlur = () => {},
 }) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState(multiple ? [] : null);
+  const intl = useIntl();
 
-  const handleSelect = (value) => {
+  const handleSelect = (newValue) => {
+    let updatedValue;
+
     if (multiple) {
-      // multiple toggle
-      setSelected((prev) =>
-        prev.includes(value)
-          ? prev.filter((v) => v !== value)
-          : [...prev, value]
-      );
+      updatedValue = value.includes(newValue)
+        ? value.filter((v) => v !== newValue)
+        : [...value, newValue];
     } else {
-      setSelected(value);
+      updatedValue = newValue;
       setOpen(false);
     }
+
+    onChange(updatedValue);
   };
 
   return (
@@ -48,10 +53,10 @@ export default function Select({
         >
           <span className="text-sm text-inputPlaceholder">
             {multiple
-              ? selected.length
-                ? selected.join(", ")
+              ? value.length
+                ? value.join(", ")
                 : placeholder
-              : selected || placeholder}
+              : value || placeholder}
           </span>
 
           <ChevronDown
@@ -71,15 +76,15 @@ export default function Select({
                 onClick={() => handleSelect(opt.value)}
                 className={`p-3 cursor-pointer hover:bg-gray-100 transition text-sm ${
                   multiple
-                    ? selected.includes(opt.value)
+                    ? value.includes(opt.value)
                       ? "bg-gray-100 font-medium"
                       : ""
-                    : selected === opt.value
+                    : value === opt.value
                     ? "bg-gray-100 font-medium"
                     : ""
                 }`}
               >
-                {opt.name}
+                {intl.formatMessage({ id: opt.name })}
               </li>
             ))}
 
@@ -90,13 +95,11 @@ export default function Select({
         )}
 
         {/* Hidden input to register value */}
-        <input
-          type="hidden"
+        {/* <input
+          className="opacity-0 invisible absolute"
           name={name}
-          required={required}
-          value={multiple ? selected.join(",") : selected || ""}
-          {...register(name, validation)}
-        />
+          required={required} // Agar Controller ishlatilsa, register va value kerak emas!
+        /> */}
       </div>
 
       {error && <span className="text-red-500 text-xs mt-1">{error}</span>}

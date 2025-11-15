@@ -43,15 +43,15 @@ export default function InviteCodeListTable({ loading }) {
         <table className="w-[700px] sm:w-full text-textPrimary rounded-2xl">
           <thead>
             <tr className="border-b border-dashboard-bg">
-              <th className="text-sm font-bold text-center p-4 w-[5%]">№</th>
+              {/* <th className="text-sm font-bold text-center p-4 w-[5%]">№</th> */}
               <th className="text-sm font-bold p-4 w-[30%] text-start">
-                {intl.formatMessage({ id: "Name" })}
+                {intl.formatMessage({ id: "Code" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
-                {intl.formatMessage({ id: "Students" })}
+                {intl.formatMessage({ id: "Role" })}
               </th>
-              <th className="text-sm font-bold p-4 w-[15%] text-start">
-                {intl.formatMessage({ id: "Groups" })}
+              <th className="text-sm font-bold p-4 w-[20%] text-start">
+                {intl.formatMessage({ id: "Target user" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Status" })}
