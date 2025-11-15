@@ -1,5 +1,5 @@
 // pages/dashboard/index.js
-import { TeachersListTable } from "@/components/dashboard";
+import { InviteCodeListTable, TeachersListTable } from "@/components/dashboard";
 import { Analytics, Wrapper } from "@/components/dashboard/details";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
@@ -15,15 +15,15 @@ function DashboardPage({ info, user, loading }) {
       />
       <DashboardLayout user={user} loading={loading}>
         <Wrapper
-          title={"Teachers"}
+          title={"Invitation codes"}
           isLink
           body={"Dashboard"}
           isButton
-          buttonText={"Add teacher"}
-          modalType={"big"}
+          buttonText={"Add invite code"}
+          modalType={"short"}
           buttonFunc={"addTeacher"}
         >
-          <TeachersListTable loading={loading} />
+          <InviteCodeListTable loading={loading} />
         </Wrapper>
       </DashboardLayout>
     </>
@@ -32,7 +32,7 @@ function DashboardPage({ info, user, loading }) {
 
 export async function getServerSideProps() {
   const info = {
-    seo_home_title: "Dashboard | Welcome",
+    seo_home_title: "Invite codes",
     seo_home_keywords: "",
     seo_home_description: "",
   };

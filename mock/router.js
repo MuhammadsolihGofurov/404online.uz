@@ -16,3 +16,6 @@ export const TEACHERS_URL = "/dashboard/teachers";
 
 // === STUDENTS ===
 export const STUDENTS_URL = "/dashboard/students";
+
+// === INVITE CODE ===
+export const INVITECODE_URL = "/dashboard/invite-codes";

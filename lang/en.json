@@ -77,5 +77,14 @@
   "Total tasks": "Total tasks",
   "Total submissions": "Total submissions",
   "Teachers": "Teachers",
-  "Students": "Students"
+  "Students": "Students",
+  "Add teacher": "Add teacher",
+  "Teacher updated successfully!": "Teacher updated successfully!",
+  "New teacher is successfully created!": "New teacher is successfully created!",
+  "Edit teacher": "Edit teacher",
+  "Role": "Role",
+  "Select": "Select",
+  "Required": "Required",
+  "Invitation codes": "Invitation codes",
+  "Add invite code": "Add invite code"
 }

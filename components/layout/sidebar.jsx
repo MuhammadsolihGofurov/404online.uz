@@ -93,7 +93,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        <SidebarLinks />
+        <SidebarLinks userRole={user?.role}/>
 
         <button
           onClick={handleLogout}

@@ -9,8 +9,9 @@ import Pagination from "../custom/pagination";
 import { useParams } from "@/hooks/useParams";
 import { useModal } from "@/context/modal-context";
 import { EduCenterItem } from "./details";
+import { InviteCodeListItem, TeacherListItem } from "./details/center-admin";
 
-export default function EduCenterTable({ loading }) {
+export default function InviteCodeListTable({ loading }) {
   const router = useRouter();
   const intl = useIntl();
   const { findParams } = useParams();
@@ -18,8 +19,8 @@ export default function EduCenterTable({ loading }) {
 
   const currentPage = parseInt(findParams("page")) || 1;
 
-  const { data: centers, isLoading } = useSWR(
-    ["/owner/centers/", router.locale, currentPage, modalClosed],
+  const { data: data, isLoading } = useSWR(
+    ["/centers/invitations/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
         `${url}?page=${page}&page_size=10`,
@@ -44,13 +45,13 @@ export default function EduCenterTable({ loading }) {
             <tr className="border-b border-dashboard-bg">
               <th className="text-sm font-bold text-center p-4 w-[5%]">№</th>
               <th className="text-sm font-bold p-4 w-[30%] text-start">
-                {intl.formatMessage({ id: "Users" })}
+                {intl.formatMessage({ id: "Name" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
-                {intl.formatMessage({ id: "Admins" })}
+                {intl.formatMessage({ id: "Students" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
-                {intl.formatMessage({ id: "Teacher’s count" })}
+                {intl.formatMessage({ id: "Groups" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Status" })}
@@ -62,9 +63,15 @@ export default function EduCenterTable({ loading }) {
             </tr>
           </thead>
           <tbody>
-            {centers && centers?.results > 0 ? (
-              centers?.results?.map((item, index) => {
-                return <EduCenterItem key={index} item={item} />;
+            {data && data?.results?.length > 0 ? (
+              data?.results?.map((item, index) => {
+                return (
+                  <InviteCodeListItem
+                    key={index}
+                    item={item}
+                    isExists={data?.count}
+                  />
+                );
               })
             ) : (
               <tr>
@@ -80,7 +87,7 @@ export default function EduCenterTable({ loading }) {
         </table>
       </div>
 
-      <Pagination count={centers?.count} />
+      <Pagination count={data?.count} />
     </>
   );
 }
