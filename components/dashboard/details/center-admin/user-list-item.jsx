@@ -7,22 +7,21 @@ import React, { useState, useRef, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { toast } from "react-toastify";
 
-export default function TeacherListItem({ item }) {
+export default function UserListItem({ item }) {
   const { openModal } = useModal();
-  const menuRef = useRef(null);
   const intl = useIntl();
 
   const handleDelete = (id) => {
     openModal(
       "confirmModal",
       {
-        title: "Delete Center",
+        title: "Delete user",
         description:
-          "Are you sure you want to delete this center? This action cannot be undone.",
+          "Are you sure you want to delete this user? This action cannot be undone.",
         onConfirm: async () => {
-          await authAxios.delete(`/owner/centers/${id}/`);
+          await authAxios.delete(`/users/${id}/`);
           toast.success(
-            intl.formatMessage({ id: "Center deleted successfully!" })
+            intl.formatMessage({ id: "User deleted successfully!" })
           );
         },
       },
@@ -73,7 +72,7 @@ export default function TeacherListItem({ item }) {
     <tr className="border-b border-b-dashboardBg last:border-b-transparent relative z-0">
       <td className="text-sm p-5 text-center font-medium">{item?.id}</td>
       <td className="text-sm p-5 font-medium font-poppins">
-        {item?.center_name}
+        {item?.full_name}
       </td>
       <td className="text-sm p-5 font-medium">
         <button type="button">
@@ -107,7 +106,17 @@ export default function TeacherListItem({ item }) {
           </Dropdown>
         </button>
       </td>
-      <td className="text-sm p-5 font-medium">{item?.teacher_count}</td>
+      <td className="text-sm p-5 font-medium">
+        {item?.is_approved ? (
+          <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+            {intl.formatMessage({ id: "Approved" })}
+          </span>
+        ) : (
+          <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+            {intl.formatMessage({ id: "Pending" })}
+          </span>
+        )}
+      </td>
       <td className="text-sm p-5 font-medium">
         {item?.is_active ? (
           <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
@@ -123,59 +132,35 @@ export default function TeacherListItem({ item }) {
         {formatDateToShort(item?.created_at)}
       </td>
 
-      <td className="relative z-0" ref={menuRef}>
+      <td className="relative z-0">
         {/* 🔹 Dropdown menyu */}
         <Dropdown
           buttonContent={<MoreVertical className="h-5 w-5 text-gray-500" />}
         >
-          <button
-            type="button"
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
-            onClick={() => {
-              openModal(
-                "createEduCenter",
-                { id: item?.id, initialData: item },
-                "short"
-              );
-            }}
-          >
-            <Edit2 className="h-4 w-4 text-gray-500" /> Edit
-          </button>
-
-          <button
-            type="button"
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-red-500"
-            onClick={() => handleDelete(item?.id)}
-          >
-            <Trash2 className="h-4 w-4 text-red-500" /> Delete
-          </button>
-
-          <button
-            type="button"
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
-            onClick={() =>
-              openModal("eduCenterCreateAdmin", { id: item?.id }, "short")
-            }
-          >
-            <Plus className="h-4 w-4 text-main" /> Admin
-          </button>
-
-          {item?.is_active ? (
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-yellow-500"
-              onClick={() => handleToggleActive(item?.id, "suspend")}
-            >
-              <Slash className="h-4 w-4 text-yellow-500" /> Suspend
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-green-500"
-              onClick={() => handleToggleActive(item?.id, "activate")}
-            >
-              <Check className="h-4 w-4 text-green-500" /> Activate
-            </button>
+          {/* ! center admin */}
+          {item?.role !== "CENTER_ADMIN" && (
+            <>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
+                onClick={() => {
+                  openModal(
+                    "editUser",
+                    { id: item?.id, initialData: item },
+                    "short"
+                  );
+                }}
+              >
+                <Edit2 className="h-4 w-4 text-gray-500" /> Edit
+              </button>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-red-500"
+                onClick={() => handleDelete(item?.id)}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" /> Delete
+              </button>
+            </>
           )}
         </Dropdown>
       </td>

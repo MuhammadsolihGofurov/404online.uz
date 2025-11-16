@@ -21,9 +21,9 @@ export default function Header({ user, toggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <Link href={"/notifications"}>
+        {/* <Link href={"/notifications"}>
           <Bell />
-        </Link>
+        </Link> */}
         <div className="w-9 h-9 bg-main text-white rounded-full flex items-center justify-center overflow-hidden">
           <img
             src={user?.avatar}

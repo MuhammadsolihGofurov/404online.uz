@@ -26,3 +26,16 @@ export const YesOrNo = [
     value: "No",
   },
 ];
+
+export const TrueOrFalse = [
+  {
+    id: 1,
+    name: "Active",
+    value: "Active",
+  },
+  {
+    id: 2,
+    name: "Not active",
+    value: "Not active",
+  },
+];

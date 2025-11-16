@@ -19,3 +19,9 @@ export const STUDENTS_URL = "/dashboard/students";
 
 // === INVITE CODE ===
 export const INVITECODE_URL = "/dashboard/invite-codes";
+
+// === USERS ===
+export const USERS_URL = "/dashboard/users";
+
+// === GROUPS ===
+export const GROUPS_URL = "/dashboard/groups";

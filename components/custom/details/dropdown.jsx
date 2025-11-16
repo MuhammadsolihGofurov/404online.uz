@@ -1,8 +1,16 @@
+import { ChevronDown } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
+import { useIntl } from "react-intl";
 
-export default function Dropdown({ children, buttonContent, width = "w-32" }) {
+export default function Dropdown({
+  children,
+  type = "",
+  buttonContent,
+  width = "w-32",
+}) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
+  const intl = useIntl();
 
   // Tashqariga bosilganda menyuni yopish
   useEffect(() => {
@@ -26,14 +34,25 @@ export default function Dropdown({ children, buttonContent, width = "w-32" }) {
   }, []);
 
   return (
-    <div className="relative inline-block" ref={menuRef}>
-      <button
+    <div className={`relative inline-block`} ref={menuRef}>
+      <div
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="p-2 hover:bg-gray-100 rounded-lg"
+        className={` hover:bg-gray-100 rounded-lg cursor-pointer ${
+          type === "filter"
+            ? "border border-b-gray-200 text-sm text-gray-500 flex items-center justify-center gap-2 px-5 py-2 w-[132px] "
+            : "p-2"
+        }`}
       >
-        {buttonContent}
-      </button>
+        {type === "filter" ? (
+          <>
+            <span>{intl.formatMessage({ id: buttonContent })}</span>
+            <ChevronDown className="w-3 h-3" />
+          </>
+        ) : (
+          buttonContent
+        )}
+      </div>
 
       {open && (
         <div
@@ -42,6 +61,7 @@ export default function Dropdown({ children, buttonContent, width = "w-32" }) {
             top: menuRef.current?.getBoundingClientRect().bottom + 4,
             left: menuRef.current?.getBoundingClientRect().right - 128,
           }}
+          onClick={() => setOpen((prev) => !prev)}
         >
           {children}
         </div>

@@ -1,4 +1,9 @@
-import { GenerateCodeModal, TeacherModal } from "./admin-center";
+import {
+  EditUserModal,
+  GenerateCodeModal,
+  GroupModal,
+  TeacherModal,
+} from "./admin-center";
 import {
   ConfirmModal,
   EduCenterCreateAdminModal,
@@ -11,4 +16,6 @@ export const ModalComponents = {
   eduCenterCreateAdmin: EduCenterCreateAdminModal,
   addTeacher: TeacherModal,
   generateCode: GenerateCodeModal,
+  editUser: EditUserModal,
+  addGroup: GroupModal,
 };

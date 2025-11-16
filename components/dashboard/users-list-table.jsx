@@ -1,5 +1,4 @@
 import fetcher from "@/utils/fetcher";
-import { formatDateToShort } from "@/utils/funcs";
 import { useRouter } from "next/router";
 import React from "react";
 import { useIntl } from "react-intl";
@@ -8,22 +7,41 @@ import { CentersTableSkeleton } from "../skeleton";
 import Pagination from "../custom/pagination";
 import { useParams } from "@/hooks/useParams";
 import { useModal } from "@/context/modal-context";
-import { EduCenterItem } from "./details";
-import { TeacherListItem } from "./details/center-admin";
+import { UserListItem } from "./details/center-admin";
 
-export default function TeachersListTable({ loading }) {
+export default function UsersListTable({ loading }) {
   const router = useRouter();
   const intl = useIntl();
   const { findParams } = useParams();
   const { modalClosed } = useModal();
 
   const currentPage = parseInt(findParams("page")) || 1;
+  const currentRole = findParams("role");
+  const isActiveUser = findParams("is_active");
+  const isApprovedUser = findParams("is_approved");
 
-  const { data: teachers, isLoading } = useSWR(
-    ["/users/", router.locale, currentPage, modalClosed],
+  // query
+  const query = `&page_size=10${currentRole ? `&role=` + currentRole : ""}${
+    isActiveUser ? `&is_active=${isActiveUser == "Active" ? true : false}` : ""
+  }${
+    isApprovedUser
+      ? `&is_approved=${isApprovedUser == "Approved" ? true : false}`
+      : ""
+  }`;
+
+  const { data: users, isLoading } = useSWR(
+    [
+      "/users/",
+      router.locale,
+      currentPage,
+      modalClosed,
+      currentRole,
+      isActiveUser,
+      isApprovedUser,
+    ],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=10&role=TEACHER`,
+        `${url}?page=${page}${query}`,
         {
           headers: {
             "Accept-Language": locale,
@@ -37,6 +55,7 @@ export default function TeachersListTable({ loading }) {
   if (loading || isLoading) {
     return <CentersTableSkeleton />;
   }
+  
   return (
     <>
       <div className="bg-white rounded-2xl overflow-x-auto sm:w-full">
@@ -48,10 +67,10 @@ export default function TeachersListTable({ loading }) {
                 {intl.formatMessage({ id: "Name" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
-                {intl.formatMessage({ id: "Students" })}
+                {intl.formatMessage({ id: "Groups" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
-                {intl.formatMessage({ id: "Groups" })}
+                {intl.formatMessage({ id: "Approve" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Status" })}
@@ -63,19 +82,22 @@ export default function TeachersListTable({ loading }) {
             </tr>
           </thead>
           <tbody>
-            {teachers && teachers?.results?.length > 0 ? (
-              teachers?.results?.map((item, index) => {
+            {users && users?.results?.length > 0 ? (
+              users?.results?.map((item, index) => {
                 return (
-                  <TeacherListItem
+                  <UserListItem
                     key={index}
                     item={item}
-                    isExists={teachers?.results?.length}
+                    isExists={users?.results?.length}
                   />
                 );
               })
             ) : (
               <tr>
-                <td colSpan={6} className="text-center p-6 text-sm text-textSecondary">
+                <td
+                  colSpan={6}
+                  className="text-center p-6 text-sm text-textSecondary"
+                >
                   {intl.formatMessage({ id: "There isn't anything" })}
                 </td>
               </tr>
@@ -84,7 +106,7 @@ export default function TeachersListTable({ loading }) {
         </table>
       </div>
 
-      <Pagination count={teachers?.count} />
+      <Pagination count={users?.count} />
     </>
   );
 }

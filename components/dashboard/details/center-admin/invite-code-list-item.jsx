@@ -86,7 +86,15 @@ export default function InviteCodeListItem({ item }) {
             <button
               type="button"
               className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-green-500"
-              onClick={() => handleToggleActive(item?.code, "activate")}
+              onClick={() => {
+                if (!item?.target_user) {
+                  toast.error(
+                    intl.formatMessage({ id: "The user has not sent a request yet!" })
+                  );
+                } else {
+                  handleToggleActive(item?.code, "activate");
+                }
+              }}
             >
               <Check className="h-4 w-4 text-green-500" /> Activate
             </button>

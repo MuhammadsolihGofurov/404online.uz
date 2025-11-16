@@ -5,10 +5,13 @@ import React, { useState } from "react";
 import { useIntl } from "react-intl";
 import { toast } from "react-toastify";
 
-export default function AvatarForm({ user }) {
+export default function AvatarForm({ user, page, center }) {
   const intl = useIntl();
   const router = useRouter();
   const [reqLoading, setReqLoading] = useState(false);
+  const isMyCenterPage = page === "myCenter";
+
+  const url = isMyCenterPage ? "/centers/avatar/" : "/accounts/me/avatar/";
 
   const uploadAvatar = async (file) => {
     try {
@@ -17,7 +20,7 @@ export default function AvatarForm({ user }) {
       const formData = new FormData();
       formData.append("avatar", file);
 
-      await authAxios.put(`/accounts/me/avatar/`, formData);
+      await authAxios.put(url, formData);
 
       toast.success(intl.formatMessage({ id: "Avatar updated successfully!" }));
 
@@ -33,11 +36,13 @@ export default function AvatarForm({ user }) {
   return (
     <div className="flex flex-col items-start gap-5">
       <h2 className="text-textPrimary font-semibold text-base">
-        {intl.formatMessage({ id: "Profile avatar" })}
+        {intl.formatMessage({
+          id: isMyCenterPage ? "My center avatar" : "Profile avatar",
+        })}
       </h2>
 
       <AvatarInput
-        initialImage={user?.avatar}
+        initialImage={isMyCenterPage ? center?.avatar : user?.avatar}
         onUpload={uploadAvatar}
         reqLoading={reqLoading}
       />

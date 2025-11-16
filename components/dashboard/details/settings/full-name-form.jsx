@@ -7,7 +7,14 @@ import { useForm } from "react-hook-form";
 import { useIntl } from "react-intl";
 import { toast } from "react-toastify";
 
-export default function FullNameForm({ old_full_name }) {
+export default function FullNameForm({
+  old_full_name,
+  role,
+  description,
+  center_id,
+  page,
+  old_center_name,
+}) {
   const intl = useIntl();
   const router = useRouter();
   const [reqLoading, setReqLoading] = useState(false);
@@ -22,21 +29,36 @@ export default function FullNameForm({ old_full_name }) {
     mode: "onChange",
     defaultValues: {
       full_name: old_full_name || "",
+      name: old_center_name || "",
+      description: description || "",
     },
   });
+  const isMyCenterPage = page === "myCenter";
 
   useEffect(() => {
     setValue("full_name", old_full_name);
-  }, [old_full_name]);
+    if (page === "myCenter") {
+      setValue("name", old_center_name);
+      setValue("description", description);
+    }
+  }, [old_full_name, role, description, old_center_name]);
 
   const submitFn = async (data) => {
+    const url = isMyCenterPage
+      ? `/centeradmin/center/${center_id}/`
+      : "/accounts/me/";
+    const { full_name, name, description } = data;
+
+    const UserData = { full_name };
+    const CenterData = { name, description };
+
     try {
       setReqLoading(true);
 
-      await authAxios.patch("/accounts/me/", data);
+      await authAxios.patch(url, isMyCenterPage ? CenterData : UserData);
 
       toast.success(
-        intl.formatMessage({ id: "Full name is successfully updated!" })
+        intl.formatMessage({ id: "Details is successfully updated!" })
       );
     } catch (e) {
       const error = e?.response?.data;
@@ -56,18 +78,47 @@ export default function FullNameForm({ old_full_name }) {
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <Input
-          type={"text"}
-          register={register}
-          name={"full_name"}
-          title={intl.formatMessage({ id: "Full name" })}
-          placeholder={"John D"}
-          id="full_name"
-          required
-          validation={{
-            required: intl.formatMessage({ id: "Full name is requried" }),
-          }}
-        />
+        {isMyCenterPage ? (
+          <>
+            <Input
+              type={"text"}
+              register={register}
+              name={"name"}
+              title={intl.formatMessage({ id: "Center name" })}
+              placeholder={"Center"}
+              id="name"
+              required
+              validation={{
+                required: intl.formatMessage({ id: "Center name is requried" }),
+              }}
+            />
+            <Input
+              type={"text"}
+              register={register}
+              name={"description"}
+              title={intl.formatMessage({ id: "Description" })}
+              placeholder={"Text"}
+              id="description"
+              required
+              validation={{
+                required: intl.formatMessage({ id: "Description is requried" }),
+              }}
+            />
+          </>
+        ) : (
+          <Input
+            type={"text"}
+            register={register}
+            name={"full_name"}
+            title={intl.formatMessage({ id: "Full name" })}
+            placeholder={"John D"}
+            id="full_name"
+            required
+            validation={{
+              required: intl.formatMessage({ id: "Full name is requried" }),
+            }}
+          />
+        )}
       </div>
       <button
         type="submit"
