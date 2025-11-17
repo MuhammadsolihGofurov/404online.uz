@@ -1,8 +1,12 @@
 import {
+  AssignToTeacherModal,
+  ChangeGroupMemberModal,
   EditUserModal,
   GenerateCodeModal,
   GroupModal,
+  ListGroupMembersModal,
   TeacherModal,
+  ViewProfileModal,
 } from "./admin-center";
 import {
   ConfirmModal,
@@ -18,4 +22,8 @@ export const ModalComponents = {
   generateCode: GenerateCodeModal,
   editUser: EditUserModal,
   addGroup: GroupModal,
+  assignToTeacher: AssignToTeacherModal,
+  listGroupMembers: ListGroupMembersModal,
+  changeGroupMember: ChangeGroupMemberModal,
+  viewProfile: ViewProfileModal,
 };

@@ -121,5 +121,21 @@
   "Edit group": "Edit group",
   "Add group": "Add group",
   "New group is successfully created!": "New group is successfully created!",
-  "Group updated successfully!": "Group updated successfully!"
+  "Group updated successfully!": "Group updated successfully!",
+  "Delete group": "Delete group",
+  "Are you sure you want to delete this group? This action cannot be undone.": "Are you sure you want to delete this group? This action cannot be undone.",
+  "Group deleted successfully!": "Group deleted successfully!",
+  "Memberships": "Memberships",
+  "Assign to teacher": "Assign to teacher",
+  "Assistant is successfully assigned to teacher!": "Assistant is successfully assigned to teacher!",
+  "Unlink user": "Unlink user",
+  "Do you really want to unlink this user? The connection will be removed, but no data will be deleted.": "Do you really want to unlink this user? The connection will be removed, but no data will be deleted.",
+  "User unlink successfully!": "User unlink successfully!",
+  "Group members list": "Group members list",
+  "No members found": "No members found",
+  "Student group is successfully changed!": "Student group is successfully changed!",
+  "Change membership": "Change membership",
+  "Remove member": "Remove member",
+  "Are you sure you want to remove this member from the group? This action cannot be undone.": "Are you sure you want to remove this member from the group? This action cannot be undone.",
+  "Member removed!": "Member removed!"
 }

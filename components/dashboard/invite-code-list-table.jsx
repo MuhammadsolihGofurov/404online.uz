@@ -9,7 +9,7 @@ import Pagination from "../custom/pagination";
 import { useParams } from "@/hooks/useParams";
 import { useModal } from "@/context/modal-context";
 import { EduCenterItem } from "./details";
-import { InviteCodeListItem, TeacherListItem } from "./details/center-admin";
+import { InviteCodeListItem, TeacherListItem } from "./details/items";
 
 export default function InviteCodeListTable({ loading }) {
   const router = useRouter();

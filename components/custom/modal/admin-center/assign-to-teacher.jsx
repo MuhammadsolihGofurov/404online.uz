@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { Controller, useForm } from "react-hook-form";
-import { Select } from "../../details";
+import { MultiSelect, Select } from "../../details";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
@@ -11,7 +11,7 @@ import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
 
-export default function GenerateCodeModal() {
+export default function AssignToTeacherModal({ initialData, assistant_id }) {
   const intl = useIntl();
   const { closeModal, openModal } = useModal();
   const [reqLoading, setReqLoading] = useState(false);
@@ -24,40 +24,42 @@ export default function GenerateCodeModal() {
     reset,
     watch,
     control,
+    setValue,
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      role: "",
-      is_guest: "",
-      group: "",
+      teacher_id: initialData || [],
     },
   });
 
-  const watchedRole = watch("role");
-
-  const showIsGuest = watchedRole === "STUDENT";
+  useEffect(() => {
+    if (initialData) reset({ teacher_id: initialData });
+  }, [initialData, reset]);
 
   const submitFn = async (data) => {
     try {
       setReqLoading(true);
 
       const payload = {
-        role: data?.role,
-        is_guest: data?.is_guest == "Yes" ? true : false,
-        group: data?.group,
+        ...data,
+        assistant_id: assistant_id,
       };
 
+      console.error(payload)
+
       const response = await authAxios.post(
-        "/centers/invitations/create/",
+        "/assistant-teacher/link/",
         payload
       );
 
       toast.success(
-        intl.formatMessage({ id: "Invitations code is successfully created!" })
+        intl.formatMessage({
+          id: "Assistant is successfully assigned to teacher!",
+        })
       );
 
       setTimeout(() => {
-        closeModal("generateCode", response?.data);
+        closeModal("assignToTeacher", response?.data);
       }, 500);
     } catch (e) {
       toast.error(e?.response?.data?.error?.detail?.[0]);
@@ -66,11 +68,11 @@ export default function GenerateCodeModal() {
     }
   };
 
-  const { data: groups } = useSWR(
-    ["/groups/", router.locale],
+  const { data: teachers } = useSWR(
+    ["/users/", router.locale],
     ([url, locale]) =>
       fetcher(
-        `${url}?page_size=all`,
+        `${url}?page_size=all&role=TEACHER`,
         {
           headers: {
             "Accept-Language": locale,
@@ -84,7 +86,7 @@ export default function GenerateCodeModal() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
-        {intl.formatMessage({ id: "Generate code" })}
+        {intl.formatMessage({ id: "Assign to teacher" })}
       </h1>
       <form
         onSubmit={handleSubmit(submitFn)}
@@ -92,51 +94,22 @@ export default function GenerateCodeModal() {
       >
         <div className="flex flex-col gap-5">
           <Controller
-            name="role"
+            name="teacher_id"
             control={control}
             rules={{ required: intl.formatMessage({ id: "Required" }) }}
+            defaultValue={initialData || []}
             render={({ field }) => (
-              <Select
+              <MultiSelect
                 {...field}
-                title={intl.formatMessage({ id: "Role" })}
+                title={intl.formatMessage({ id: "Teacher" })}
                 placeholder={intl.formatMessage({ id: "Select" })}
-                options={ForCenterAdmin}
-                error={errors.role?.message}
+                options={teachers || []}
+                error={errors.teacher_id?.message}
+                value={field.value || []}
+                onChange={(val) => field.onChange(val)}
               />
             )}
           />
-          {showIsGuest && (
-            <>
-              <Controller
-                name="is_guest"
-                control={control}
-                rules={{ required: intl.formatMessage({ id: "Required" }) }}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    title={intl.formatMessage({ id: "Is guest" })}
-                    placeholder={intl.formatMessage({ id: "Select" })}
-                    options={YesOrNo}
-                    error={errors.is_guest?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="group"
-                control={control}
-                rules={{ required: intl.formatMessage({ id: "Required" }) }}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    title={intl.formatMessage({ id: "Groups" })}
-                    placeholder={intl.formatMessage({ id: "Select" })}
-                    options={groups}
-                    error={errors.to_group_id?.message}
-                  />
-                )}
-              />
-            </>
-          )}
         </div>
 
         <div className="flex flex-col gap-4">

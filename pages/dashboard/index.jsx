@@ -38,4 +38,10 @@ export async function getServerSideProps() {
   return { props: { info } };
 }
 
-export default withAuthGuard(DashboardPage, ["OWNER", "CENTER_ADMIN", "user"]);
+export default withAuthGuard(DashboardPage, [
+  "OWNER",
+  "CENTER_ADMIN",
+  "STUDENT",
+  "TEACHER",
+  "ASSISTANT",
+]);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
-import Header from "./header";
+import Header from "./dashboard-header";
 
 export default function DashboardLayout({ children, user }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);

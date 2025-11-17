@@ -25,3 +25,7 @@ export const USERS_URL = "/dashboard/users";
 
 // === GROUPS ===
 export const GROUPS_URL = "/dashboard/groups";
+export const GROUPSMEMBERS_URL = "/dashboard/groups/members";
+
+// === NOTIFICATIONS ===
+export const NOTIFICATIONS_URL = "/dashboard/notifications";

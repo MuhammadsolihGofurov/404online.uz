@@ -7,9 +7,9 @@ import { CentersTableSkeleton } from "../skeleton";
 import Pagination from "../custom/pagination";
 import { useParams } from "@/hooks/useParams";
 import { useModal } from "@/context/modal-context";
-import { UserListItem } from "./details/center-admin";
+import { UserListItem } from "./details/items";
 
-export default function UsersListTable({ loading }) {
+export default function UsersListTable({ loading, role }) {
   const router = useRouter();
   const intl = useIntl();
   const { findParams } = useParams();
@@ -62,7 +62,7 @@ export default function UsersListTable({ loading }) {
         <table className="w-[700px] sm:w-full text-textPrimary rounded-2xl">
           <thead>
             <tr className="border-b border-dashboard-bg">
-              <th className="text-sm font-bold text-center p-4 w-[5%]">№</th>
+              <th className="text-sm font-bold text-center p-4 w-[5%]">#</th>
               <th className="text-sm font-bold p-4 w-[30%] text-start">
                 {intl.formatMessage({ id: "Name" })}
               </th>
@@ -89,6 +89,7 @@ export default function UsersListTable({ loading }) {
                     key={index}
                     item={item}
                     isExists={users?.results?.length}
+                    role={role}
                   />
                 );
               })

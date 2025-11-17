@@ -17,7 +17,7 @@ function DashboardPage({ info, user, loading }) {
       <DashboardLayout user={user} loading={loading}>
         <Wrapper title={"Users"} isLink body={"Dashboard"}>
           <UserFilter loading={loading} />
-          <UsersListTable loading={loading} />
+          <UsersListTable loading={loading} role={user?.role} />
         </Wrapper>
       </DashboardLayout>
     </>

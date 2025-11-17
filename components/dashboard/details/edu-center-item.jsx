@@ -1,4 +1,4 @@
-import { Dropdown } from "@/components/custom/details";
+import { Dropdown, DropdownBtn } from "@/components/custom/details";
 import { useModal } from "@/context/modal-context";
 import { authAxios } from "@/utils/axios";
 import { formatDateToShort } from "@/utils/funcs";
@@ -9,7 +9,6 @@ import { toast } from "react-toastify";
 
 export default function EduCenterItem({ item }) {
   const { openModal } = useModal();
-  const menuRef = useRef(null);
   const intl = useIntl();
 
   const handleDelete = (id) => {
@@ -123,60 +122,55 @@ export default function EduCenterItem({ item }) {
         {formatDateToShort(item?.created_at)}
       </td>
 
-      <td className="relative z-0" ref={menuRef}>
+      <td className="relative z-0">
         {/* 🔹 Dropdown menyu */}
         <Dropdown
           buttonContent={<MoreVertical className="h-5 w-5 text-gray-500" />}
         >
-          <button
-            type="button"
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
-            onClick={() => {
-              openModal(
-                "createEduCenter",
-                { id: item?.id, initialData: item },
-                "short"
-              );
-            }}
-          >
-            <Edit2 className="h-4 w-4 text-gray-500" /> Edit
-          </button>
+          <>
+            <DropdownBtn
+              title="Edit"
+              icon={<Edit2 className="text-gray-500" />}
+              onClick={() =>
+                openModal(
+                  "createEduCenter",
+                  { id: item?.id, initialData: item },
+                  "short"
+                )
+              }
+            />
 
-          <button
-            type="button"
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-red-500"
-            onClick={() => handleDelete(item?.id)}
-          >
-            <Trash2 className="h-4 w-4 text-red-500" /> Delete
-          </button>
+            <DropdownBtn
+              title="Delete"
+              icon={<Trash2 className="text-red-500" />}
+              className="text-red-500"
+              onClick={() => handleDelete(item?.id)}
+            />
 
-          <button
-            type="button"
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
-            onClick={() =>
-              openModal("eduCenterCreateAdmin", { id: item?.id }, "short")
-            }
-          >
-            <Plus className="h-4 w-4 text-main" /> Admin
-          </button>
+            <DropdownBtn
+              title="Admin"
+              icon={<Plus className="text-main" />}
+              onClick={() =>
+                openModal("eduCenterCreateAdmin", { id: item?.id }, "short")
+              }
+            />
 
-          {item?.is_active ? (
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-yellow-500"
-              onClick={() => handleToggleActive(item?.id, "suspend")}
-            >
-              <Slash className="h-4 w-4 text-yellow-500" /> Suspend
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-green-500"
-              onClick={() => handleToggleActive(item?.id, "activate")}
-            >
-              <Check className="h-4 w-4 text-green-500" /> Activate
-            </button>
-          )}
+            {item?.is_active ? (
+              <DropdownBtn
+                title="Suspend"
+                icon={<Slash className="text-yellow-500" />}
+                className="text-yellow-500"
+                onClick={() => handleToggleActive(item?.id, "suspend")}
+              />
+            ) : (
+              <DropdownBtn
+                title="Activate"
+                icon={<Check className="text-green-500" />}
+                className="text-green-500"
+                onClick={() => handleToggleActive(item?.id, "activate")}
+              />
+            )}
+          </>
         </Dropdown>
       </td>
     </tr>

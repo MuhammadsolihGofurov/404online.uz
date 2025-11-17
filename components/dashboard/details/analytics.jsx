@@ -4,6 +4,7 @@ import {
   EDUCATIONCENTERS_URL,
   SETTINGS_URL,
   TEACHERS_URL,
+  USERS_URL,
 } from "@/mock/router";
 import fetcher from "@/utils/fetcher";
 import { formatDateToLong } from "@/utils/funcs";
@@ -462,7 +463,7 @@ export const CenterAdminAnalytics = ({
                 })}
               </div>
               <Link
-                href={TEACHERS_URL}
+                href={`${USERS_URL}?role=TEACHER`}
                 className="text-sm text-main text-end pt-5 hover:text-blue-800 transition-colors duration-200"
               >
                 {intl.formatMessage({ id: "Wiew all" })}
@@ -514,7 +515,7 @@ export const CenterAdminAnalytics = ({
                 })}
               </div>
               <Link
-                href={TEACHERS_URL}
+                href={`${USERS_URL}?role=STUDENT`}
                 className="text-sm text-main text-end pt-5 hover:text-blue-800 transition-colors duration-200"
               >
                 {intl.formatMessage({ id: "Wiew all" })}

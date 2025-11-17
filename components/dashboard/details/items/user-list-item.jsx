@@ -1,13 +1,22 @@
-import { Dropdown } from "@/components/custom/details";
+import { Dropdown, DropdownBtn } from "@/components/custom/details";
 import { useModal } from "@/context/modal-context";
 import { authAxios } from "@/utils/axios";
 import { formatDateToShort } from "@/utils/funcs";
-import { Check, Edit2, MoreVertical, Plus, Slash, Trash2 } from "lucide-react";
+import {
+  Check,
+  Edit2,
+  MoreVertical,
+  Plus,
+  Slash,
+  Trash2,
+  Unlink,
+  UserPlus,
+} from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { toast } from "react-toastify";
 
-export default function UserListItem({ item }) {
+export default function UserListItem({ item, role }) {
   const { openModal } = useModal();
   const intl = useIntl();
 
@@ -29,39 +38,21 @@ export default function UserListItem({ item }) {
     );
   };
 
-  const handleToggleActive = (id, actionType) => {
-    const isSuspend = actionType === "suspend";
-
+  const handleUnLinkToTeacher = (assistant_id, teacher_id) => {
     openModal(
       "confirmModal",
       {
-        title: isSuspend ? "Suspend Center" : "Activate Center",
-        description: isSuspend
-          ? "Are you sure you want to suspend this center? Suspended centers will not be active until reactivated."
-          : "Are you sure you want to activate this center? The center will be active immediately.",
+        title: "Unlink user",
+        description:
+          "Do you really want to unlink this user? The connection will be removed, but no data will be deleted.",
         onConfirm: async () => {
-          try {
-            const url = isSuspend
-              ? `/owner/centers/${id}/suspend/`
-              : `/owner/centers/${id}/activate/`;
-
-            await authAxios.post(url);
-
-            toast.success(
-              intl.formatMessage({
-                id: isSuspend
-                  ? "Center suspended successfully!"
-                  : "Center activated successfully!",
-              })
-            );
-          } catch (e) {
-            toast.error(
-              e?.response?.data?.error?.detail ||
-                (isSuspend
-                  ? "Error suspending center"
-                  : "Error activating center")
-            );
-          }
+          await authAxios.post(`/assistant-teacher/unlink/`, {
+            assistant_id,
+            teacher_id,
+          });
+          toast.success(
+            intl.formatMessage({ id: "User unlink successfully!" })
+          );
         },
       },
       "short"
@@ -86,22 +77,22 @@ export default function UserListItem({ item }) {
             {item?.centeradmin_emails?.length > 0 ? (
               item?.centeradmin_emails?.map((admin) => {
                 return (
-                  <button
+                  <div
                     type="button"
                     key={admin?.email}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-wrap break-words"
                   >
                     {admin?.full_name}
-                  </button>
+                  </div>
                 );
               })
             ) : (
-              <button
+              <div
                 type="button"
                 className="w-full flex items-center text-menu gap-2 px-4 py-2 text-xs text-center text-wrap break-words"
               >
                 {intl.formatMessage({ id: "There isn't anything" })}
-              </button>
+              </div>
             )}
           </Dropdown>
         </button>
@@ -140,9 +131,9 @@ export default function UserListItem({ item }) {
           {/* ! center admin */}
           {item?.role !== "CENTER_ADMIN" && (
             <>
-              <button
-                type="button"
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50"
+              <DropdownBtn
+                title="Edit"
+                icon={<Edit2 className="text-gray-500" />}
                 onClick={() => {
                   openModal(
                     "editUser",
@@ -150,16 +141,38 @@ export default function UserListItem({ item }) {
                     "short"
                   );
                 }}
-              >
-                <Edit2 className="h-4 w-4 text-gray-500" /> Edit
-              </button>
-              <button
-                type="button"
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-red-500"
+              />
+
+              <DropdownBtn
+                title="Delete"
+                icon={<Trash2 className="text-red-500" />}
+                className="text-red-500"
                 onClick={() => handleDelete(item?.id)}
-              >
-                <Trash2 className="h-4 w-4 text-red-500" /> Delete
-              </button>
+              />
+            </>
+          )}
+
+          {/* for assistant to teacher (only CENTER_ADMIN can) */}
+          {role === "CENTER_ADMIN" && item?.role === "ASSISTANT" && (
+            <>
+              <DropdownBtn
+                title="Assign to"
+                icon={<UserPlus className="text-blue-500" />}
+                onClick={() =>
+                  openModal(
+                    "assignToTeacher",
+                    { assistant_id: item?.id, initialData: item?.teacher },
+                    "short"
+                  )
+                }
+              />
+              {item?.teacher && (
+                <DropdownBtn
+                  title="Unassign"
+                  icon={<Unlink className="text-red-500" />}
+                  onClick={() => handleUnLinkToTeacher(item?.id, item?.teacher)}
+                />
+              )}
             </>
           )}
         </Dropdown>

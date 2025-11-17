@@ -2,16 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { Controller, useForm } from "react-hook-form";
-import { Input, Select, ToggleSwitch } from "../../details";
+import { Input, Select } from "../../details";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
-import { ForCenterAdmin, TrueOrFalse } from "@/mock/roles";
+import { ForCenterAdmin } from "@/mock/roles";
+import useSWR from "swr";
+import fetcher from "@/utils/fetcher";
+import { useRouter } from "next/router";
 
 export default function GroupModal({ id, initialData }) {
   const intl = useIntl();
   const { closeModal } = useModal();
   const [reqLoading, setReqLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -43,7 +47,9 @@ export default function GroupModal({ id, initialData }) {
       if (id) {
         // 🔹 Edit
         response = await authAxios.patch(`/groups/${id}/`, data);
-        toast.success(intl.formatMessage({ id: "Group updated successfully!" }));
+        toast.success(
+          intl.formatMessage({ id: "Group updated successfully!" })
+        );
       } else {
         // 🔹 Create
         response = await authAxios.post("/groups/", data);
@@ -62,6 +68,21 @@ export default function GroupModal({ id, initialData }) {
     }
   };
 
+  const { data: teachers } = useSWR(
+    ["/users/", router.locale],
+    ([url, locale]) =>
+      fetcher(
+        `${url}?page_size=all&role=TEACHER`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
@@ -75,45 +96,39 @@ export default function GroupModal({ id, initialData }) {
       >
         <div className="flex flex-col gap-5">
           <Input
-            type={"email"}
+            type={"text"}
             register={register}
-            name={"email"}
-            title={intl.formatMessage({ id: "Username" })}
-            placeholder={"example@gmail.com"}
-            id="email"
+            name={"name"}
+            title={intl.formatMessage({ id: "Name" })}
+            placeholder={"Group name"}
+            id="name"
             required
             validation={{
-              required: intl.formatMessage({ id: "Username is required" }),
-              pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: intl.formatMessage({
-                  id: "Please enter a valid email address",
-                }),
-              },
+              required: intl.formatMessage({ id: "Name is required" }),
             }}
           />
           <Input
             type="text"
             register={register}
-            name="full_name"
-            title={intl.formatMessage({ id: "Full name" })}
-            placeholder="John D"
+            name="description"
+            title={intl.formatMessage({ id: "Description" })}
+            placeholder="Describe group"
             required
             validation={{
-              required: intl.formatMessage({ id: "Full name is required" }),
+              required: intl.formatMessage({ id: "Description is required" }),
             }}
           />
           <Controller
-            name="role"
+            name="teacher"
             control={control}
             rules={{ required: intl.formatMessage({ id: "Required" }) }}
             render={({ field }) => (
               <Select
                 {...field}
-                title={intl.formatMessage({ id: "Role" })}
+                title={intl.formatMessage({ id: "Teacher" })}
                 placeholder={intl.formatMessage({ id: "Select" })}
-                options={ForCenterAdmin}
-                error={errors.role?.message}
+                options={teachers}
+                error={errors.teacher?.message}
               />
             )}
           />

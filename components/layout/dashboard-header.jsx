@@ -1,8 +1,29 @@
 import React from "react";
-import { Bell, BellRing, BellRingIcon, Menu } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import Link from "next/link";
+import { NOTIFICATIONS_URL } from "@/mock/router";
+import useSWR from "swr";
+import fetcher from "@/utils/fetcher";
+import { useRouter } from "next/router";
 
 export default function Header({ user, toggleSidebar }) {
+  const router = useRouter();
+
+  const { data: notifications, isLoading } = useSWR(
+    ["/notifications/", router.locale],
+    ([url, locale, page]) =>
+      fetcher(
+        `${url}`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
   return (
     <header className="flex items-center justify-between bg-white shadow-sm px-6 py-4">
       <div className="flex items-center gap-3">
@@ -20,10 +41,10 @@ export default function Header({ user, toggleSidebar }) {
         </h1>
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* <Link href={"/notifications"}>
-          <Bell />
-        </Link> */}
+      <div className="flex items-center gap-4">
+        <Link href={NOTIFICATIONS_URL} className="relative z-0">
+          <Bell className="w-4 h-4 " />
+        </Link>
         <div className="w-9 h-9 bg-main text-white rounded-full flex items-center justify-center overflow-hidden">
           <img
             src={user?.avatar}

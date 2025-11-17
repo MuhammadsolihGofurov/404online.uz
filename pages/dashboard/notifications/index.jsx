@@ -1,7 +1,4 @@
-// pages/dashboard/index.js
-import { GroupListCards, UsersListTable } from "@/components/dashboard";
 import { Wrapper } from "@/components/dashboard/details";
-import { UserFilter } from "@/components/dashboard/details/filters";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
@@ -15,16 +12,8 @@ function DashboardPage({ info, user, loading }) {
         keywords={info?.data?.seo_home_keywords}
       />
       <DashboardLayout user={user} loading={loading}>
-        <Wrapper
-          title={"Groups"}
-          isLink
-          body={"Dashboard"}
-          isButton
-          buttonText={"Add group"}
-          modalType={"short"}
-          buttonFunc={"addGroup"}
-        >
-          <GroupListCards loading={loading} role={user?.role} />
+        <Wrapper title={"Notifications"} isLink body={"Dashboard"}>
+
         </Wrapper>
       </DashboardLayout>
     </>
@@ -33,11 +22,11 @@ function DashboardPage({ info, user, loading }) {
 
 export async function getServerSideProps() {
   const info = {
-    seo_home_title: "Groups",
+    seo_home_title: "Notifications",
     seo_home_keywords: "",
     seo_home_description: "",
   };
   return { props: { info } };
 }
 
-export default withAuthGuard(DashboardPage, ["CENTER_ADMIN"]);
+export default withAuthGuard(DashboardPage, ["OWNER", "CENTER_ADMIN"]);

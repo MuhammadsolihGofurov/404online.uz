@@ -1,9 +1,9 @@
-import { Dropdown } from "@/components/custom/details";
+import { Dropdown, DropdownBtn } from "@/components/custom/details";
 import { useModal } from "@/context/modal-context";
 import { authAxios } from "@/utils/axios";
 import { formatDateToShort } from "@/utils/funcs";
-import { Check, Edit2, MoreVertical, Plus, Slash, Trash2 } from "lucide-react";
-import React, { useState, useRef, useEffect } from "react";
+import { Check, MoreVertical } from "lucide-react";
+import React from "react";
 import { useIntl } from "react-intl";
 import { toast } from "react-toastify";
 
@@ -28,7 +28,6 @@ const STATUS = {
 
 export default function InviteCodeListItem({ item }) {
   const { openModal } = useModal();
-  const menuRef = useRef(null);
   const intl = useIntl();
 
   const handleToggleActive = (code) => {
@@ -62,7 +61,17 @@ export default function InviteCodeListItem({ item }) {
       <td className="text-sm p-5 font-medium font-poppins">{item?.code}</td>
       <td className="text-sm p-5 font-medium">{item?.role}</td>
       <td className="text-sm p-5 font-medium">
-        {item?.target_user?.full_name}
+        {item?.target_user && (
+          <span
+            type="button"
+            className="cursor-pointer text-sm hover:text-main transition-colors duration-150"
+            onClick={() =>
+              openModal("viewProfile", { data: item?.target_user }, "short")
+            }
+          >
+            {intl.formatMessage({ id: "View user" })}
+          </span>
+        )}
       </td>
       <td className="text-sm p-5 font-medium">
         <span
@@ -77,27 +86,28 @@ export default function InviteCodeListItem({ item }) {
         {formatDateToShort(item?.created_at)}
       </td>
 
-      <td className="relative z-0" ref={menuRef}>
+      <td className="relative z-0">
         {/* 🔹 Dropdown menyu */}
         {item?.status == "PENDING" && (
           <Dropdown
             buttonContent={<MoreVertical className="h-5 w-5 text-gray-500" />}
           >
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-green-500"
+            <DropdownBtn
+              title="Activate"
+              icon={<Check className="text-green-500" />}
+              className="text-green-500"
               onClick={() => {
                 if (!item?.target_user) {
                   toast.error(
-                    intl.formatMessage({ id: "The user has not sent a request yet!" })
+                    intl.formatMessage({
+                      id: "The user has not sent a request yet!",
+                    })
                   );
                 } else {
                   handleToggleActive(item?.code, "activate");
                 }
               }}
-            >
-              <Check className="h-4 w-4 text-green-500" /> Activate
-            </button>
+            />
           </Dropdown>
         )}
       </td>

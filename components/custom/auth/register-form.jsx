@@ -46,17 +46,23 @@ export default function RegisterForm() {
 
       toast.success(intl.formatMessage({ id: "Register is successfully" }));
 
-      // setTimeout(() => {
-      //   router.push(`/${FillNewPasswordUrl}`);
-      // }, 500);
-      
+      setTimeout(() => {
+        router.push(`/${LOGIN_URL}`);
+      }, 500);
     } catch (e) {
       const error = e?.response?.data?.error;
 
       if (error?.invitation_code) {
         setError("invitation_code", {
           type: "manual",
-          message: error?.invitation_code?.[0], 
+          message: error?.invitation_code?.[0],
+        });
+      }
+
+      if (error?.password) {
+        setError("password", {
+          type: "manual",
+          message: error?.password?.[0],
         });
       }
 

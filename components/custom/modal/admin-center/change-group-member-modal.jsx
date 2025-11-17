@@ -11,7 +11,7 @@ import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
 
-export default function GenerateCodeModal() {
+export default function ChangeGroupMemberModal({ initialData, assistant_id }) {
   const intl = useIntl();
   const { closeModal, openModal } = useModal();
   const [reqLoading, setReqLoading] = useState(false);
@@ -24,43 +24,40 @@ export default function GenerateCodeModal() {
     reset,
     watch,
     control,
+    setValue,
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      role: "",
-      is_guest: "",
-      group: "",
+      user_id: initialData?.user_id || "",
+      to_group_id: initialData?.to_group_id || "",
     },
   });
 
-  const watchedRole = watch("role");
-
-  const showIsGuest = watchedRole === "STUDENT";
+  useEffect(() => {
+    if (initialData) reset(initialData);
+  }, [initialData, reset]);
 
   const submitFn = async (data) => {
     try {
       setReqLoading(true);
 
-      const payload = {
-        role: data?.role,
-        is_guest: data?.is_guest == "Yes" ? true : false,
-        group: data?.group,
-      };
-
       const response = await authAxios.post(
-        "/centers/invitations/create/",
-        payload
+        "/group-memberships/move-student/",
+        data
       );
 
       toast.success(
-        intl.formatMessage({ id: "Invitations code is successfully created!" })
+        intl.formatMessage({
+          id: "Student group is successfully changed!",
+        })
       );
 
       setTimeout(() => {
-        closeModal("generateCode", response?.data);
+        closeModal("changeGroupMember", response?.data);
       }, 500);
     } catch (e) {
-      toast.error(e?.response?.data?.error?.detail?.[0]);
+        // const error = e?.response?.data?.error?.detail;
+      toast.error(e?.response?.data?.error?.detail);
     } finally {
       setReqLoading(false);
     }
@@ -84,7 +81,7 @@ export default function GenerateCodeModal() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
-        {intl.formatMessage({ id: "Generate code" })}
+        {intl.formatMessage({ id: "Change membership" })}
       </h1>
       <form
         onSubmit={handleSubmit(submitFn)}
@@ -92,51 +89,19 @@ export default function GenerateCodeModal() {
       >
         <div className="flex flex-col gap-5">
           <Controller
-            name="role"
+            name="to_group_id"
             control={control}
             rules={{ required: intl.formatMessage({ id: "Required" }) }}
             render={({ field }) => (
               <Select
                 {...field}
-                title={intl.formatMessage({ id: "Role" })}
+                title={intl.formatMessage({ id: "Groups" })}
                 placeholder={intl.formatMessage({ id: "Select" })}
-                options={ForCenterAdmin}
-                error={errors.role?.message}
+                options={groups}
+                error={errors.to_group_id?.message}
               />
             )}
           />
-          {showIsGuest && (
-            <>
-              <Controller
-                name="is_guest"
-                control={control}
-                rules={{ required: intl.formatMessage({ id: "Required" }) }}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    title={intl.formatMessage({ id: "Is guest" })}
-                    placeholder={intl.formatMessage({ id: "Select" })}
-                    options={YesOrNo}
-                    error={errors.is_guest?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="group"
-                control={control}
-                rules={{ required: intl.formatMessage({ id: "Required" }) }}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    title={intl.formatMessage({ id: "Groups" })}
-                    placeholder={intl.formatMessage({ id: "Select" })}
-                    options={groups}
-                    error={errors.to_group_id?.message}
-                  />
-                )}
-              />
-            </>
-          )}
         </div>
 
         <div className="flex flex-col gap-4">
