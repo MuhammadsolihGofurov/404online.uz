@@ -29,3 +29,6 @@ export const GROUPSMEMBERS_URL = "/dashboard/groups/members";
 
 // === NOTIFICATIONS ===
 export const NOTIFICATIONS_URL = "/dashboard/notifications";
+
+// === CHATS ===
+export const CHATS_URL = "/dashboard/chats";

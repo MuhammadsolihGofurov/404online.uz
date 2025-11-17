@@ -12,20 +12,23 @@ export default function Wrapper({
   buttonText,
   buttonFunc,
   modalType,
+  isWrapperClose = false,
 }) {
   return (
     <div className="flex flex-col gap-8 items-start">
-      <WrapperHeader
-        title={title}
-        body={body}
-        isLink={isLink}
-        url={url}
-        isButton={isButton}
-        name={name}
-        buttonText={buttonText}
-        buttonFunc={buttonFunc}
-        modalType={modalType}
-      />
+      {!isWrapperClose && (
+        <WrapperHeader
+          title={title}
+          body={body}
+          isLink={isLink}
+          url={url}
+          isButton={isButton}
+          name={name}
+          buttonText={buttonText}
+          buttonFunc={buttonFunc}
+          modalType={modalType}
+        />
+      )}
       <div className="flex flex-col gap-5 w-full">{children}</div>
     </div>
   );

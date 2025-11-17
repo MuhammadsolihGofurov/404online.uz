@@ -137,5 +137,6 @@
   "Change membership": "Change membership",
   "Remove member": "Remove member",
   "Are you sure you want to remove this member from the group? This action cannot be undone.": "Are you sure you want to remove this member from the group? This action cannot be undone.",
-  "Member removed!": "Member removed!"
+  "Member removed!": "Member removed!",
+  "Topics": "Topics"
 }

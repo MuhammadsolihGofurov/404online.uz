@@ -11,7 +11,7 @@ export default function DashboardLayout({ children, user }) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const handleResize = () => {
-        if (window.innerWidth < 650) {
+        if (window.innerWidth < 1200) {
           setSidebarOpen(false); 
         } else {
           setSidebarOpen(true); 

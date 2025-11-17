@@ -1,7 +1,7 @@
 import React from "react";
-import { Bell, Menu } from "lucide-react";
+import { Bell, Menu, MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { NOTIFICATIONS_URL } from "@/mock/router";
+import { CHATS_URL, NOTIFICATIONS_URL } from "@/mock/router";
 import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
@@ -9,9 +9,22 @@ import { useRouter } from "next/router";
 export default function Header({ user, toggleSidebar }) {
   const router = useRouter();
 
+  const ICONS = [
+    {
+      id: 1,
+      icon: MessageCircle,
+      href: CHATS_URL,
+    },
+    {
+      id: 2,
+      icon: Bell,
+      href: NOTIFICATIONS_URL,
+    },
+  ];
+
   const { data: notifications, isLoading } = useSWR(
     ["/notifications/", router.locale],
-    ([url, locale, page]) =>
+    ([url, locale]) =>
       fetcher(
         `${url}`,
         {
@@ -42,9 +55,24 @@ export default function Header({ user, toggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Link href={NOTIFICATIONS_URL} className="relative z-0">
-          <Bell className="w-4 h-4 " />
-        </Link>
+        {/* Map orqali iconlarni chiqarish */}
+        {ICONS.map(({ id, icon: Icon, href }) => {
+          const isActive = router.pathname === href;
+
+          return (
+            <Link
+              key={id}
+              href={href}
+              className={`relative z-0 p-1 rounded-md transition-colors ${
+                isActive ? "text-main bg-main/10" : "text-gray-700"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+            </Link>
+          );
+        })}
+
+        {/* Avatar */}
         <div className="w-9 h-9 bg-main text-white rounded-full flex items-center justify-center overflow-hidden">
           <img
             src={user?.avatar}
