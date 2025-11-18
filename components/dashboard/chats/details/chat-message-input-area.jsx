@@ -117,13 +117,13 @@ export default function ChatMessageInputArea({ chat, topicId }) {
   };
 
   return (
-    <div className="p-4 border-t bg-white">
+    <div className="pb-4 px-4 pt-4 border-t bg-white">
       {attachments.length > 0 && (
-        <div className="mb-3 space-y-2">
+        <div className="flex flex-wrap gap-2 pb-3">
           {previewEntries.map(({ key, file, isImage, previewUrl }, idx) => (
             <div
               key={key}
-              className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2"
+              className="flex items-center gap-3 rounded-xl relative"
             >
               <div className="w-12 h-12 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
                 {isImage && previewUrl ? (
@@ -136,14 +136,10 @@ export default function ChatMessageInputArea({ chat, topicId }) {
                   <FileText className="w-5 h-5 text-gray-500" />
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{file.name}</p>
-                <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
-              </div>
               <button
                 type="button"
                 onClick={() => removeAttachment(idx)}
-                className="text-gray-500 hover:text-red-500 p-1"
+                className="text-gray-500 hover:text-red-500 p-1 absolute -top-1 -right-1"
                 aria-label="Remove attachment"
               >
                 <X className="w-4 h-4" />

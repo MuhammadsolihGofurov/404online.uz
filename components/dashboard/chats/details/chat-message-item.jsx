@@ -19,7 +19,7 @@ function renderAttachment(attachment) {
 
   if (ATTACHMENT_IMAGE_TYPES.includes(ext)) {
     return (
-      <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
+      <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
         <a
           href={url}
           target="_blank"
@@ -35,7 +35,7 @@ function renderAttachment(attachment) {
 
   if (ext === "pdf") {
     return (
-      <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
+      <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
         <a
           href={url}
           target="_blank"
@@ -51,7 +51,7 @@ function renderAttachment(attachment) {
   if (ATTACHMENT_AUDIO_TYPES.includes(ext)) {
     const audioType = attachment?.content_type || "audio/mpeg";
     return (
-      <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
+      <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
         <div className="p-3 border-b">
           <audio controls className="w-full">
             <source src={url} type={audioType} />
@@ -63,7 +63,7 @@ function renderAttachment(attachment) {
   }
 
   return (
-    <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
+    <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
       <a
         href={url}
         target="_blank"
