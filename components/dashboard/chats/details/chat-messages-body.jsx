@@ -15,13 +15,13 @@ export default function ChatMessagesBody({ chat }) {
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto h-[85%] p-4 space-y-4">
-      <div className="text-xs text-gray-500 mb-2">
+      <div className="mb-2 text-xs text-gray-500">
         Status: {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
       </div>
-      {/* {console.log(messages)} */}
+      {console.log(messages)}
 
       {messages.length === 0 ? (
-        <div className="text-center text-gray-400 text-sm py-6">
+        <div className="py-6 text-sm text-center text-gray-400">
           No messages yet.
         </div>
       ) : (
