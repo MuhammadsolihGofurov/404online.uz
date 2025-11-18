@@ -331,16 +331,36 @@ export function useChat(accessToken, groupId, topicId) {
   }, [connect]);
 
   const sendMessage = useCallback(
-    async ({ text = '', file, replyToId }) => {
-      if (file) {
+    async ({ text = '', files = [], file, replyToId } = {}) => {
+      const trimmedText = (text ?? '').trim();
+      let normalizedFiles = [];
+      if (Array.isArray(files)) {
+        normalizedFiles = files.filter(Boolean);
+      } else if (
+        typeof FileList !== 'undefined' &&
+        files instanceof FileList
+      ) {
+        normalizedFiles = Array.from(files).filter(Boolean);
+      } else if (files) {
+        normalizedFiles = [files];
+      }
+      if (file) normalizedFiles.push(file);
+
+      if (normalizedFiles.length > 0) {
         const formData = new FormData();
         formData.append('channel', topicId);
-        formData.append('message', text);
-        formData.append('attachment', file);
+        formData.append('message', trimmedText);
+        normalizedFiles.forEach((upload) => {
+          formData.append('attachments', upload);
+        });
         if (replyToId) formData.append('reply_to', replyToId);
 
         await authAxios.post('/chat-messages/', formData);
-        return; // REST call broadcasts `message_update` with attachment_url
+        return; // REST call broadcasts `message_update` with attachments
+      }
+
+      if (!trimmedText) {
+        throw new Error('Message text or attachments required');
       }
 
       const socket = wsRef.current;
@@ -348,7 +368,7 @@ export function useChat(accessToken, groupId, topicId) {
         throw new Error('WebSocket is not connected');
       }
 
-      const payload = { message: text };
+      const payload = { message: trimmedText };
       if (replyToId) payload.reply_to_id = replyToId;
       socket.send(JSON.stringify(payload));
     },

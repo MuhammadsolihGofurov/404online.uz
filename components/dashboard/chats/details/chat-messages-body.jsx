@@ -21,8 +21,6 @@ export default function ChatMessagesBody({ chat }) {
       <div className="py-1 px-2 sticky top-2 left-2 text-xs text-gray-500 bg-white inline-block rounded-full">
         Status: {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
       </div>
-      {console.log(messages)}
-
       {messages.length === 0 ? (
         <div className="py-6 text-sm text-center text-gray-400">
           No messages yet.

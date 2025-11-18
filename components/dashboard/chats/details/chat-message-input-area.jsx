@@ -1,73 +1,83 @@
-import { Paperclip, SendHorizontal, X, FileText, Image } from "lucide-react";
-import React, { useState, useEffect } from "react"; // useEffect qo'shildi
+import { Paperclip, SendHorizontal, X, FileText } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 const IMAGE_MIME_REGEX = /^image\/(jpeg|png|gif|webp|tiff|bmp)$/i;
+const MAX_ATTACHMENTS = 10;
+
+function formatBytes(bytes) {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export default function ChatMessageInputArea({ chat, topicId }) {
   const [sending, setSending] = useState(false);
-  const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+  const [attachments, setAttachments] = useState([]);
+  const [inputError, setInputError] = useState("");
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { isDirty, isValid },
-    setValue,
     watch,
   } = useForm({
     mode: "onChange",
     defaultValues: {
       message: "",
-      file: null,
     },
   });
 
-  const file = watch("file");
+  const messageValue = watch("message") ?? "";
+  const trimmedMessage = messageValue.trim();
+  const hasFiles = attachments.length > 0;
+  const hasText = trimmedMessage.length > 0;
+  const canSend =
+    Boolean(chat?.isConnected) && !chat?.readOnly && (hasText || hasFiles);
+
+  const previewEntries = useMemo(() => {
+    const canPreview =
+      typeof window !== "undefined" &&
+      typeof URL !== "undefined" &&
+      typeof URL.createObjectURL === "function";
+
+    return attachments.map((file, idx) => {
+      const isImage = IMAGE_MIME_REGEX.test(file.type);
+      const previewUrl = isImage && canPreview ? URL.createObjectURL(file) : null;
+      return {
+        key: `${file.name}-${file.lastModified}-${idx}`,
+        file,
+        isImage,
+        previewUrl,
+      };
+    });
+  }, [attachments]);
 
   useEffect(() => {
-    if (!file) {
-      setFilePreviewUrl(null);
-      return;
-    }
-
-    const isImage = IMAGE_MIME_REGEX.test(file.type);
-
-    if (isImage) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setFilePreviewUrl(null);
-    }
-
     return () => {
-      if (filePreviewUrl) {
-        URL.revokeObjectURL(filePreviewUrl); // Agar Object URL ishlatilgan bo'lsa tozalash
-      }
+      previewEntries.forEach((item) => {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      });
     };
-  }, [file]);
-
-  const canSend =
-    Boolean(chat?.isConnected) && (isDirty || Boolean(file)) && isValid;
-
-  // ... onSubmit, handleFileChange funksiyalari o'zgarishsiz qoldi ...
+  }, [previewEntries]);
 
   const onSubmit = async (data) => {
-    if (!canSend) return;
+    if (!canSend) {
+      setInputError("Write a message or attach files to send.");
+      return;
+    }
 
     try {
       setSending(true);
       await chat.sendMessage({
         text: data.message?.trim(),
-        file: data.file,
-        topicId,
+        files: attachments,
       });
 
-      reset({ message: "", file: null });
-      setFilePreviewUrl(null);
+      reset({ message: "" });
+      setAttachments([]);
+      setInputError("");
     } catch (error) {
       console.error("Failed to send message", error);
     } finally {
@@ -76,53 +86,81 @@ export default function ChatMessageInputArea({ chat, topicId }) {
   };
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setValue("file", selectedFile, { shouldDirty: true, shouldValidate: true });
+    const selectedFiles = Array.from(e.target.files || []);
+    if (!selectedFiles.length) return;
+
+    setAttachments((prev) => {
+      const remainingSlots = MAX_ATTACHMENTS - prev.length;
+      if (remainingSlots <= 0) {
+        setInputError(`You can attach up to ${MAX_ATTACHMENTS} files.`);
+        return prev;
+      }
+
+      if (selectedFiles.length > remainingSlots) {
+        setInputError(
+          `Only ${MAX_ATTACHMENTS} files are allowed. Extra files were ignored.`,
+        );
+      } else {
+        setInputError("");
+      }
+
+      const allowedFiles = selectedFiles.slice(0, remainingSlots);
+      return [...prev, ...allowedFiles];
+    });
+
     e.target.value = null;
   };
 
-  const removeFile = () => {
-    setValue("file", null, { shouldDirty: true, shouldValidate: true });
-    setFilePreviewUrl(null);
+  const removeAttachment = (index) => {
+    setAttachments((prev) => prev.filter((_, idx) => idx !== index));
+    setInputError("");
   };
-
-  const isFileImage = file && IMAGE_MIME_REGEX.test(file.type);
 
   return (
     <div className="p-4 border-t bg-white">
-      {file && (
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 relative">
-            {isFileImage && filePreviewUrl ? (
-              <img
-                src={filePreviewUrl}
-                alt={file.name}
-                className="w-12 h-12 object-cover rounded-md flex-shrink-0"
-              />
-            ) : (
-              <div className="w-12 h-12 bg-gray-300 rounded-md flex items-center justify-center flex-shrink-0">
-                <FileText className="w-6 h-6 text-gray-600" />
-              </div>
-            )}
-            {/* Faylni olib tashlash tugmasi */}
-            <button
-              type="button"
-              onClick={removeFile}
-              className="p-1 rounded-full -top-1 -right-1 absolute text-gray-500 hover:bg-gray-200 hover:text-red-500 transition-colors flex-shrink-0"
-              aria-label="Faylni o'chirish"
+      {attachments.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {previewEntries.map(({ key, file, isImage, previewUrl }, idx) => (
+            <div
+              key={key}
+              className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2"
             >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+              <div className="w-12 h-12 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
+                {isImage && previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <FileText className="w-5 h-5 text-gray-500" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeAttachment(idx)}
+                className="text-gray-500 hover:text-red-500 p-1"
+                aria-label="Remove attachment"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Xabar yuborish formasi */}
+      {inputError && (
+        <p className="text-xs text-red-500 mb-2">{inputError}</p>
+      )}
+
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="flex gap-3 items-center"
       >
-        {/* File input (O'zgarishsiz) */}
         <label className="rounded-xl cursor-pointer relative">
           <Paperclip className="w-5 h-5 text-gray-400 hover:text-main" />
           <input
@@ -133,16 +171,16 @@ export default function ChatMessageInputArea({ chat, topicId }) {
           />
         </label>
 
-        {/* Message input (O'zgarishsiz) */}
         <input
           type="text"
-          placeholder="Write a message..."
+          placeholder={
+            chat?.readOnly ? "Channel is read-only" : "Write a message..."
+          }
           disabled={!chat?.isConnected || chat?.readOnly}
           {...register("message")}
           className="flex-1 rounded-xl border border-gray-300 px-4 py-2"
         />
 
-        {/* Send icon button (O'zgarishsiz) */}
         <button
           type="submit"
           disabled={!canSend || sending}
