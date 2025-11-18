@@ -1,6 +1,6 @@
 import { Dropdown, DropdownBtn } from "@/components/custom/details";
 import { useModal } from "@/context/modal-context";
-import { GROUPS_URL, GROUPSMEMBERS_URL } from "@/mock/router";
+import { CHATS_URL, GROUPS_URL, GROUPSMEMBERS_URL } from "@/mock/router";
 import { authAxios } from "@/utils/axios";
 import {
   Check,
@@ -19,6 +19,8 @@ export default function GroupListItem({ item, role }) {
   const { openModal } = useModal();
   const intl = useIntl();
   const router = useRouter();
+
+  const chat_url = `${CHATS_URL}?group_id=${item?.id}`;
 
   const handleDelete = (id) => {
     openModal(
@@ -81,7 +83,15 @@ export default function GroupListItem({ item, role }) {
               <DropdownBtn
                 title="Members"
                 icon={<Users className="text-gray-500" />}
-                onClick={() => router.push(`${GROUPSMEMBERS_URL}?group_id=${item?.id}`)}
+                onClick={() =>
+                  router.push(`${GROUPSMEMBERS_URL}?group_id=${item?.id}`)
+                }
+              />
+              
+              <DropdownBtn
+                title="Chats"
+                icon={<Users className="text-gray-500" />}
+                onClick={() => router.push(chat_url)}
               />
             </>
           )}

@@ -32,3 +32,5 @@ export const NOTIFICATIONS_URL = "/dashboard/notifications";
 
 // === CHATS ===
 export const CHATS_URL = "/dashboard/chats";
+export const CHATSTOPICS_URL = "/dashboard/chats/topics";
+export const CHATSTOPICSCHANNEL_URL = "/dashboard/chats/channel";

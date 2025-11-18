@@ -55,7 +55,7 @@ authAxios.interceptors.response.use(
 
     // 🔸 Network yoki timeout xatosi
     if (!error.response || error.code === "ECONNABORTED") {
-      window.alert("Network error or request timeout, Please refresh page");
+      // window.alert("Network error or request timeout, Please refresh page");
       return Promise.reject(error);
     }
 

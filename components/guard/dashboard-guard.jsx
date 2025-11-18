@@ -19,7 +19,6 @@ export function withAuthGuard(WrappedComponent, allowedRoles = []) {
           //     return;
           //   }
 
-          // 🔹 /accounts/me/ orqali foydalanuvchini olish
           const { data } = await authAxios.get("/accounts/me/");
 
           setUser(data);

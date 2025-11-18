@@ -9,20 +9,17 @@ import React from "react";
 import { useIntl } from "react-intl";
 import useSWR from "swr";
 
-export default function ChatsLeftGroups({ loading }) {
+export default function ChatsLeftGroups({ onSelectGroup, loading }) {
   const intl = useIntl();
   const router = useRouter();
-  const query = `&page_size=all`;
   const { findParams } = useParams();
   const currentGroup = findParams("group_id") || "";
-  const isMobile = useMediaQuery("(max-width: 993px)");
-  const url = isMobile ? `${CHATS_URL}/topics` : `${CHATS_URL}`;
 
   const { data: datas, isLoading } = useSWR(
     ["/groups/", router.locale],
-    ([url, locale, page]) =>
+    ([url, locale]) =>
       fetcher(
-        `${url}?page=${page}${query}`,
+        `${url}?page_size=all`,
         {
           headers: {
             "Accept-Language": locale,
@@ -51,6 +48,10 @@ export default function ChatsLeftGroups({ loading }) {
     return <ChatsLeftGroupsSkeleton />;
   }
 
+  const handleLink = (group_id) => {
+    onSelectGroup(group_id);
+  };
+
   return (
     <>
       <div className="p-3 text-sm font-semibold text-gray-600 tracking-wide">
@@ -60,9 +61,9 @@ export default function ChatsLeftGroups({ loading }) {
         {datas?.map((g, i) => {
           const colorClass = colors[i % colors.length];
           return (
-            <Link
+            <button
               key={i}
-              href={`${url}?group_id=${g?.id}`}
+              onClick={() => handleLink(g?.id)}
               className={`px-3 py-2 rounded-xl cursor-pointer hover:bg-gray-100 transition flex items-center gap-2 ${
                 currentGroup == g?.id ? "bg-gray-100" : ""
               }`}
@@ -73,7 +74,7 @@ export default function ChatsLeftGroups({ loading }) {
                 {g?.name?.slice(0, 1)}
               </span>
               <span className="text-sm text-textPrimary">{g?.name}</span>
-            </Link>
+            </button>
           );
         })}
       </div>

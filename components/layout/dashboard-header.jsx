@@ -54,7 +54,7 @@ export default function Header({ user, toggleSidebar }) {
         </h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         {/* Map orqali iconlarni chiqarish */}
         {ICONS.map(({ id, icon: Icon, href }) => {
           const isActive = router.pathname === href;
