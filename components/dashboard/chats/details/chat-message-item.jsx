@@ -1,91 +1,86 @@
 import React from "react";
 
-export default function ChatMessageItem({ msg, isOwn }) {
-  const author = msg.user_full_name || "Member";
-  const text = msg.message || "";
-  const attachment = msg.attachment_url;
+const ATTACHMENT_IMAGE_TYPES = ["jpeg", "jpg", "png", "webp"];
+const ATTACHMENT_AUDIO_TYPES = ["mp3", "wav"];
 
-  const renderAttachmentPost = (url) => {
-    const cleanUrl = url.split("?")[0];
-    const ext = cleanUrl.split(".").pop().toLowerCase();
+function getExtension(attachment) {
+  const source = attachment?.original_name || attachment?.url || "";
+  const clean = source.split("?")[0];
+  const parts = clean.split(".");
+  if (parts.length <= 1) return "";
+  return parts.pop().toLowerCase();
+}
 
-    // IMAGE — Telegram style post
-    if (["jpeg", "jpg", "png", "webp"].includes(ext)) {
-      return (
-        <div className="bg-white border rounded-xl shadow-sm w-[240px] sm:w-[400px] overflow-hidden">
-          <a
-            href={url}
-            target="_blank"
-            title="Open image"
-            className="w-full h-[200px] flex items-center justify-center"
-          >
-            <img
-              src={url}
-              alt="attachment"
-              className="w-full h-full rounded-t-xl object-cover"
-            />
-          </a>
-          {text && (
-            <div className="p-3 text-gray-800 whitespace-pre-line leading-relaxed break-words">
-              {text}
-            </div>
-          )}
-        </div>
-      );
-    }
+function renderAttachment(attachment) {
+  const url = attachment?.url;
+  if (!url) return null;
+  const ext = getExtension(attachment);
+  const name = attachment?.original_name || "attachment";
 
-    // PDF — Telegram style file box
-    if (ext === "pdf") {
-      return (
-        <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
-          <a
-            href={url}
-            target="_blank"
-            className="flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-200 border-b transition"
-          >
-            📄 PDF File
-          </a>
-          {text && (
-            <div className="p-3 text-gray-800 whitespace-pre-line">{text}</div>
-          )}
-        </div>
-      );
-    }
-
-    // AUDIO — Telegram style audio block
-    if (["mp3", "wav"].includes(ext)) {
-      return (
-        <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
-          <div className="p-3 border-b">
-            <audio controls className="w-full">
-              <source src={url} type="audio/mpeg" />
-            </audio>
-          </div>
-          {text && (
-            <div className="p-3 text-gray-800 whitespace-pre-line">{text}</div>
-          )}
-        </div>
-      );
-    }
-
-    // Other files
+  if (ATTACHMENT_IMAGE_TYPES.includes(ext)) {
     return (
-      <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
+      <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
         <a
           href={url}
           target="_blank"
-          className="text-blue-500 underline px-4 py-3 block border-b break-all"
+          rel="noreferrer"
+          className="block max-h-[320px] bg-gray-100"
         >
-          Open attachment
+          <img src={url} alt={name} className="w-full object-cover" />
         </a>
-        {text && (
-          <div className="p-3 text-gray-800 whitespace-pre-line break-words">
-            {text}
-          </div>
-        )}
+        <div className="px-4 py-2 text-sm text-gray-600 truncate">{name}</div>
       </div>
     );
-  };
+  }
+
+  if (ext === "pdf") {
+    return (
+      <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-200 transition"
+        >
+          📄 <span className="truncate">{name}</span>
+        </a>
+      </div>
+    );
+  }
+
+  if (ATTACHMENT_AUDIO_TYPES.includes(ext)) {
+    const audioType = attachment?.content_type || "audio/mpeg";
+    return (
+      <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
+        <div className="p-3 border-b">
+          <audio controls className="w-full">
+            <source src={url} type={audioType} />
+          </audio>
+        </div>
+        <div className="px-4 py-2 text-sm text-gray-600 truncate">{name}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white border rounded-xl shadow-sm max-w-md overflow-hidden">
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="text-blue-500 underline px-4 py-3 block break-all"
+      >
+        {name}
+      </a>
+    </div>
+  );
+}
+
+export default function ChatMessageItem({ msg, isOwn }) {
+  const author = msg.user_full_name || "Member";
+  const text = msg.message || "";
+  const attachments = Array.isArray(msg.attachments) ? msg.attachments : [];
+  const hasAttachments = attachments.length > 0;
 
   return (
     <div
@@ -93,7 +88,6 @@ export default function ChatMessageItem({ msg, isOwn }) {
         isOwn ? "justify-end" : "justify-start"
       }`}
     >
-      {/* Avatar (others only) */}
       {!isOwn && (
         <div
           className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-700"
@@ -103,25 +97,45 @@ export default function ChatMessageItem({ msg, isOwn }) {
         </div>
       )}
 
-      {/* If attachment exists → show Telegram-like post */}
-      {attachment ? (
-        <div className="max-w-sm">{renderAttachmentPost(attachment)}</div>
-      ) : (
-        // Normal bubble message
-        <div
-          className={`
-            px-4 py-2 rounded-2xl shadow max-w-sm
-            ${isOwn ? "bg-main text-white" : "bg-gray-100 text-gray-900"}
-          `}
-        >
-          <div className="text-xs opacity-70 mb-1">
-            {isOwn ? "You" : author}
+      <div className="flex flex-col gap-2 max-w-full sm:max-w-xl">
+        {hasAttachments &&
+          attachments.map((attachment, index) => {
+            const content = renderAttachment(attachment);
+            if (!content) return null;
+            return (
+              <div key={attachment.id || `${attachment.url}-${index}`}>
+                {content}
+              </div>
+            );
+          })}
+
+        {text && (
+          <div
+            className={`
+              px-4 py-2 rounded-2xl shadow break-words
+              ${isOwn ? "bg-main text-white" : "bg-gray-100 text-gray-900"}
+            `}
+          >
+            <div className="text-xs opacity-70 mb-1">
+              {isOwn ? "You" : author}
+            </div>
+            <div className="leading-relaxed whitespace-pre-line">{text}</div>
           </div>
-          <div className="leading-relaxed whitespace-pre-line break-words">
-            {text}
+        )}
+
+        {!text && !hasAttachments && (
+          <div
+            className={`px-4 py-2 rounded-2xl shadow ${
+              isOwn ? "bg-main text-white" : "bg-gray-100 text-gray-900"
+            }`}
+          >
+            <div className="text-xs opacity-70 mb-1">
+              {isOwn ? "You" : author}
+            </div>
+            <div className="text-sm text-gray-500">Shared an attachment</div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
