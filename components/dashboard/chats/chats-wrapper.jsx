@@ -77,7 +77,7 @@ export default function ChatsWrapper({ role, loading, page }) {
       {/* ===== RIGHT (Messages) ===== */}
       <div
         className={`
-          bg-white h-full
+          bg-white h-full flex flex-col overflow-y-auto scroll_none
           ${isDesktop ? "col-span-7" : step === 3 ? "col-span-12" : "hidden"}
         `}
       >

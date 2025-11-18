@@ -12,9 +12,18 @@ export default function ChatMessageItem({ msg, isOwn }) {
     // IMAGE — Telegram style post
     if (["jpeg", "jpg", "png", "webp"].includes(ext)) {
       return (
-        <div className="bg-white border rounded-xl shadow-sm max-w-sm overflow-hidden">
-          <a href={url} target="_blank" title="Open image">
-            <img src={url} alt="attachment" className="w-full rounded-t-xl" />
+        <div className="bg-white border rounded-xl shadow-sm w-[240px] sm:w-[400px] overflow-hidden">
+          <a
+            href={url}
+            target="_blank"
+            title="Open image"
+            className="w-full h-[200px] flex items-center justify-center"
+          >
+            <img
+              src={url}
+              alt="attachment"
+              className="w-full h-full rounded-t-xl object-cover"
+            />
           </a>
           {text && (
             <div className="p-3 text-gray-800 whitespace-pre-line leading-relaxed break-words">
@@ -32,7 +41,7 @@ export default function ChatMessageItem({ msg, isOwn }) {
           <a
             href={url}
             target="_blank"
-            className="flex items-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 border-b transition"
+            className="flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-200 border-b transition"
           >
             📄 PDF File
           </a>

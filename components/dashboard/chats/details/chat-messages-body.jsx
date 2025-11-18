@@ -14,8 +14,11 @@ export default function ChatMessagesBody({ chat }) {
   }, [messages]);
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto h-[85%] p-4 space-y-4">
-      <div className="mb-2 text-xs text-gray-500">
+    <div
+      ref={containerRef}
+      className="flex-1 overflow-y-auto h-[85%] p-4 space-y-4 relative bg-gray-50"
+    >
+      <div className="py-1 px-2 sticky top-2 left-2 text-xs text-gray-500 bg-white inline-block rounded-full">
         Status: {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
       </div>
       {console.log(messages)}
