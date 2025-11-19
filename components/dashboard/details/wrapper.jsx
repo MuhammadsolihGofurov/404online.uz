@@ -13,6 +13,7 @@ export default function Wrapper({
   buttonFunc,
   modalType,
   isWrapperClose = false,
+  isIcon,
 }) {
   return (
     <div className="flex flex-col gap-8 items-start">
@@ -27,6 +28,7 @@ export default function Wrapper({
           buttonText={buttonText}
           buttonFunc={buttonFunc}
           modalType={modalType}
+          isIcon={isIcon}
         />
       )}
       <div className="flex flex-col gap-5 w-full">{children}</div>

@@ -74,3 +74,16 @@ export function formatDateToShort(dateString) {
 
   return `${month}/${day}/${year} ${hours}:${minutes}`;
 }
+
+export const formatDate = (dateString) => {
+  if (!dateString) return "Noma'lum sana";
+  try {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch (error) {
+    return "Xato sana";
+  }
+};

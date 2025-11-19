@@ -34,3 +34,7 @@ export const NOTIFICATIONS_URL = "/dashboard/notifications";
 export const CHATS_URL = "/dashboard/chats";
 export const CHATSTOPICS_URL = "/dashboard/chats/topics";
 export const CHATSTOPICSCHANNEL_URL = "/dashboard/chats/channel";
+
+// === MOCKS ===
+export const MOCKS_URL = "/dashboard/mocks";
+export const MOCKS_CREATE_FIRST_STEP_URL = "/dashboard/mocks/create/1-step";

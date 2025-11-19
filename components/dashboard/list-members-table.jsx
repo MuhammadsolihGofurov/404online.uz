@@ -53,7 +53,7 @@ export default function ListMembersTable({ loading, role }) {
           </tr>
         </thead>
         <tbody>
-          {members.length ? (
+          {members?.length ? (
             members.map((member) => (
               <ListMembersItem key={member.id} member={member} role={role} group_id={currentGroupId}/>
             ))

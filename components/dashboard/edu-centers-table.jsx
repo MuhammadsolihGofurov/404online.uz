@@ -62,7 +62,7 @@ export default function EduCenterTable({ loading }) {
             </tr>
           </thead>
           <tbody>
-            {centers && centers?.results > 0 ? (
+            {centers && centers?.results?.length > 0 ? (
               centers?.results?.map((item, index) => {
                 return <EduCenterItem key={index} item={item} />;
               })

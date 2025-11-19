@@ -14,6 +14,7 @@ export default function WrapperHeader({
   buttonText = "",
   buttonFunc,
   modalType,
+  isIcon = false,
 }) {
   const intl = useIntl();
   const { openModal } = useModal();
@@ -41,7 +42,7 @@ export default function WrapperHeader({
           }
           className="flex items-center gap-1 border border-[#E5E7EB] py-2 px-4 rounded-md bg-white text-sm text-textPrimary font-normal"
         >
-          {modalType ? (
+          {!isIcon ? (
             <svg
               width="16"
               height="16"

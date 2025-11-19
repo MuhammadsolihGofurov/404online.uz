@@ -14,7 +14,7 @@ export default function FilterButtonItem({ value, label, param }) {
       onClick={() => {
         value == "All" ? removeParams(param) : updateParams(param, value);
       }}
-      className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 ${
+      className={`w-full flex text-start items-center justify-between text-wrap break-words gap-2 px-4 py-2 text-sm hover:bg-gray-50 ${
         value === current ? activeClass : ""
       }`}
     >

@@ -47,6 +47,7 @@ function DashboardPage({ info, user, loading }) {
           isButton={notifications?.some((n) => !n.is_read)}
           buttonFunc={handleMarkAllRead}
           buttonText={intl.formatMessage({ id: "Mark all as read" })}
+          isIcon
         >
           {/* 🔹 Notifications List */}
           {loading ? (

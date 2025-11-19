@@ -7,6 +7,7 @@ export default function Dropdown({
   type = "",
   buttonContent,
   width = "w-32",
+  dropdown_width = "",
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
@@ -40,7 +41,9 @@ export default function Dropdown({
         onClick={() => setOpen((prev) => !prev)}
         className={` hover:bg-gray-100 rounded-lg cursor-pointer ${
           type === "filter"
-            ? "border border-b-gray-200 text-sm text-gray-500 flex items-center justify-center gap-2 px-5 py-2 w-[132px] "
+            ? `border border-b-gray-200 text-sm text-gray-500 flex items-center justify-between gap-2 px-5 py-2  ${
+                dropdown_width ? dropdown_width : "w-full sm:w-[132px]"
+              }`
             : "p-2"
         }`}
       >

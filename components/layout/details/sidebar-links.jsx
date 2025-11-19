@@ -4,6 +4,7 @@ import {
   INVITECODE_URL,
   MATERIALSHUB_URL,
   MEMBERSHIPS_URL,
+  MOCKS_URL,
   SETTINGS_URL,
   TEACHERS_URL,
   USERS_URL,
@@ -73,6 +74,15 @@ const menuItems = [
   },
   ...OwnerMenuItems,
   ...CenterAdminMenuItems,
+  {
+    title: "Mocks",
+    href: MOCKS_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 12L12 16L20 12M4 16L12 20L20 16M12 4L4 8L12 12L20 8L12 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      `,
+    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+  },
   {
     title: "Materials Hub",
     href: MATERIALSHUB_URL,

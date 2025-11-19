@@ -147,5 +147,19 @@
   "No notifications yet": "No notifications yet",
   "All notifications marked as read": "All notifications marked as read",
   "Failed to mark all as read": "Failed to mark all as read",
-  "Mark all as read": "Mark all as read"
+  "Mark all as read": "Mark all as read",
+  "Create mock": "Create mock",
+  "Mocks": "Mocks",
+  "View": "View",
+  "Exam template": "Exam template",
+  "Practice template": "Practice template",
+  "Custom": "Custom",
+  "Listening": "Listening",
+  "Reading": "Reading",
+  "Writing": "Writing",
+  "Category": "Category",
+  "Type": "Type",
+  "First step": "First step",
+  "Choose a template": "Choose a template",
+  "Select the template that best suits your goals: Structured Exam, Self-Paced Practice, or a fully Customized setup.": "Select the template that best suits your goals: Structured Exam, Self-Paced Practice, or a fully Customized setup."
 }
