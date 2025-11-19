@@ -90,7 +90,7 @@ export default function ChatMessageItem({ msg, isOwn }) {
     >
       {!isOwn && (
         <div
-          className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-700"
+          className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-700"
           title={author}
         >
           {author[0]?.toUpperCase()}
@@ -112,8 +112,8 @@ export default function ChatMessageItem({ msg, isOwn }) {
         {text && (
           <div
             className={`
-              px-4 py-2 rounded-2xl shadow break-words
-              ${isOwn ? "bg-main text-white" : "bg-gray-100 text-gray-900"}
+              px-4 py-2 rounded-2xl break-words
+              ${isOwn ? "bg-main text-white" : "bg-white text-gray-900"}
             `}
           >
             <div className="text-xs opacity-70 mb-1">
@@ -125,7 +125,7 @@ export default function ChatMessageItem({ msg, isOwn }) {
 
         {!text && !hasAttachments && (
           <div
-            className={`px-4 py-2 rounded-2xl shadow ${
+            className={`px-4 py-2 rounded-2xl ${
               isOwn ? "bg-main text-white" : "bg-gray-100 text-gray-900"
             }`}
           >
