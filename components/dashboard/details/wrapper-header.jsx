@@ -1,5 +1,6 @@
 import { useModal } from "@/context/modal-context";
 import { DASHBOARD_URL } from "@/mock/router";
+import { Check, CheckCheck } from "lucide-react";
 import Link from "next/link";
 import { useIntl } from "react-intl";
 
@@ -35,23 +36,29 @@ export default function WrapperHeader({
       {isButton ? (
         <button
           type="button"
-          onClick={() => openModal(buttonFunc, {}, modalType)}
+          onClick={() =>
+            modalType ? openModal(buttonFunc, {}, modalType) : buttonFunc()
+          }
           className="flex items-center gap-1 border border-[#E5E7EB] py-2 px-4 rounded-md bg-white text-sm text-textPrimary font-normal"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M7.99992 3.33301V12.6663M3.33325 7.99967H12.6666"
-              stroke="#364749"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          {modalType ? (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.99992 3.33301V12.6663M3.33325 7.99967H12.6666"
+                stroke="#364749"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <CheckCheck className="w-4 text-textPrimary" />
+          )}
 
           <span>{intl.formatMessage({ id: buttonText })}</span>
         </button>

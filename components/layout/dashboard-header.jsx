@@ -1,13 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Bell, Menu, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { CHATS_URL, NOTIFICATIONS_URL } from "@/mock/router";
 import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
+import { useNotifications } from "@/hooks/useNotifications";
+import { PRIVATEAUTHKEY } from "@/mock/keys";
+import { useDispatch } from "react-redux";
+import { setNotificationsData } from "@/redux/slice/settings";
 
 export default function Header({ user, toggleSidebar }) {
   const router = useRouter();
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem(PRIVATEAUTHKEY) : "";
+  const { notifications, isConnected } = useNotifications(token);
+  const dispatch = useDispatch();
 
   const ICONS = [
     {
@@ -22,20 +30,13 @@ export default function Header({ user, toggleSidebar }) {
     },
   ];
 
-  const { data: notifications, isLoading } = useSWR(
-    ["/notifications/", router.locale],
-    ([url, locale]) =>
-      fetcher(
-        `${url}`,
-        {
-          headers: {
-            "Accept-Language": locale,
-          },
-        },
-        {},
-        true
-      )
-  );
+  useEffect(() => {
+    dispatch(setNotificationsData(notifications));
+  }, [notifications]);
+
+  const UnReadNotifications =
+    notifications?.length > 0 ??
+    notifications?.filter((item) => !item?.is_read);
 
   return (
     <header className="flex items-center justify-between bg-white shadow-sm px-6 py-4">
@@ -53,6 +54,8 @@ export default function Header({ user, toggleSidebar }) {
           Dashboard
         </h1>
       </div>
+      {console.log("notifications", notifications)}
+      {console.log("notification status", isConnected)}
 
       <div className="flex items-center gap-2">
         {/* Map orqali iconlarni chiqarish */}
@@ -68,6 +71,13 @@ export default function Header({ user, toggleSidebar }) {
               }`}
             >
               <Icon className="w-4 h-4" />
+              {href === NOTIFICATIONS_URL && UnReadNotifications ? (
+                <span className="absolute -top-1 -right-1 bg-main text-white rounded-full text-[9px] w-3 h-3 flex items-center justify-center">
+                  {UnReadNotifications}
+                </span>
+              ) : (
+                <></>
+              )}
             </Link>
           );
         })}

@@ -1,10 +1,12 @@
 // components/ChatMessagesBody.jsx
 import React, { useEffect, useRef } from "react";
 import { ChatMessageItem } from ".";
+import { useIntl } from "react-intl";
 
 export default function ChatMessagesBody({ chat }) {
   const { messages = [], isConnected } = chat || {};
   const containerRef = useRef(null);
+  const intl = useIntl();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -23,7 +25,7 @@ export default function ChatMessagesBody({ chat }) {
       </div>
       {messages.length === 0 ? (
         <div className="py-6 text-sm text-center text-gray-400">
-          No messages yet.
+          {intl.formatMessage({ id: "No messages yet." })}
         </div>
       ) : (
         messages.map((msg) => (

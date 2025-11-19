@@ -24,7 +24,7 @@ function renderAttachment(attachment) {
           href={url}
           target="_blank"
           rel="noreferrer"
-          className="block max-h-[320px] bg-gray-100"
+          className="block h-[320px] bg-gray-100"
         >
           <img src={url} alt={name} className="w-full object-cover" />
         </a>

@@ -140,5 +140,12 @@
   "Member removed!": "Member removed!",
   "Topics": "Topics",
   "Select a topic to view messages": "Select a topic to view messages",
-  "Select a group to view topics": "Select a group to view topics"
+  "Select a group to view topics": "Select a group to view topics",
+  "No messages yet.": "No messages yet.",
+  "Notification marked as read": "Notification marked as read",
+  "Failed to mark notification": "Failed to mark notification",
+  "No notifications yet": "No notifications yet",
+  "All notifications marked as read": "All notifications marked as read",
+  "Failed to mark all as read": "Failed to mark all as read",
+  "Mark all as read": "Mark all as read"
 }
