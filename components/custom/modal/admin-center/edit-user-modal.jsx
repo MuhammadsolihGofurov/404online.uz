@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
-import { Controller, useForm } from "react-hook-form";
-import { Input, Select, ToggleSwitch } from "../../details";
+import { useForm } from "react-hook-form";
+import { Input, ToggleSwitch } from "../../details";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";

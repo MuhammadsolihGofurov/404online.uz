@@ -1,11 +1,11 @@
 export const MOCK_CATEGORIES = [
   {
     value: "EXAM_TEMPLATE",
-    name: "Exam template",
+    name: "For exams",
   },
   {
     value: "PRACTICE_TEMPLATE",
-    name: "Practice template",
+    name: "For practice",
   },
   {
     value: "CUSTOM",
@@ -28,21 +28,43 @@ export const MOCK_TYPES = [
   },
 ];
 
+export const READING_TYPES = [
+  {
+    value: "GENERAL",
+    name: "Genaral",
+  },
+  {
+    value: "ACADEMIC",
+    name: "Academic",
+  },
+];
+
+export const PARTNUMBERS = [
+  {
+    value: 1,
+    name: "Genaral",
+  },
+  {
+    value: "ACADEMIC",
+    name: "Academic",
+  },
+];
+
 export const MOCK_CREATE_STEPS = [
   {
     id: 1,
-    label: "Choose",
+    label: "Category",
     value: "category",
   },
   {
     id: 2,
-    label: "Choose",
-    value: "category",
+    label: "Mock details",
+    value: "mock_id",
   },
   {
     id: 3,
-    label: "Choose",
-    value: "category",
+    label: "Section create",
+    value: "second_id",
   },
   {
     id: 4,

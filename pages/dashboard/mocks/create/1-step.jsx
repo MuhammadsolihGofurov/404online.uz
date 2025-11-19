@@ -5,9 +5,8 @@ import {
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
-import { useParams } from "@/hooks/useParams";
 import { MOCK_CREATE_STEPS } from "@/mock/data";
-import { MOCKS_URL } from "@/mock/router";
+import { MOCKS_CREATE_SECOND_STEP_URL, MOCKS_URL } from "@/mock/router";
 import { BookOpen, ListChecks, Settings } from "lucide-react";
 import { useRouter } from "next/router";
 import { useIntl } from "react-intl";
@@ -33,14 +32,13 @@ const templates = [
   },
 ];
 
+
 function FirstPage({ info, user, loading }) {
   const intl = useIntl();
   const router = useRouter();
-  const { updateParams } = useParams();
 
   const handleCardClick = (id) => {
-    updateParams("category", id);
-    router.push(``);
+    router.push(MOCKS_CREATE_SECOND_STEP_URL + `?category=${id}`);
   };
 
   return (

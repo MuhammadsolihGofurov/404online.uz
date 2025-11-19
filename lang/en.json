@@ -161,5 +161,15 @@
   "Type": "Type",
   "First step": "First step",
   "Choose a template": "Choose a template",
-  "Select the template that best suits your goals: Structured Exam, Self-Paced Practice, or a fully Customized setup.": "Select the template that best suits your goals: Structured Exam, Self-Paced Practice, or a fully Customized setup."
+  "Select the template that best suits your goals: Structured Exam, Self-Paced Practice, or a fully Customized setup.": "Select the template that best suits your goals: Structured Exam, Self-Paced Practice, or a fully Customized setup.",
+  "For exam": "For exam",
+  "For practice": "For practice",
+  "Title": "Title",
+  "Mock title": "Mock title",
+  "Title is required": "Title is required",
+  "Reading type": "Reading type",
+  "Audio file": "Audio file",
+  "In this step, prepare the required content for the mock. Based on the selected mock type, you can add passages, audio materials, tasks, and related questions to complete the section": "In this step, prepare the required content for the mock. Based on the selected mock type, you can add passages, audio materials, tasks, and related questions to complete the section",
+  "Instructions": "Instructions",
+  "Part Number": "Part Number"
 }
