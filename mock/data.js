@@ -39,16 +39,12 @@ export const READING_TYPES = [
   },
 ];
 
-export const PARTNUMBERS = [
-  {
-    value: 1,
-    name: "Genaral",
-  },
-  {
-    value: "ACADEMIC",
-    name: "Academic",
-  },
-];
+export const PARTS_BY_TYPE = {
+  LISTENING: 4,
+  READING: 3,
+  WRITING: 2,
+  SPEAKING: 3,
+};
 
 export const MOCK_CREATE_STEPS = [
   {
@@ -68,8 +64,8 @@ export const MOCK_CREATE_STEPS = [
   },
   {
     id: 4,
-    label: "Choose",
-    value: "category",
+    label: "Questions",
+    value: "question",
   },
 ];
 
@@ -77,4 +73,10 @@ export const MOCK_CATEGORIES_TEXT = {
   EXAM_TEMPLATE: "For exams",
   PRACTICE_TEMPLATE: "For practice",
   CUSTOM: "Custom",
+};
+
+export const MOCK_CONFIG = {
+  READING: { parts: 3, fields: ["instructions", "images"] },
+  WRITING: { parts: 2, fields: ["instructions", "images"] },
+  LISTENING: { parts: 4, fields: ["instructions", "images", "audio_file"] },
 };

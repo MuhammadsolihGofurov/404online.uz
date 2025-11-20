@@ -39,4 +39,5 @@ export const CHATSTOPICSCHANNEL_URL = "/dashboard/chats/channel";
 export const MOCKS_URL = "/dashboard/mocks";
 export const MOCKS_CREATE_FIRST_STEP_URL = "/dashboard/mocks/create/1-step";
 export const MOCKS_CREATE_SECOND_STEP_URL = "/dashboard/mocks/create/2-step";
-export const MOCKS_CREATE_THIRD_STEP_URL = "/dashborad/mocks/create/3-step";
+export const MOCKS_CREATE_THIRD_STEP_URL = "/dashboard/mocks/create/3-step";
+export const MOCKS_CREATE_FOURTH_STEP_URL = "/dashboard/mocks/create/4-step";

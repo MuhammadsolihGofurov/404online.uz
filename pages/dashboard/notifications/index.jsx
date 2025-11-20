@@ -8,11 +8,21 @@ import { useIntl } from "react-intl";
 import { useSelector, useDispatch } from "react-redux";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
+import { PRIVATEAUTHKEY } from "@/mock/keys";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useMemo } from "react";
 
 function DashboardPage({ info, user, loading }) {
-  const { notifications } = useSelector((state) => state.settings);
+  // const { notifications } = useSelector((state) => state.settings);
   const dispatch = useDispatch();
   const intl = useIntl();
+  const token = useMemo(
+    () =>
+      typeof window !== "undefined" ? localStorage.getItem(PRIVATEAUTHKEY) : "",
+    []
+  );
+
+  const { notifications, isConnected } = useNotifications(token);
 
   // 🔹 Mark all as read
   const handleMarkAllRead = async () => {
@@ -50,15 +60,19 @@ function DashboardPage({ info, user, loading }) {
           isIcon
         >
           {/* 🔹 Notifications List */}
-          {loading ? (
-            [...Array(5)].map((_, i) => <NotificationItemSkeleton key={i} />)
-          ) : notifications?.length === 0 ? (
-            <div className="text-center text-gray-500 py-10">
-              {intl.formatMessage({ id: "No notifications yet" })}
-            </div>
-          ) : (
-            notifications.map((n) => <NotificationItem key={n.id} item={n} />)
-          )}
+          <div className="flex flex-col gap-2">
+            {loading ? (
+              [...Array(5)].map((_, i) => <NotificationItemSkeleton key={i} />)
+            ) : notifications?.length === 0 ? (
+              <div className="text-center text-gray-500 py-10">
+                {intl.formatMessage({ id: "No notifications yet" })}
+              </div>
+            ) : (
+              notifications?.map((n) => (
+                <NotificationItem key={n.id} item={n} />
+              ))
+            )}
+          </div>
         </Wrapper>
       </DashboardLayout>
     </>

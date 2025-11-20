@@ -1,3 +1,4 @@
+import { SidebarLinksSkeleton } from "@/components/skeleton";
 import {
   DASHBOARD_URL,
   GROUPS_URL,
@@ -103,9 +104,13 @@ const menuItems = [
   },
 ];
 
-export default function SidebarLinks({ userRole = "OWNER", closeSidebar }) {
+export default function SidebarLinks({ userRole, closeSidebar }) {
   const router = useRouter();
   const intl = useIntl();
+
+  if (!userRole) {
+    return <SidebarLinksSkeleton />;
+  }
 
   const filteredItems = menuItems.filter((item) =>
     item.roles.includes(userRole)

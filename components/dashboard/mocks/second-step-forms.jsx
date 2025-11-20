@@ -16,10 +16,11 @@ import {
   PRIVATEREFRESHKEY,
   PRIVATEUSERTYPE,
 } from "@/mock/keys";
-import { FileInput, Input, Select } from "@/components/custom/details";
+import { FileInput, Input } from "@/components/custom/details";
 import { ButtonSpinner } from "@/components/custom/loading";
 import { MOCK_TYPES, READING_TYPES } from "@/mock/data";
 import { useParams } from "@/hooks/useParams";
+import Select from "@/components/custom/details/select";
 
 export default function SecondStepForms() {
   const intl = useIntl();
@@ -44,12 +45,13 @@ export default function SecondStepForms() {
   const MockTypeWatch = watch("mock_type");
 
   const submitFn = async (data) => {
+    const category = findParams("category");
     try {
       setReqLoading(true);
 
       const formData = new FormData();
       formData.append("title", data.title);
-      formData.append("category", findParams("category"));
+      formData.append("category", category);
       formData.append("mock_type", data.mock_type);
 
       if (data.mock_type === "READING" && data.reading_type) {
@@ -70,7 +72,7 @@ export default function SecondStepForms() {
       setTimeout(() => {
         router.push(
           MOCKS_CREATE_THIRD_STEP_URL +
-            `?mock_id=${response?.data?.id}&mock_type=%${data?.mock_type}`
+            `?mock_id=${response?.data?.id}&mock_type=${data?.mock_type}&category=${category}`
         );
       }, 500);
     } catch (e) {

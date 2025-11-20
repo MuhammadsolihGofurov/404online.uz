@@ -18,11 +18,17 @@ export function useNotifications(accessToken) {
   const [notifications, setNotifications] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // ✅ Refs - state o'zgarishini chaqirmaydi
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
+  const hasFetchedRef = useRef(false);
+  const isConnectingRef = useRef(false);
+  const notificationIdsRef = useRef(new Set()); // Dublikatlarni oldini olish
 
   const currentUserId = useMemo(() => decodeUserId(accessToken), [accessToken]);
 
+  // ✅ Decorator - re-render chaqirmaydi
   const decorate = useCallback(
     (raw) => ({
       ...raw,
@@ -33,43 +39,96 @@ export function useNotifications(accessToken) {
     [currentUserId]
   );
 
-  const upsert = useCallback(
-    (next) =>
-      setNotifications((prev) => {
-        if (!next?.id || prev.some((n) => n.id === next.id)) {
-          // already have it
-          return prev;
-        }
-        return [next, ...prev];
-      }),
-    []
-  );
+  // ✅ Smart upsert - faqat haqiqiy o'zgarishlarda state yangilanadi
+  const upsert = useCallback((next) => {
+    if (!next?.id) return;
 
+    // Agar bu notification allaqachon bor bo'lsa, skip
+    if (notificationIdsRef.current.has(next.id)) {
+      console.log("⏭️ Skipping duplicate notification:", next.id);
+      return;
+    }
+
+    console.log("✨ Adding new notification:", next.id);
+    notificationIdsRef.current.add(next.id);
+
+    setNotifications((prev) => {
+      // Double check state'da yo'qligini tekshirish
+      if (prev.some((n) => n.id === next.id)) {
+        return prev;
+      }
+      return [next, ...prev];
+    });
+  }, []);
+
+  // ✅ Initial fetch - faqat bir marta
   const fetchInitial = useCallback(async () => {
-    if (!accessToken) return;
+    if (!accessToken || hasFetchedRef.current) {
+      console.log("⏭️ Skipping fetch - already fetched or no token");
+      return;
+    }
+
+    console.log("📥 Fetching initial notifications...");
+    hasFetchedRef.current = true;
     setIsLoading(true);
+
     try {
       const res = await fetch(`${API_BASE}/api/v1/notifications/`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
+
       if (!res.ok) {
-        console.error("Notifications fetch failed:", res.status);
+        console.error("❌ Fetch failed:", res.status);
+        hasFetchedRef.current = false;
         return;
       }
+
       const data = await res.json();
       const items = Array.isArray(data?.results) ? data.results : data;
+
+      console.log(`✅ Fetched ${items.length} notifications`);
+
+      // ID'larni tracking qilish
+      items.forEach((item) => {
+        if (item.id) notificationIdsRef.current.add(item.id);
+      });
+
       setNotifications(items.map(decorate));
     } catch (err) {
-      console.error("Notifications fetch error:", err);
+      console.error("❌ Fetch error:", err);
+      hasFetchedRef.current = false;
     } finally {
       setIsLoading(false);
     }
   }, [accessToken, decorate]);
 
+  // ✅ WebSocket connection - dublikat ulanishlarni oldini olish
   const connect = useCallback(() => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      console.log("⏭️ No token, skipping WebSocket connection");
+      return;
+    }
+
+    // Agar allaqachon ulanayotgan yoki ulangan bo'lsa
+    if (
+      isConnectingRef.current ||
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) {
+      console.log("⏭️ Already connecting or connected");
+      return;
+    }
+
+    console.log("🔌 Connecting to WebSocket...");
+    isConnectingRef.current = true;
+
+    // Avvalgi WebSocket'ni yopish
+    if (wsRef.current) {
+      wsRef.current.close(1000, "reconnecting");
+      wsRef.current = null;
+    }
 
     const ws = new WebSocket(
       `wss://api.404online.uz/ws/notifications/?token=${accessToken}`
@@ -77,43 +136,72 @@ export function useNotifications(accessToken) {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      console.log("✅ WebSocket connected");
       setIsConnected(true);
+      isConnectingRef.current = false;
     };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         if (!data) return;
+
+        console.log("📩 New notification:", data.id || "unknown");
         upsert(decorate(data));
       } catch (err) {
-        console.error("Notification parse error:", err);
+        console.error("❌ Parse error:", err);
       }
     };
 
     ws.onerror = (err) => {
-      console.error("Notifications WebSocket error:", err);
+      console.error("❌ WebSocket error:", err);
       setIsConnected(false);
+      isConnectingRef.current = false;
     };
 
     ws.onclose = (event) => {
+      console.log(
+        `🔌 WebSocket closed: ${event.code} - ${event.reason || "no reason"}`
+      );
       setIsConnected(false);
-      if (event.code !== 1000) {
-        reconnectTimer.current = setTimeout(connect, 2000);
+      isConnectingRef.current = false;
+
+      // Faqat kutilmagan yopilishlarda reconnect
+      if (event.code !== 1000 && accessToken) {
+        console.log("🔄 Reconnecting in 3s...");
+        reconnectTimer.current = setTimeout(connect, 3000);
       }
     };
   }, [accessToken, decorate, upsert]);
 
+  // ✅ Initial fetch - mount'da faqat bir marta
   useEffect(() => {
+    console.log("🎬 useNotifications hook mounted");
     fetchInitial();
-  }, [fetchInitial]);
 
-  useEffect(() => {
-    connect();
     return () => {
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
-      wsRef.current?.close(1000, "cleanup");
+      console.log("🧹 useNotifications hook unmounting");
     };
-  }, [connect]);
+  }, []); // ✅ Bo'sh dependency - faqat mount/unmount
+
+  // ✅ WebSocket - token o'zgarganda qayta ulanish
+  useEffect(() => {
+    if (!accessToken) return;
+
+    connect();
+
+    return () => {
+      console.log("🧹 Cleaning up WebSocket");
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close(1000, "cleanup");
+        wsRef.current = null;
+      }
+      isConnectingRef.current = false;
+    };
+  }, [accessToken]); // ✅ Faqat token o'zgarganda
 
   return {
     notifications,

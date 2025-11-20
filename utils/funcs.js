@@ -1,3 +1,5 @@
+import { PARTS_BY_TYPE } from "@/mock/data";
+
 export const thousandSeperate = (data = "") => {
   return data
     .toString()
@@ -87,3 +89,13 @@ export const formatDate = (dateString) => {
     return "Xato sana";
   }
 };
+
+export function getPartNumbers(mockType) {
+  const count = PARTS_BY_TYPE[mockType];
+  if (!count) return [];
+
+  return Array.from({ length: count }).map((_, i) => ({
+    value: i + 1,
+    name: `Part ${i + 1}`,
+  }));
+}

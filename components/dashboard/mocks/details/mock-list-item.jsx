@@ -50,7 +50,7 @@ export default function MockListItem({ item }) {
       <div className="p-4 grid grid-cols-2 gap-y-3 gap-x-4">
         <InfoItem
           Icon={User}
-          value={item?.created_by?.user_full_name || "Unknown"}
+          value={item?.created_by?.full_name || "Unknown"}
         />
 
         <InfoItem Icon={Folder} value={item?.mock_type} />
