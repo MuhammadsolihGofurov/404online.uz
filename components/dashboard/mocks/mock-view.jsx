@@ -1,49 +1,57 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   ArrowLeft,
   BookOpen,
-  Clock,
   Users,
   Calendar,
-  Edit, // Tahrirlash ikonkasi
-  Trash2, // O'chirish ikonkasi
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/router";
-import { MOCKS_URL } from "@/mock/router";
+import { MOCKS_ACTION_FIRST_STEP_URL, MOCKS_URL } from "@/mock/router";
 import { formatDate } from "@/utils/funcs";
+import { MockViewSkeleton } from "@/components/skeleton";
+import Link from "next/link";
+import { useModal } from "@/context/modal-context";
+import { authAxios } from "@/utils/axios";
+import { toast } from "react-toastify";
 
-// Bu funksiyalar bosilganda nima sodir bo'lishini keyinchalik aniqlash uchun stubs
-const handleMockEdit = (mockId) => {
-  console.log(`Editing Mock with ID: ${mockId}`);
-  // router.push(`/mocks/edit/${mockId}`);
-};
-
-const handleMockDelete = (mockId) => {
-  console.log(`Deleting Mock with ID: ${mockId}`);
-  // API chaqiruvi orqali o'chirish logikasi
-};
-
-const handleSectionEdit = (sectionId) => {
-  console.log(`Editing Section with ID: ${sectionId}`);
-};
-
-const handleSectionDelete = (sectionId) => {
-  console.log(`Deleting Section with ID: ${sectionId}`);
-};
-
-export default function MockView({ mock }) {
+export default function MockView({ mock, loading }) {
   const router = useRouter();
+  const { openModal } = useModal();
 
-  // Accordion funksiyasi olib tashlandi, ammo useEffect/useState qoldiqlari hozircha tozalangan (setOpenSections olib tashlandi)
-  // Bo'limlar doimiy ravishda ochiq bo'ladi
+  if (loading) {
+    return <MockViewSkeleton />;
+  }
 
-  if (!mock) {
+  if (!mock && !loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6 text-center text-xl text-gray-500">
-        Loading mock data...
-      </div>
+      <p className="text-center text-sm text-textSecondary">
+        Mock is not found
+      </p>
     );
   }
+
+  const handleDelete = (id) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Delete mock",
+        description:
+          "Are you sure you want to delete this mock? This action cannot be undone.",
+        onConfirm: async () => {
+          await authAxios.delete(`/mocks/${id}/`);
+          toast.success(
+            intl.formatMessage({ id: "Mock deleted successfully!" })
+          );
+          setTimeout(() => {
+            router.push(MOCKS_URL);
+          }, 300);
+        },
+      },
+      "short"
+    );
+  };
 
   return (
     <div className="sm:px-6 lg:px-8 sm:py-12 space-y-12">
@@ -82,14 +90,20 @@ export default function MockView({ mock }) {
           {/* Mock Action Buttons */}
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
             <button
-              onClick={() => handleMockEdit(mock.id)}
+              onClick={() => {
+                openModal(
+                  "updateMock",
+                  { id: mock?.id, initialData: mock },
+                  "short"
+                );
+              }}
               className="flex items-center space-x-2 px-4 py-3 bg-white text-indigo-600 border border-indigo-200 font-semibold rounded-full shadow-md hover:bg-indigo-50 transition-all text-sm"
             >
               <Edit size={15} />
               <span className="hidden sm:inline">Edit Mock</span>
             </button>
             <button
-              onClick={() => handleMockDelete(mock.id)}
+              onClick={() => handleDelete(mock?.id)}
               className="flex items-center space-x-2 px-4 py-3 bg-red-500 text-white font-semibold rounded-full shadow-lg hover:bg-red-600 transition-all duration-300 text-sm"
             >
               <Trash2 size={15} />
@@ -125,20 +139,20 @@ export default function MockView({ mock }) {
 
               {/* Section Action Buttons */}
               <div className="flex space-x-2">
-                <button
-                  onClick={() => handleSectionEdit(section.id)}
+                {/* <button
+                  onClick={() => {}}
                   className="p-2 rounded-full bg-white text-indigo-600 shadow-md hover:bg-indigo-100 transition duration-200"
                   aria-label="Edit Section"
                 >
                   <Edit size={18} />
-                </button>
-                <button
-                  onClick={() => handleSectionDelete(section.id)}
+                </button> */}
+                {/* <button
+                  onClick={() => {}}
                   className="p-2 rounded-full bg-white text-red-500 shadow-md hover:bg-red-50 transition duration-200"
                   aria-label="Delete Section"
                 >
                   <Trash2 size={18} />
-                </button>
+                </button> */}
               </div>
             </div>
 

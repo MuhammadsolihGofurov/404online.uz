@@ -3,6 +3,7 @@ import { MockView } from "@/components/dashboard/mocks";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
+import { useModal } from "@/context/modal-context";
 import { useParams } from "@/hooks/useParams";
 import { MOCKS_URL } from "@/mock/router";
 import fetcher from "@/utils/fetcher";
@@ -14,6 +15,7 @@ function MockViewPage({ info, user, loading }) {
   const intl = useIntl();
   const router = useRouter();
   const { findParams } = useParams();
+  const { modalClosed } = useModal();
 
   const currentMockId = findParams("mock_id");
 
@@ -22,7 +24,7 @@ function MockViewPage({ info, user, loading }) {
   }
 
   const { data: mock, isLoading } = useSWR(
-    ["/mocks", router.locale, currentMockId],
+    ["/mocks", router.locale, currentMockId, modalClosed],
     ([url, locale]) =>
       fetcher(
         `${url}/${currentMockId}/`,
@@ -44,7 +46,7 @@ function MockViewPage({ info, user, loading }) {
         keywords={info?.data?.seo_home_keywords}
       />
       <DashboardLayout user={user} loading={loading}>
-        <MockView mock={mock} />
+        <MockView mock={mock} loading={isLoading}/>
       </DashboardLayout>
     </>
   );

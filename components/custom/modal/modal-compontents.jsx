@@ -8,6 +8,7 @@ import {
   TeacherModal,
   ViewProfileModal,
 } from "./admin-center";
+import { UpdateMockModal } from "./mocks";
 import {
   ConfirmModal,
   EduCenterCreateAdminModal,
@@ -26,4 +27,5 @@ export const ModalComponents = {
   listGroupMembers: ListGroupMembersModal,
   changeGroupMember: ChangeGroupMemberModal,
   viewProfile: ViewProfileModal,
+  updateMock: UpdateMockModal,
 };

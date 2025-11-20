@@ -4,4 +4,5 @@ export { default as CentersTableSkeleton } from "./edu-centers/centers-skeleton"
 export { default as GroupListSkeleton } from "./groups/group-list-skeleton";
 export { default as NotificationItemSkeleton } from "./notifications/notification-item-skeleton";
 export { default as MockListItemSkeleton } from "./mocks/mock-list-item-skeleton";
-export { default as SidebarLinksSkeleton } from './sidebar-links-skeleton'
+export { default as SidebarLinksSkeleton } from "./sidebar-links-skeleton";
+export { default as MockViewSkeleton } from "./mocks/mock-view-skeleton";

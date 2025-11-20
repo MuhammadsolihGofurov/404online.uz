@@ -172,5 +172,10 @@
   "In this step, prepare the required content for the mock. Based on the selected mock type, you can add passages, audio materials, tasks, and related questions to complete the section": "In this step, prepare the required content for the mock. Based on the selected mock type, you can add passages, audio materials, tasks, and related questions to complete the section",
   "Instructions": "Instructions",
   "Part Number": "Part Number",
-  "Mocks details": "Mocks details"
+  "Mocks details": "Mocks details",
+  "Edit mock": "Edit mock",
+  "Mock updated successfully!": "Mock updated successfully!",
+  "Delete mock": "Delete mock",
+  "Are you sure you want to delete this mock? This action cannot be undone.": "Are you sure you want to delete this mock? This action cannot be undone.",
+  "Mock deleted successfully!": "Mock deleted successfully!"
 }
