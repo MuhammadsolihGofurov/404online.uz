@@ -37,6 +37,7 @@ export const CHATSTOPICSCHANNEL_URL = "/dashboard/chats/channel";
 
 // === MOCKS ===
 export const MOCKS_URL = "/dashboard/mocks";
+export const MOCKS_VIEW_URL = "/dashboard/mocks/view";
 export const MOCKS_CREATE_FIRST_STEP_URL = "/dashboard/mocks/create/1-step";
 export const MOCKS_CREATE_SECOND_STEP_URL = "/dashboard/mocks/create/2-step";
 export const MOCKS_CREATE_THIRD_STEP_URL = "/dashboard/mocks/create/3-step";

@@ -68,10 +68,10 @@ function Header({ user, toggleSidebar }) {
   // const { notifications, isConnected } = useNotifications(token);
 
   // ✅ Render count tracking
-  useEffect(() => {
-    renderCount.current += 1;
-    console.error(`🔄 Header rendered ${renderCount.current} times`);
-  });
+  // useEffect(() => {
+  //   renderCount.current += 1;
+  //   console.error(`🔄 Header rendered ${renderCount.current} times`);
+  // });
 
   // ✅ O'qilmagan notificationlarni hisoblash
   // const unreadCount = useMemo(() => {

@@ -10,6 +10,8 @@ import {
 import { formatDate } from "@/utils/funcs";
 import { useIntl } from "react-intl";
 import { MOCK_CATEGORIES_TEXT } from "@/mock/data";
+import Link from "next/link";
+import { MOCKS_VIEW_URL } from "@/mock/router";
 
 const InfoItem = ({ Icon, value }) => (
   <div className="flex items-center gap-2 text-gray-600">
@@ -66,13 +68,16 @@ export default function MockListItem({ item }) {
           <FileText size={14} className="mr-1" />
           <span className="text-xs font-semibold">{item?.mock_type}</span>
         </div>
-        <button className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+        <Link
+          href={`${MOCKS_VIEW_URL}?mock_id=${item?.id}`}
+          className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+        >
           {intl.formatMessage({ id: "View" })}
           <ChevronRight
             size={14}
             className="mt-0.5 group-hover:translate-x-0.5 transition-transform"
           />
-        </button>
+        </Link>
       </div>
     </div>
   );
