@@ -6,3 +6,5 @@ export { default as NotificationItemSkeleton } from "./notifications/notificatio
 export { default as MockListItemSkeleton } from "./mocks/mock-list-item-skeleton";
 export { default as SidebarLinksSkeleton } from "./sidebar-links-skeleton";
 export { default as MockViewSkeleton } from "./mocks/mock-view-skeleton";
+export { default as DocumentItemSkeleton } from "./materials/document-item-skeleton";
+export { default as TemplateItemSkeleton } from './materials/template-item-skeleton'

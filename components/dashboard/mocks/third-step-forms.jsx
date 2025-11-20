@@ -9,6 +9,7 @@ import { useParams } from "@/hooks/useParams";
 import { getPartNumbers } from "@/utils/funcs";
 import { Dynamic3PartsForm } from "./details";
 import { MOCK_CONFIG } from "@/mock/data";
+import { MOCKS_CREATE_FOURTH_STEP_URL } from "@/mock/router";
 
 export default function ThirdStepForms() {
   const intl = useIntl();
@@ -86,7 +87,9 @@ export default function ThirdStepForms() {
 
       toast.success("Success!");
       setTimeout(() => {
-        router.push(`/`);
+        router.push(
+          `${MOCKS_CREATE_FOURTH_STEP_URL}?mock_id=${MockId}&mock_type=${MockType}`
+        );
       });
     } catch (e) {
       console.error(e.response?.data || e.message);

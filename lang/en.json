@@ -177,5 +177,14 @@
   "Mock updated successfully!": "Mock updated successfully!",
   "Delete mock": "Delete mock",
   "Are you sure you want to delete this mock? This action cannot be undone.": "Are you sure you want to delete this mock? This action cannot be undone.",
-  "Mock deleted successfully!": "Mock deleted successfully!"
+  "Mock deleted successfully!": "Mock deleted successfully!",
+  "Create document": "Create document",
+  "Upload File": "Upload File",
+  "File is required": "File is required",
+  "Material deleted successfully!": "Material deleted successfully!",
+  "Are you sure you want to delete this document? This action cannot be undone.": "Are you sure you want to delete this document? This action cannot be undone.",
+  "Delete document": "Delete document",
+  "Is public": "Is public",
+  "Document is successfully assigned to user!": "Document is successfully assigned to user!",
+  "Download is successfully done!": "Download is successfully done!"
 }

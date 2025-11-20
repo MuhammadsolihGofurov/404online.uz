@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { useForm } from "react-hook-form";
-import { Input, Select } from "../../details";
+import { Input } from "../../details";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
-import { ForCenterAdmin } from "@/mock/roles";
 
 export default function UpdateMockModal({ id, initialData }) {
   const intl = useIntl();

@@ -45,7 +45,7 @@ const MultiSelect = forwardRef(function MultiSelect(
       >
         <span className="text-sm text-inputPlaceholder">
           {value.length > 0
-            ? value.map((v) => v.full_name).join(", ")
+            ? value.map((v) => v.full_name || v.name).join(", ")
             : placeholder}
         </span>
 
@@ -72,7 +72,7 @@ const MultiSelect = forwardRef(function MultiSelect(
                     isSelected ? "font-medium" : ""
                   }`}
                 >
-                  {opt.full_name}
+                  <span className="flex-1">{opt.full_name || opt?.name}</span>
                   {isSelected && <Check className="h-4 w-4 text-green-500" />}
                 </button>
               );

@@ -5,62 +5,79 @@ import { Controller, useForm } from "react-hook-form";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
+import { ForCenterAdmin, YesOrNo } from "@/mock/roles";
 import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
-import Select from "../../details/select";
+import MultiSelect from "../../details/multi-select";
 
-export default function ChangeGroupMemberModal({ initialData, assistant_id }) {
+export default function AssignUserToDocumentsModal({
+  old_students,
+  old_groups,
+  id,
+}) {
   const intl = useIntl();
-  const { closeModal, openModal } = useModal();
+  const { closeModal } = useModal();
   const [reqLoading, setReqLoading] = useState(false);
   const router = useRouter();
 
   const {
-    register,
     handleSubmit,
-    formState: { errors, isDirty, isValid },
+    formState: { errors },
     reset,
-    watch,
     control,
-    setValue,
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      user_id: initialData?.user_id || "",
-      to_group_id: initialData?.to_group_id || "",
+      assigned_students: old_students || [],
+      assigned_groups: old_groups || [],
     },
   });
 
   useEffect(() => {
-    if (initialData) reset(initialData);
-  }, [initialData, reset]);
+    if (old_students || old_groups)
+      reset({ assigned_students: old_students, assigned_groups: old_groups });
+  }, [old_groups, old_students, reset]);
 
   const submitFn = async (data) => {
     try {
       setReqLoading(true);
 
-      const response = await authAxios.post(
-        "/group-memberships/move-student/",
-        data
-      );
+      const payload = {
+        assigned_groups: data?.assigned_groups?.map((item) => item?.id),
+        assigned_students: data?.assigned_students?.map((item) => item?.id),
+      };
+
+      const response = await authAxios.patch(`/materials/${id}/`, payload);
 
       toast.success(
         intl.formatMessage({
-          id: "Student group is successfully changed!",
+          id: "Document is successfully assigned to user!",
         })
       );
 
       setTimeout(() => {
-        closeModal("changeGroupMember", response?.data);
+        closeModal("assignDocumentToUser", response?.data);
       }, 500);
     } catch (e) {
-      // const error = e?.response?.data?.error?.detail;
-      toast.error(e?.response?.data?.error?.detail);
+      toast.error(e?.response?.data?.error?.detail?.[0]);
     } finally {
       setReqLoading(false);
     }
   };
+
+  const { data: users } = useSWR(["/users/", router.locale], ([url, locale]) =>
+    fetcher(
+      `${url}?page_size=all&role=STUDENT`,
+      {
+        headers: {
+          "Accept-Language": locale,
+        },
+      },
+      {},
+      true
+    )
+  );
 
   const { data: groups } = useSWR(
     ["/groups/", router.locale],
@@ -80,7 +97,7 @@ export default function ChangeGroupMemberModal({ initialData, assistant_id }) {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
-        {intl.formatMessage({ id: "Change membership" })}
+        {intl.formatMessage({ id: "Assign to teacher" })}
       </h1>
       <form
         onSubmit={handleSubmit(submitFn)}
@@ -88,16 +105,36 @@ export default function ChangeGroupMemberModal({ initialData, assistant_id }) {
       >
         <div className="flex flex-col gap-5">
           <Controller
-            name="to_group_id"
+            name="assigned_groups"
             control={control}
             rules={{ required: intl.formatMessage({ id: "Required" }) }}
+            defaultValue={old_groups || []}
             render={({ field }) => (
-              <Select
+              <MultiSelect
                 {...field}
                 title={intl.formatMessage({ id: "Groups" })}
                 placeholder={intl.formatMessage({ id: "Select" })}
-                options={groups}
-                error={errors.to_group_id?.message}
+                options={groups || []}
+                error={errors.assigned_groups?.message}
+                value={field.value || []}
+                onChange={(val) => field.onChange(val)}
+              />
+            )}
+          />
+          <Controller
+            name="assigned_students"
+            control={control}
+            rules={{ required: intl.formatMessage({ id: "Required" }) }}
+            defaultValue={old_students || []}
+            render={({ field }) => (
+              <MultiSelect
+                {...field}
+                title={intl.formatMessage({ id: "Users" })}
+                placeholder={intl.formatMessage({ id: "Select" })}
+                options={users || []}
+                error={errors.assigned_students?.message}
+                value={field.value || []}
+                onChange={(val) => field.onChange(val)}
               />
             )}
           />

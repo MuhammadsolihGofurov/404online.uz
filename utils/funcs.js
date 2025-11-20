@@ -99,3 +99,16 @@ export function getPartNumbers(mockType) {
     name: `Part ${i + 1}`,
   }));
 }
+
+export const handleDownload = async (file, name) => {
+  const res = await fetch(file);
+  const blob = await res.blob();
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name || "file";
+  a.click();
+  window.URL.revokeObjectURL(url);
+  return "success";
+};

@@ -66,7 +66,7 @@ const Select = forwardRef(function Select(
         <ul className="absolute top-full left-0 w-full mt-2 bg-white border border-buttonGrey rounded-xl shadow-md max-h-48 overflow-y-auto z-20 text-start">
           {options.length > 0 ? (
             options.map((opt) => {
-              const optValue = opt.value ?? opt.id;
+              const optValue = opt?.value ?? opt?.id;
               const isSelected = value === optValue;
 
               return (
@@ -77,7 +77,7 @@ const Select = forwardRef(function Select(
                     isSelected ? "font-medium" : ""
                   }`}
                 >
-                  {opt.full_name || opt.name}
+                  {opt?.full_name || opt?.name}
                   {isSelected && <Check className="h-4 w-4 text-green-500" />}
                 </li>
               );

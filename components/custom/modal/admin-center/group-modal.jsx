@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { Controller, useForm } from "react-hook-form";
-import { Input, Select } from "../../details";
+import { Input } from "../../details";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
 import { ForCenterAdmin } from "@/mock/roles";
-import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
+import Select from "../../details/select";
+import useSWR from "swr";
 
 export default function GroupModal({ id, initialData }) {
   const intl = useIntl();

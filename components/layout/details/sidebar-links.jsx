@@ -91,7 +91,8 @@ const menuItems = [
           <path d="M20 6C20 7.65685 16.4183 9 12 9C7.58172 9 4 7.65685 4 6M20 6C20 4.34315 16.4183 3 12 3C7.58172 3 4 4.34315 4 6M20 6V12M4 6V12M4 12C4 12.7956 4.84285 13.5587 6.34315 14.1213C7.84344 14.6839 9.87827 15 12 15C14.1217 15 16.1566 14.6839 17.6569 14.1213C19.1571 13.5587 20 12.7956 20 12M4 12V18C4 18.7956 4.84285 19.5587 6.34315 20.1213C7.84344 20.6839 9.87827 21 12 21C14.1217 21 16.1566 20.6839 17.6569 20.1213C19.1571 19.5587 20 18.7956 20 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
       `,
-    roles: ["OWNER"],
+    roles: ["OWNER", "CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+    query: `?type=DOCUMENTS`
   },
   {
     title: "Settings",
@@ -130,7 +131,7 @@ export default function SidebarLinks({ userRole, closeSidebar }) {
         return (
           <Link
             key={item.title}
-            href={item.href}
+            href={item.href + `${item?.query ? item?.query: ""}`}
             onClick={handleClick}
             className={`flex items-center gap-3 relative px-4 py-2 rounded-lg transition-colors duration-200 
               ${

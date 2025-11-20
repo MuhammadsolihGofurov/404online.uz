@@ -1,4 +1,3 @@
-import { Wrapper } from "@/components/dashboard/details";
 import { MockView } from "@/components/dashboard/mocks";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";

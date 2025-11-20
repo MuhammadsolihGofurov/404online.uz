@@ -8,6 +8,7 @@ import {
   TeacherModal,
   ViewProfileModal,
 } from "./admin-center";
+import { AssignUserToDocumentsModal, DocumentsModal } from "./materials";
 import { UpdateMockModal } from "./mocks";
 import {
   ConfirmModal,
@@ -28,4 +29,6 @@ export const ModalComponents = {
   changeGroupMember: ChangeGroupMemberModal,
   viewProfile: ViewProfileModal,
   updateMock: UpdateMockModal,
+  documentsModal: DocumentsModal,
+  assignDocumentToUser: AssignUserToDocumentsModal,
 };

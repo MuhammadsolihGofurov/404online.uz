@@ -8,7 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/router";
-import { MOCKS_ACTION_FIRST_STEP_URL, MOCKS_URL } from "@/mock/router";
+import { MOCKS_URL } from "@/mock/router";
 import { formatDate } from "@/utils/funcs";
 import { MockViewSkeleton } from "@/components/skeleton";
 import Link from "next/link";
