@@ -164,6 +164,12 @@ export default function TemplatesModal({
       )
   );
 
+  const mockOptions = Array.isArray(mocksData?.results)
+    ? mocksData.results
+    : Array.isArray(mocksData)
+    ? mocksData
+    : [];
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
@@ -236,7 +242,7 @@ export default function TemplatesModal({
                   {...field}
                   title={intl.formatMessage({ id: "Mocks" })}
                   placeholder={intl.formatMessage({ id: "Select" })}
-                  options={mocksData || []}
+                  options={mockOptions}
                   error={errors.mocks?.message}
                   value={field.value || []}
                   onChange={(val) => field.onChange(val)}
