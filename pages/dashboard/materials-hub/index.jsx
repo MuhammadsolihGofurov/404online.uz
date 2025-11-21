@@ -27,9 +27,20 @@ const sections = [
     title: "Templates",
     body: "Dashboard",
     isButton: true,
-    buttonFunc: "templateModal",
+    buttonFunc: "templatesModal",
     buttonText: "Create template",
-    modalType: "short",
+    modalType: "big",
+    component: "TempletesLists",
+    box: TempletesLists,
+  },
+  {
+    key: "TRAINING_ZONE",
+    title: "Traning zone",
+    body: "Dashboard",
+    isButton: true,
+    buttonFunc: "templatesModal",
+    buttonText: "Create template",
+    modalType: "big",
     component: "TempletesLists",
     box: TempletesLists,
   },
@@ -62,7 +73,11 @@ function MaterialsPage({ info, user, loading }) {
             modalType={currentSection.modalType}
           >
             <MaterialsTypes role={user?.role} />
-            <BoxComponent loading={loading} role={user?.role} />
+            <BoxComponent
+              loading={loading}
+              role={user?.role}
+              user_id={user?.id}
+            />
           </Wrapper>
         )}
       </DashboardLayout>

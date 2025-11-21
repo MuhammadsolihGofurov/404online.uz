@@ -13,6 +13,32 @@ export const MOCK_CATEGORIES = [
   },
 ];
 
+export const MOCK_TEMPLATES = [
+  {
+    value: "EXAM_TEMPLATE",
+    name: "For exams",
+  },
+  {
+    value: "PRACTICE_TEMPLATE",
+    name: "For practice",
+  },
+];
+
+export const TEMPLATE_D_LEVEL = [
+  {
+    value: "BEGINNER",
+    name: "For beginners",
+  },
+  {
+    value: "INTERMEDIATE",
+    name: "For intermediate",
+  },
+  {
+    value: "ADVANCED",
+    name: "Advanced",
+  },
+];
+
 export const MOCK_TYPES = [
   {
     value: "LISTENING",

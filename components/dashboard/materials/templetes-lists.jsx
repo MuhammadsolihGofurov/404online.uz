@@ -7,10 +7,13 @@ import React from "react";
 import useSWR from "swr";
 import DocumentItem from "../details/items/document-item";
 import { useIntl } from "react-intl";
-import { DocumentItemSkeleton, TemplateItemSkeleton } from "@/components/skeleton";
+import {
+  DocumentItemSkeleton,
+  TemplateItemSkeleton,
+} from "@/components/skeleton";
 import { TemplateItem } from "../details/items";
 
-export default function TempletesLists({ loading, role }) {
+export default function TempletesLists({ loading, role, user_id }) {
   const router = useRouter();
   const intl = useIntl();
   const { modalClosed } = useModal();
@@ -50,7 +53,12 @@ export default function TempletesLists({ loading, role }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {datas?.results?.length > 0 ? (
             datas?.results?.map((doc) => (
-              <TemplateItem key={doc.id} item={doc} role={role} />
+              <TemplateItem
+                key={doc.id}
+                item={doc}
+                role={role}
+                user_id={user_id}
+              />
             ))
           ) : (
             <p>{intl.formatMessage({ id: "There isn't anything" })}</p>

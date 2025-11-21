@@ -43,9 +43,9 @@ const MultiSelect = forwardRef(function MultiSelect(
         }`}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="text-sm text-inputPlaceholder">
+        <span className="text-sm text-inputPlaceholder flex-1">
           {value.length > 0
-            ? value.map((v) => v.full_name || v.name).join(", ")
+            ? value.map((v) => v.full_name || v.name || v?.title).join(", ")
             : placeholder}
         </span>
 
@@ -68,11 +68,11 @@ const MultiSelect = forwardRef(function MultiSelect(
                     e.preventDefault();
                     handleSelect(opt);
                   }}
-                  className={`p-3 cursor-pointer w-full hover:bg-gray-100 transition text-sm flex justify-between items-center ${
+                  className={`p-3 cursor-pointer text-start w-full hover:bg-gray-100 transition text-sm flex justify-between items-center ${
                     isSelected ? "font-medium" : ""
                   }`}
                 >
-                  <span className="flex-1">{opt.full_name || opt?.name}</span>
+                  <span className="flex-1">{opt.full_name || opt?.name || opt?.title}</span>
                   {isSelected && <Check className="h-4 w-4 text-green-500" />}
                 </button>
               );

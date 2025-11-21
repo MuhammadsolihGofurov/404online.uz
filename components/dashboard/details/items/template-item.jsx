@@ -2,13 +2,11 @@ import React from "react";
 import {
   Edit,
   Trash2,
-  UserPlus,
   Calendar,
   Layers,
-  BarChart2,
   CheckCircle,
   BookOpen,
-  MoreHorizontal,
+  MoveRight,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
 import { useModal } from "@/context/modal-context";
@@ -30,7 +28,7 @@ const getDifficultyColor = (level) => {
   }
 };
 
-export default function TemplateItem({ item, role }) {
+export default function TemplateItem({ item, role, user_id }) {
   const { openModal } = useModal();
   const intl = useIntl();
 
@@ -42,7 +40,7 @@ export default function TemplateItem({ item, role }) {
         description:
           "Are you sure you want to delete this template? This action cannot be undone.",
         onConfirm: async () => {
-          await authAxios.delete(`/mock-templates/${id}/`); // URLni APIga moslab o'zgartiring
+          await authAxios.delete(`/material-templates/${id}/`);
           toast.success(
             intl.formatMessage({ id: "Template deleted successfully!" })
           );
@@ -77,52 +75,60 @@ export default function TemplateItem({ item, role }) {
             <BookOpen size={18} />
           </button>
 
-          {role !== "STUDENT" && (
-            <>
-              {/* Edit Button */}
-              <button
-                onClick={() =>
-                  openModal(
-                    "templateModal", // Modal nomini loyihangizga moslang
-                    { id: item?.id, initialData: item },
-                    "short"
-                  )
-                }
-                className="p-2 bg-white text-blue-600 rounded-full hover:bg-blue-50 hover:scale-110 transition-all shadow-lg"
-                title="Edit"
-              >
-                <Edit size={18} />
-              </button>
-
-              {/* Delete Button */}
-              <button
-                onClick={() => handleDelete(item?.id)}
-                className="p-2 bg-white text-red-500 rounded-full hover:bg-red-50 hover:scale-110 transition-all shadow-lg"
-                title="Delete"
-              >
-                <Trash2 size={18} />
-              </button>
-
-              {/* Assign Button */}
-              {!item?.is_public && (
+          {role !== "STUDENT" &&
+            (user_id === item?.created_by?.id || role === "CENTER_ADMIN") && (
+              <>
+                {/* Edit Button */}
                 <button
                   onClick={() =>
                     openModal(
-                      "assignTemplateToUser",
+                      "templatesModal",
                       {
                         id: item?.id,
+                        old_title: item?.title,
+                        old_description: item?.description,
+                        old_category: item?.category,
+                        old_difficulty_level: item?.difficulty_level,
+                        old_mocks: item?.mocks,
                       },
-                      "short"
+                      "big"
                     )
                   }
-                  className="p-2 bg-white text-green-600 rounded-full hover:bg-green-50 hover:scale-110 transition-all shadow-lg"
-                  title="Assign"
+                  className="p-2 bg-white text-blue-600 rounded-full hover:bg-blue-50 hover:scale-110 transition-all shadow-lg"
+                  title="Edit"
                 >
-                  <UserPlus size={18} />
+                  <Edit size={18} />
                 </button>
-              )}
-            </>
-          )}
+
+                {/* Delete Button */}
+                <button
+                  onClick={() => handleDelete(item?.id)}
+                  className="p-2 bg-white text-red-500 rounded-full hover:bg-red-50 hover:scale-110 transition-all shadow-lg"
+                  title="Delete"
+                >
+                  <Trash2 size={18} />
+                </button>
+
+                {/* Assign to task Button */}
+                {!item?.is_public && (
+                  <button
+                    onClick={() =>
+                      openModal(
+                        "assignTemplateToUser",
+                        {
+                          id: item?.id,
+                        },
+                        "short"
+                      )
+                    }
+                    className="p-2 bg-white text-green-600 rounded-full hover:bg-green-50 hover:scale-110 transition-all shadow-lg"
+                    title="Assign"
+                  >
+                    <MoveRight size={18} />
+                  </button>
+                )}
+              </>
+            )}
         </div>
       </div>
 
