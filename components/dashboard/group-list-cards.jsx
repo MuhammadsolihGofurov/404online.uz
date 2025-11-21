@@ -48,7 +48,7 @@ export default function GroupListCards({ loading, role }) {
         })}
       </div>
 
-      <Pagination count={datas?.count} />
+      <Pagination count={datas?.count} pageSize={12}/>
     </>
   );
 }

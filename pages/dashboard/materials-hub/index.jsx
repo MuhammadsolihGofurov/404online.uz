@@ -4,6 +4,7 @@ import { MaterialsTypes } from "@/components/dashboard/details/filters";
 import {
   DocumentsLists,
   TempletesLists,
+  TraniningZoneLists,
 } from "@/components/dashboard/materials";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
@@ -37,12 +38,12 @@ const sections = [
     key: "TRAINING_ZONE",
     title: "Traning zone",
     body: "Dashboard",
-    isButton: true,
+    isButton: false,
     buttonFunc: "templatesModal",
     buttonText: "Create template",
     modalType: "big",
     component: "TempletesLists",
-    box: TempletesLists,
+    box: TraniningZoneLists,
   },
 ];
 
@@ -67,7 +68,11 @@ function MaterialsPage({ info, user, loading }) {
             title={currentSection.title}
             body={currentSection.body}
             isLink={true}
-            isButton={currentSection.isButton}
+            isButton={
+              user?.role !== "STUDENT" &&
+              user?.role !== "OWNER" &&
+              currentSection.isButton
+            }
             buttonFunc={currentSection.buttonFunc}
             buttonText={currentSection.buttonText}
             modalType={currentSection.modalType}
@@ -77,6 +82,7 @@ function MaterialsPage({ info, user, loading }) {
               loading={loading}
               role={user?.role}
               user_id={user?.id}
+              key={currentSection?.key}
             />
           </Wrapper>
         )}
@@ -99,4 +105,5 @@ export default withAuthGuard(MaterialsPage, [
   "CENTER_ADMIN",
   "TEACHER",
   "ASSISTANT",
+  "STUDENT",
 ]);

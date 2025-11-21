@@ -4,3 +4,4 @@ export { default as GroupListItem } from "./group-list-item";
 export { default as ListMembersItem } from "./list-members-item";
 export { default as DocumentItem } from "./document-item";
 export { default as TemplateItem } from "./template-item";
+export { default as TaskItem } from "./task-item";

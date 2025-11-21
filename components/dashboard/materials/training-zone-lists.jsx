@@ -5,11 +5,15 @@ import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
 import React from "react";
 import useSWR from "swr";
+import DocumentItem from "../details/items/document-item";
 import { useIntl } from "react-intl";
-import { DocumentItemSkeleton } from "@/components/skeleton";
-import { DocumentItem } from "../details/items";
+import {
+  DocumentItemSkeleton,
+  TemplateItemSkeleton,
+} from "@/components/skeleton";
+import { TemplateItem } from "../details/items";
 
-export default function DocumentsLists({ loading, role }) {
+export default function TraniningZoneLists({ loading, role, user_id }) {
   const router = useRouter();
   const intl = useIntl();
   const { modalClosed } = useModal();
@@ -19,10 +23,10 @@ export default function DocumentsLists({ loading, role }) {
   const currentPage = findParams("page") || 1;
 
   const { data: datas, isLoading } = useSWR(
-    ["/materials/", router.locale, currentPage, modalClosed],
+    ["/material-templates/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=10`,
+        `${url}?page=${page}&page_size=12&category=PRACTICE_TEMPLATE&is_public=true`,
         {
           headers: {
             "Accept-Language": locale,
@@ -37,7 +41,7 @@ export default function DocumentsLists({ loading, role }) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 bg-white rounded-2xl p-5 sm:p-6">
         {Array.from({ length: 12 }).map((_, i) => (
-          <DocumentItemSkeleton key={i} />
+          <TemplateItemSkeleton key={i} />
         ))}
       </div>
     );
@@ -49,7 +53,12 @@ export default function DocumentsLists({ loading, role }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {datas?.results?.length > 0 ? (
             datas?.results?.map((doc) => (
-              <DocumentItem key={doc.id} item={doc} role={role} />
+              <TemplateItem
+                key={doc.id}
+                item={doc}
+                role={role}
+                user_id={user_id}
+              />
             ))
           ) : (
             <p className="text-sm text-center col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-textSecondary">
@@ -59,7 +68,7 @@ export default function DocumentsLists({ loading, role }) {
         </div>
       </div>
 
-      <Pagination count={datas?.count} />
+      <Pagination count={datas?.count} pageSize={12}/>
     </>
   );
 }

@@ -26,7 +26,7 @@ export default function TempletesLists({ loading, role, user_id }) {
     ["/material-templates/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=10`,
+        `${url}?page=${page}&page_size=12`,
         {
           headers: {
             "Accept-Language": locale,
@@ -61,12 +61,12 @@ export default function TempletesLists({ loading, role, user_id }) {
               />
             ))
           ) : (
-            <p>{intl.formatMessage({ id: "There isn't anything" })}</p>
+            <p className="text-sm text-center col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-textSecondary">{intl.formatMessage({ id: "There isn't anything" })}</p>
           )}
         </div>
       </div>
 
-      <Pagination count={datas?.count} />
+      <Pagination count={datas?.count} pageSize={12}/>
     </>
   );
 }

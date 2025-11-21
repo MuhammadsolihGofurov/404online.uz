@@ -13,14 +13,14 @@ import Select from "../../details/select";
 import { MOCK_TEMPLATES, TEMPLATE_D_LEVEL } from "@/mock/data";
 import { Input, ToggleSwitch } from "../../details";
 
-export default function TemplatesModal({
+export default function TaskModal({
   id,
   old_title,
   old_description,
   old_category,
   old_difficulty_level,
   old_mocks,
-  old_is_public, // Agar propsda is_public kelsa
+  old_is_public,
 }) {
   const intl = useIntl();
   const { closeModal } = useModal();
@@ -179,16 +179,10 @@ export default function TemplatesModal({
       )
   );
 
-  const mockOptions = Array.isArray(mocksData?.results)
-    ? mocksData.results
-    : Array.isArray(mocksData)
-    ? mocksData
-    : [];
-
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
-        {intl.formatMessage({ id: "Template" })}
+        {intl.formatMessage({ id: "Task" })}
       </h1>
       <form
         onSubmit={handleSubmit(submitFn)}
@@ -260,7 +254,7 @@ export default function TemplatesModal({
                   {...field}
                   title={intl.formatMessage({ id: "Mocks" })}
                   placeholder={intl.formatMessage({ id: "Select" })}
-                  options={mockOptions}
+                  options={mocksData || []}
                   error={errors.mocks?.message}
                   value={field.value || []}
                   onChange={(val) => field.onChange(val)}
