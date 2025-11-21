@@ -66,7 +66,7 @@ export default function MocksList({ loading }) {
         )}
       </div>
 
-      <Pagination count={datas?.count} />
+      <Pagination count={datas?.count} pageSize={12}/>
     </>
   );
 }

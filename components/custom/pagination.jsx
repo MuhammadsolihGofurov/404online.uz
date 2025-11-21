@@ -5,7 +5,7 @@ export default function Pagination({ count, pageSize = 10 }) {
   const { currentPage, totalPages, goToPage, nextPage, prevPage, pagesArray } =
     usePagination(count, pageSize);
 
-  if (totalPages < 1) return null;
+  if (totalPages <= 1) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2 justify-center mt-4">

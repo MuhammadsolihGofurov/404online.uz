@@ -26,7 +26,7 @@ export default function TraniningZoneLists({ loading, role, user_id }) {
     ["/material-templates/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=10&category=PRACTICE_TEMPLATE&is_public=true`,
+        `${url}?page=${page}&page_size=12&category=PRACTICE_TEMPLATE&is_public=true`,
         {
           headers: {
             "Accept-Language": locale,
@@ -68,7 +68,7 @@ export default function TraniningZoneLists({ loading, role, user_id }) {
         </div>
       </div>
 
-      <Pagination count={datas?.count} />
+      <Pagination count={datas?.count} pageSize={12}/>
     </>
   );
 }

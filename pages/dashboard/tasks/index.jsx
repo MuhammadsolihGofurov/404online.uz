@@ -13,7 +13,15 @@ function TasksPage({ info, user, loading }) {
         keywords={info?.data?.seo_home_keywords}
       />
       <DashboardLayout user={user}>
-        <Wrapper title={"Tasks"} isLink body={"Dashboard"}>
+        <Wrapper
+          title={"Tasks"}
+          isLink
+          body={"Dashboard"}
+          isButton
+          buttonText={"Create task"}
+          buttonFunc={"taskModal"}
+          modalType={"big"}
+        >
           <TasksLists loading={loading} role={user?.role} />
         </Wrapper>
       </DashboardLayout>

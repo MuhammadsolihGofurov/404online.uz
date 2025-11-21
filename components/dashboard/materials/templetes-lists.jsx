@@ -26,7 +26,7 @@ export default function TempletesLists({ loading, role, user_id }) {
     ["/material-templates/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=10`,
+        `${url}?page=${page}&page_size=12`,
         {
           headers: {
             "Accept-Language": locale,
@@ -66,7 +66,7 @@ export default function TempletesLists({ loading, role, user_id }) {
         </div>
       </div>
 
-      <Pagination count={datas?.count} />
+      <Pagination count={datas?.count} pageSize={12}/>
     </>
   );
 }

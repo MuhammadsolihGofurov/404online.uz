@@ -20,6 +20,7 @@ import {
   EduCenterCreateAdminModal,
   EduCenterModal,
 } from "./owner";
+import { TaskModal } from "./tasks";
 
 export const ModalComponents = {
   createEduCenter: EduCenterModal,
@@ -38,4 +39,5 @@ export const ModalComponents = {
   assignDocumentToUser: AssignUserToDocumentsModal,
   templatesModal: TemplatesModal,
   templateUseAsTask: TemplateUseAsTaskModal,
+  taskModal: TaskModal,
 };

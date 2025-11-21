@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { TaskItem } from "../details/items";
 import Pagination from "@/components/custom/pagination";
 import fetcher from "@/utils/fetcher";
+import { TaskItemSkeleton } from "@/components/skeleton";
 
 export default function TasksLists({ role, loading }) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function TasksLists({ role, loading }) {
     ["/tasks/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=10`,
+        `${url}?page=${page}&page_size=12`,
         {
           headers: {
             "Accept-Language": locale,
@@ -33,8 +34,15 @@ export default function TasksLists({ role, loading }) {
   );
 
   if (loading || isLoading) {
-    // bu yerda skeleton bo'ladi alohida compontentda
-    return <></>;
+    return (
+      <div className="bg-white rounded-2xl p-5 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <TaskItemSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -53,7 +61,7 @@ export default function TasksLists({ role, loading }) {
         </div>
       </div>
 
-      <Pagination count={datas?.count} />
+      <Pagination count={datas?.count} pageSize={12} />
     </>
   );
 }

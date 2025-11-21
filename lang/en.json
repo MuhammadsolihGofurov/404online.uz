@@ -201,5 +201,8 @@
   "Task created successfully!": "Task created successfully!",
   "Enter title (optional, template name will be used)": "Enter title (optional, template name will be used)",
   "Exercise: With a deadline, unlimited attempts, the result is visible": "Exercise: With a deadline, unlimited attempts, the result is visible",
-  "Exam: Time limited, 1 attempt, result hidden": "Exam: Time limited, 1 attempt, result hidden"
+  "Exam: Time limited, 1 attempt, result hidden": "Exam: Time limited, 1 attempt, result hidden",
+  "Task": "Task",
+  "Tasks": "Tasks",
+  "Create task": "Create task"
 }
