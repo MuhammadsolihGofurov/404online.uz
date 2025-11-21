@@ -3,9 +3,11 @@ import {
   DASHBOARD_URL,
   GROUPS_URL,
   INVITECODE_URL,
+  LEADERBOARD_URL,
   MATERIALSHUB_URL,
   MEMBERSHIPS_URL,
   MOCKS_URL,
+  MY_TASKS_URL,
   SETTINGS_URL,
   TASKS_URL,
   TEACHERS_URL,
@@ -103,6 +105,24 @@ const menuItems = [
         `,
     roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
     query: `?type=DOCUMENTS`,
+  },
+  {
+    title: "My Tasks",
+    href: MY_TASKS_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 7H15M9 11H15M9 15H13M7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["STUDENT", "GUEST"],
+  },
+  {
+    title: "Leaderboard",
+    href: LEADERBOARD_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT", "GUEST"],
   },
   {
     title: "Settings",

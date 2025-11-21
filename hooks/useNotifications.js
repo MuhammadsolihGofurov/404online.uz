@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
 
 const API_BASE = "https://api.404online.uz";
 
@@ -18,6 +20,7 @@ export function useNotifications(accessToken) {
   const [notifications, setNotifications] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   // ✅ Refs - state o'zgarishini chaqirmaydi
   const wsRef = useRef(null);
@@ -147,7 +150,45 @@ export function useNotifications(accessToken) {
         if (!data) return;
 
         console.log("📩 New notification:", data.id || "unknown");
+        
+        // Add notification to state
         upsert(decorate(data));
+        
+        // Show toast notification
+        const notificationMessage = data.message || "New notification";
+        const notificationLink = data.link;
+        
+        // Create clickable toast
+        const toastId = toast.info(
+          notificationMessage,
+          {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            onClick: notificationLink
+              ? () => {
+                  // Use Next.js router for client-side navigation
+                  if (typeof window !== "undefined") {
+                    if (router && router.push) {
+                      router.push(notificationLink);
+                    } else {
+                      // Fallback to window.location if router is not available
+                      window.location.href = notificationLink;
+                    }
+                  }
+                  toast.dismiss(toastId);
+                }
+              : undefined,
+            style: notificationLink
+              ? {
+                  cursor: "pointer",
+                }
+              : {},
+          }
+        );
       } catch (err) {
         console.error("❌ Parse error:", err);
       }

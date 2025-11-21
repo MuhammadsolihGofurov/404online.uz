@@ -9,6 +9,7 @@ const Select = forwardRef(function Select(
     value = null,
     onChange = () => {},
     error,
+    disabled = false,
   },
   ref
 ) {
@@ -18,6 +19,7 @@ const Select = forwardRef(function Select(
   const selectedOption = options.find((o) => (o.value ?? o.id) === value);
 
   const handleSelect = (newValue) => {
+    if (disabled) return;
     onChange(newValue);
     setOpen(false);
   };
@@ -46,10 +48,14 @@ const Select = forwardRef(function Select(
 
       <div
         ref={ref} 
-        className={`rounded-xl p-4 h-[57.6px] w-full border border-buttonGrey cursor-pointer flex justify-between items-center ${
+        className={`rounded-xl p-4 h-[57.6px] w-full border border-buttonGrey flex justify-between items-center ${
           error ? "border-red-500" : "focus:border-main"
+        } ${
+          disabled
+            ? "bg-gray-100 cursor-not-allowed opacity-60"
+            : "cursor-pointer"
         }`}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => !disabled && setOpen((prev) => !prev)}
       >
         <span className="text-sm text-inputPlaceholder">
           {selectedOption
@@ -62,7 +68,7 @@ const Select = forwardRef(function Select(
         />
       </div>
 
-      {open && (
+      {open && !disabled && (
         <ul className="absolute top-full left-0 w-full mt-2 bg-white border border-buttonGrey rounded-xl shadow-md max-h-48 overflow-y-auto z-20 text-start">
           {options.length > 0 ? (
             options.map((opt) => {

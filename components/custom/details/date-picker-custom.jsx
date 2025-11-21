@@ -2,16 +2,17 @@ import React, { forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Calendar, Clock } from "lucide-react";
+import dynamic from "next/dynamic";
 
 // Date Picker Component (faqat sana)
 export const DatePickerField = forwardRef(
   ({ title, error, placeholder, value, onChange, required, ...props }, ref) => {
     return (
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col w-full gap-2">
         {title && (
           <label className="text-sm font-medium text-gray-700">
             {title}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="ml-1 text-red-500">*</span>}
           </label>
         )}
         <div className="relative">
@@ -27,7 +28,7 @@ export const DatePickerField = forwardRef(
             calendarClassName="custom-calendar"
             {...props}
           />
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <Calendar className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
         </div>
         {error && <span className="text-sm text-red-500">{error}</span>}
       </div>
@@ -41,11 +42,11 @@ DatePickerField.displayName = "DatePickerField";
 export const TimePickerField = forwardRef(
   ({ title, error, placeholder, value, onChange, required, ...props }, ref) => {
     return (
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col w-full gap-2">
         {title && (
           <label className="text-sm font-medium text-gray-700">
             {title}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="ml-1 text-red-500">*</span>}
           </label>
         )}
         <div className="relative">
@@ -65,7 +66,7 @@ export const TimePickerField = forwardRef(
             wrapperClassName="w-full"
             {...props}
           />
-          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <Clock className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
         </div>
         {error && <span className="text-sm text-red-500">{error}</span>}
       </div>
@@ -79,11 +80,11 @@ TimePickerField.displayName = "TimePickerField";
 export const DateTimePickerField = forwardRef(
   ({ title, error, placeholder, value, onChange, required, ...props }, ref) => {
     return (
-      <div className="flex flex-col items-start gap-2 w-full">
+      <div className="flex flex-col items-start w-full gap-2">
         {title && (
-          <label className="text-textSecondary font-semibold text-sm">
+          <label className="text-sm font-semibold text-textSecondary">
             {title}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="ml-1 text-red-500">*</span>}
           </label>
         )}
         <div className="relative">
@@ -103,7 +104,7 @@ export const DateTimePickerField = forwardRef(
             calendarClassName="custom-calendar"
             {...props}
           />
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <Calendar className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 pointer-events-none left-3 top-1/2" />
         </div>
         {error && <span className="text-sm text-red-500">{error}</span>}
       </div>
@@ -134,19 +135,19 @@ export default function DateTimePickerDemo() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
+    <div className="min-h-screen p-8 bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-4xl p-8 mx-auto bg-white shadow-xl rounded-2xl">
+        <h1 className="mb-2 text-3xl font-bold text-center text-gray-800">
           Date & Time Picker Components
         </h1>
-        <p className="text-gray-600 mb-8 text-center">
+        <p className="mb-8 text-center text-gray-600">
           React Hook Form bilan integratsiya qilingan
         </p>
 
         <div className="space-y-6">
           {/* Date Picker alohida */}
           <div className="p-6 bg-blue-50 rounded-xl">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            <h2 className="mb-4 text-lg font-semibold text-gray-800">
               📅 Faqat Sana
             </h2>
             <DatePickerField
@@ -165,7 +166,7 @@ export default function DateTimePickerDemo() {
 
           {/* Time Picker alohida */}
           <div className="p-6 bg-green-50 rounded-xl">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            <h2 className="mb-4 text-lg font-semibold text-gray-800">
               🕐 Faqat Vaqt
             </h2>
             <TimePickerField
@@ -179,7 +180,7 @@ export default function DateTimePickerDemo() {
 
           {/* DateTime Picker birga */}
           <div className="p-6 bg-purple-50 rounded-xl">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            <h2 className="mb-4 text-lg font-semibold text-gray-800">
               📅🕐 Sana va Vaqt
             </h2>
             <DateTimePickerField
@@ -194,10 +195,10 @@ export default function DateTimePickerDemo() {
 
           {/* Grid Layout - ikkitasi yonma-yon */}
           <div className="p-6 bg-orange-50 rounded-xl">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            <h2 className="mb-4 text-lg font-semibold text-gray-800">
               📊 Grid Layout
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <DatePickerField
                 title="Boshlanish sanasi"
                 placeholder="Boshlanish"
@@ -222,8 +223,8 @@ export default function DateTimePickerDemo() {
         </div>
 
         {/* Qo'shimcha ma'lumot */}
-        <div className="mt-8 p-6 bg-gray-50 rounded-xl">
-          <h3 className="font-semibold text-gray-800 mb-3">📚 Xususiyatlar:</h3>
+        <div className="p-6 mt-8 bg-gray-50 rounded-xl">
+          <h3 className="mb-3 font-semibold text-gray-800">📚 Xususiyatlar:</h3>
           <ul className="space-y-2 text-sm text-gray-600">
             <li>✅ React Hook Form bilan to'liq integratsiya</li>
             <li>✅ Alohida Date, Time va DateTime komponentlar</li>

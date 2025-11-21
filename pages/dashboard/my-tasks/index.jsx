@@ -1,10 +1,10 @@
 import { Wrapper } from "@/components/dashboard/details";
-import { TasksLists } from "@/components/dashboard/tasks";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
+import { MyTasksList } from "@/components/dashboard/tasks/my-tasks-list";
 
-function TasksPage({ info, user, loading }) {
+function MyTasksPage({ info, user, loading }) {
   return (
     <>
       <Seo
@@ -14,15 +14,11 @@ function TasksPage({ info, user, loading }) {
       />
       <DashboardLayout user={user}>
         <Wrapper
-          title={"Tasks"}
+          title={"My Tasks"}
           isLink
           body={"Dashboard"}
-          isButton
-          buttonText={"Create task"}
-          buttonFunc={"taskModal"}
-          modalType={"big"}
         >
-          <TasksLists loading={loading} role={user?.role} user_id={user?.id} />
+          <MyTasksList loading={loading} user_id={user?.id} />
         </Wrapper>
       </DashboardLayout>
     </>
@@ -31,15 +27,12 @@ function TasksPage({ info, user, loading }) {
 
 export async function getServerSideProps() {
   const info = {
-    seo_home_title: "Tasks",
+    seo_home_title: "My Tasks",
     seo_home_keywords: "",
     seo_home_description: "",
   };
   return { props: { info } };
 }
 
-export default withAuthGuard(TasksPage, [
-  "CENTER_ADMIN",
-  "TEACHER",
-  "ASSISTANT",
-]);
+export default withAuthGuard(MyTasksPage, ["STUDENT", "GUEST"]);
+

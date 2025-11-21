@@ -45,3 +45,7 @@ export const MOCKS_CREATE_FOURTH_STEP_URL = "/dashboard/mocks/create/4-step";
 
 // === TASKS ===
 export const TASKS_URL = "/dashboard/tasks";
+export const MY_TASKS_URL = "/dashboard/my-tasks";
+
+// === LEADERBOARD ===
+export const LEADERBOARD_URL = "/dashboard/leaderboard";

@@ -7,11 +7,17 @@ import {
   Users,
   AlertCircle,
   MoreHorizontal,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
+import { useModal } from "@/context/modal-context";
+import { authAxios } from "@/utils/axios";
+import { toast } from "react-toastify";
 
-export default function TaskItem({ item, role }) {
+export default function TaskItem({ item, role, user_id }) {
   const intl = useIntl();
+  const { openModal } = useModal();
 
   // Destructure for cleaner access
   const {
@@ -24,6 +30,7 @@ export default function TaskItem({ item, role }) {
     is_exam_active,
     is_visible,
     created_at,
+    created_by,
   } = item;
 
   // Helper to format Task Type (e.g., EXAM_MOCK -> Exam Mock)
@@ -49,11 +56,44 @@ export default function TaskItem({ item, role }) {
   // Check if deadline is passed
   const isExpired = deadline ? new Date(deadline) < new Date() : false;
 
+  const handleDelete = (taskId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openModal(
+      "confirmModal",
+      {
+        title: "Delete task",
+        description:
+          "Are you sure you want to delete this task? This action cannot be undone.",
+        onConfirm: async () => {
+          await authAxios.delete(`/tasks/${taskId}/`);
+          toast.success(
+            intl.formatMessage({ id: "Task deleted successfully!" })
+          );
+          // Refresh will happen via modalClosed in tasks-lists
+        },
+      },
+      "short"
+    );
+  };
+
+  const handleEdit = (task, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openModal(
+      "taskModal",
+      {
+        id: task.id,
+        old_data: task,
+      },
+      "big"
+    );
+  };
+
+  const canEdit = role === "CENTER_ADMIN" || (role !== "STUDENT" && created_by?.id === user_id);
+
   return (
-    <Link
-      href={`/tasks/${id}`} // Navigate to details page
-      className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1"
-    >
+    <div className="relative flex flex-col justify-between p-5 transition-all duration-300 bg-white border border-gray-200 group rounded-xl hover:shadow-lg hover:border-primary/30 hover:-translate-y-1">
       {/* --- Header: Badges & Status --- */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-2">
@@ -75,24 +115,37 @@ export default function TaskItem({ item, role }) {
           )}
         </div>
 
-        {/* Visibility Icon (or Menu) */}
-        <div className="text-gray-400">
-          {!is_visible ? (
-            <div title="Hidden from students">
+        {/* Actions */}
+        {/* <div className="flex items-center gap-2">
+          {!is_visible && (
+            <div title="Hidden from students" className="text-gray-400">
               <AlertCircle size={16} />
             </div>
-          ) : (
-            // Placeholder for a dropdown menu if needed
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <MoreHorizontal size={18} />
+          )}
+          {canEdit && (
+            <div className="flex items-center gap-1 transition-opacity opacity-0 group-hover:opacity-100">
+              <button
+                onClick={(e) => handleEdit(item, e)}
+                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Edit"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                onClick={(e) => handleDelete(id, e)}
+                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* --- Body: Title & Meta --- */}
-      <div className="mb-6">
-        <h3 className="text-lg font-bold text-gray-900 leading-tight mb-3 group-hover:text-primary transition-colors line-clamp-2">
+      <Link href={`/dashboard/tasks/${id}`} className="block mb-6">
+        <h3 className="mb-3 text-lg font-bold leading-tight text-gray-900 transition-colors group-hover:text-primary line-clamp-2">
           {title}
         </h3>
 
@@ -130,17 +183,17 @@ export default function TaskItem({ item, role }) {
             </span>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* --- Footer: Stats & Context --- */}
-      <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+      <div className="flex items-center justify-between pt-4 mt-auto border-t border-gray-100">
         {/* Student Count (Only if count exists or role is teacher) */}
         <div className="flex items-center gap-1.5 text-sm text-gray-600">
           <Users size={16} className="text-gray-400" />
           <span className="font-medium">
             {active_students_count ? active_students_count : 0}
           </span>
-          <span className="text-xs text-gray-400 font-normal">
+          <span className="text-xs font-normal text-gray-400">
             {intl.formatMessage({ id: "students" })}
           </span>
         </div>
@@ -150,7 +203,7 @@ export default function TaskItem({ item, role }) {
       </div>
 
       {/* Decoration Gradient on Hover */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl" />
-    </Link>
+      <div className="absolute top-0 left-0 w-full h-1 transition-opacity opacity-0 bg-gradient-to-r from-transparent via-primary to-transparent group-hover:opacity-100 rounded-t-xl" />
+    </div>
   );
 }
