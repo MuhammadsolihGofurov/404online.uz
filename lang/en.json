@@ -195,5 +195,11 @@
   "Delete template": "Delete template",
   "Are you sure you want to delete this template? This action cannot be undone.": "Are you sure you want to delete this template? This action cannot be undone.",
   "Template deleted successfully!": "Template deleted successfully!",
-  "Use as Task": "Use as task"
+  "Use as Task": "Use as task",
+  "Assign groups": "Assign groups",
+  "Assign students": "Assign students",
+  "Task created successfully!": "Task created successfully!",
+  "Enter title (optional, template name will be used)": "Enter title (optional, template name will be used)",
+  "Exercise: With a deadline, unlimited attempts, the result is visible": "Exercise: With a deadline, unlimited attempts, the result is visible",
+  "Exam: Time limited, 1 attempt, result hidden": "Exam: Time limited, 1 attempt, result hidden"
 }

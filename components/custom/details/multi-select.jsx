@@ -16,6 +16,21 @@ const MultiSelect = forwardRef(function MultiSelect(
   const [open, setOpen] = useState(false);
   const intl = useIntl();
 
+  // Wrapper reference
+  const wrapperRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleSelect = (opt) => {
     const exists = value.some((v) => v.id === opt.id);
 
@@ -23,13 +38,11 @@ const MultiSelect = forwardRef(function MultiSelect(
       ? value.filter((v) => v.id !== opt.id)
       : [...value, opt];
 
-    console.error(updatedValue);
-
     onChange(updatedValue);
   };
 
   return (
-    <div className="flex flex-col gap-2 w-full relative text-start">
+    <div ref={wrapperRef} className="flex flex-col gap-2 w-full relative text-start">
       {title && (
         <span className="text-textSecondary font-semibold text-sm">
           {title}
@@ -72,7 +85,9 @@ const MultiSelect = forwardRef(function MultiSelect(
                     isSelected ? "font-medium" : ""
                   }`}
                 >
-                  <span className="flex-1">{opt.full_name || opt?.name || opt?.title}</span>
+                  <span className="flex-1">
+                    {opt.full_name || opt?.name || opt?.title}
+                  </span>
                   {isSelected && <Check className="h-4 w-4 text-green-500" />}
                 </button>
               );

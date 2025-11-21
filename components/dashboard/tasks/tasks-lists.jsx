@@ -1,15 +1,14 @@
-import Pagination from "@/components/custom/pagination";
 import { useModal } from "@/context/modal-context";
 import { useParams } from "@/hooks/useParams";
-import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
 import React from "react";
-import useSWR from "swr";
 import { useIntl } from "react-intl";
-import { DocumentItemSkeleton } from "@/components/skeleton";
-import { DocumentItem } from "../details/items";
+import useSWR from "swr";
+import { TaskItem } from "../details/items";
+import Pagination from "@/components/custom/pagination";
+import fetcher from "@/utils/fetcher";
 
-export default function DocumentsLists({ loading, role }) {
+export default function TasksLists({ role, loading }) {
   const router = useRouter();
   const intl = useIntl();
   const { modalClosed } = useModal();
@@ -19,7 +18,7 @@ export default function DocumentsLists({ loading, role }) {
   const currentPage = findParams("page") || 1;
 
   const { data: datas, isLoading } = useSWR(
-    ["/materials/", router.locale, currentPage, modalClosed],
+    ["/tasks/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
         `${url}?page=${page}&page_size=10`,
@@ -34,13 +33,8 @@ export default function DocumentsLists({ loading, role }) {
   );
 
   if (loading || isLoading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 bg-white rounded-2xl p-5 sm:p-6">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <DocumentItemSkeleton key={i} />
-        ))}
-      </div>
-    );
+    // bu yerda skeleton bo'ladi alohida compontentda
+    return <></>;
   }
 
   return (
@@ -48,8 +42,8 @@ export default function DocumentsLists({ loading, role }) {
       <div className="bg-white rounded-2xl p-5 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {datas?.results?.length > 0 ? (
-            datas?.results?.map((doc) => (
-              <DocumentItem key={doc.id} item={doc} role={role} />
+            datas?.results?.map((item) => (
+              <TaskItem item={item} key={item?.id} role={role} />
             ))
           ) : (
             <p className="text-sm text-center col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-textSecondary">

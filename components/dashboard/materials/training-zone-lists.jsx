@@ -13,7 +13,7 @@ import {
 } from "@/components/skeleton";
 import { TemplateItem } from "../details/items";
 
-export default function TempletesLists({ loading, role, user_id }) {
+export default function TraniningZoneLists({ loading, role, user_id }) {
   const router = useRouter();
   const intl = useIntl();
   const { modalClosed } = useModal();
@@ -26,7 +26,7 @@ export default function TempletesLists({ loading, role, user_id }) {
     ["/material-templates/", router.locale, currentPage, modalClosed],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=10`,
+        `${url}?page=${page}&page_size=10&category=PRACTICE_TEMPLATE&is_public=true`,
         {
           headers: {
             "Accept-Language": locale,
@@ -61,7 +61,9 @@ export default function TempletesLists({ loading, role, user_id }) {
               />
             ))
           ) : (
-            <p className="text-sm text-center col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-textSecondary">{intl.formatMessage({ id: "There isn't anything" })}</p>
+            <p className="text-sm text-center col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-textSecondary">
+              {intl.formatMessage({ id: "There isn't anything" })}
+            </p>
           )}
         </div>
       </div>

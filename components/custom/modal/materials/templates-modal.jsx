@@ -41,21 +41,36 @@ export default function TemplatesModal({
       description: old_description || "",
       category: old_category || "",
       difficulty_level: old_difficulty_level || "",
-      mocks: old_mocks || [],
+      mocks: [],
       is_public: old_is_public || false,
     },
   });
 
   const MockCategory = watch("category");
 
+  const { data: template } = useSWR(
+    ["/material-templates/", router.locale, id],
+    ([url, locale]) =>
+      fetcher(
+        `${url}${id}/`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
   useEffect(() => {
-    if (old_title && old_category && old_difficulty_level && old_mocks)
+    if (old_title && old_category && old_difficulty_level)
       reset({
         title: old_title,
         description: old_description,
         category: old_category,
         difficulty_level: old_difficulty_level,
-        mocks: old_mocks,
+        mocks: template?.mocks,
         is_public: old_is_public || false,
       });
   }, [
@@ -63,8 +78,8 @@ export default function TemplatesModal({
     old_description,
     old_category,
     old_difficulty_level,
-    old_mocks,
     old_is_public,
+    id,
     reset,
   ]);
 
@@ -198,20 +213,23 @@ export default function TemplatesModal({
             }}
             error={errors?.description?.message}
           />
-          <Controller
-            name="category"
-            control={control}
-            rules={{ required: intl.formatMessage({ id: "Required" }) }}
-            render={({ field }) => (
-              <Select
-                {...field}
-                title={intl.formatMessage({ id: "Category" })}
-                placeholder={intl.formatMessage({ id: "Select" })}
-                options={MOCK_TEMPLATES}
-                error={errors.category?.message}
-              />
-            )}
-          />
+
+          {!id && (
+            <Controller
+              name="category"
+              control={control}
+              rules={{ required: intl.formatMessage({ id: "Required" }) }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  title={intl.formatMessage({ id: "Category" })}
+                  placeholder={intl.formatMessage({ id: "Select" })}
+                  options={MOCK_TEMPLATES}
+                  error={errors.category?.message}
+                />
+              )}
+            />
+          )}
           <Controller
             name="difficulty_level"
             control={control}
@@ -226,7 +244,7 @@ export default function TemplatesModal({
               />
             )}
           />
-          <div className="sm:col-span-2 col-span-1">
+          <div className={`${!id ? "sm:col-span-2 col-span-1" : ""}`}>
             <Controller
               name="mocks"
               control={control}

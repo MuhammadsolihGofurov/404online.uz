@@ -16,8 +16,8 @@ export default function MaterialsTypes({ role }) {
         allowedRoles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT"],
       },
       {
-        label: "Practise zone",
-        type: "PRACTISE_ZONE",
+        label: "Training zone",
+        type: "TRAINING_ZONE",
         allowedRoles: ["STUDENT"],
       },
       {

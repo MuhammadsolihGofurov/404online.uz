@@ -7,6 +7,7 @@ import {
   MEMBERSHIPS_URL,
   MOCKS_URL,
   SETTINGS_URL,
+  TASKS_URL,
   TEACHERS_URL,
   USERS_URL,
 } from "@/mock/router";
@@ -71,7 +72,7 @@ const menuItems = [
       </defs>
       </svg>
       `,
-    roles: ["OWNER", "CENTER_ADMIN"],
+    roles: ["OWNER", "CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT"],
   },
   ...OwnerMenuItems,
   ...CenterAdminMenuItems,
@@ -79,9 +80,8 @@ const menuItems = [
     title: "Mocks",
     href: MOCKS_URL,
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M4 12L12 16L20 12M4 16L12 20L20 16M12 4L4 8L12 12L20 8L12 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      `,
+        <path d="M14 7H20M17 4V10M5 4H9C9.55228 4 10 4.44772 10 5V9C10 9.55228 9.55228 10 9 10H5C4.44772 10 4 9.55228 4 9V5C4 4.44772 4.44772 4 5 4ZM5 14H9C9.55228 14 10 14.4477 10 15V19C10 19.5523 9.55228 20 9 20H5C4.44772 20 4 19.5523 4 19V15C4 14.4477 4.44772 14 5 14ZM15 14H19C19.5523 14 20 14.4477 20 15V19C20 19.5523 19.5523 20 19 20H15C14.4477 20 14 19.5523 14 19V15C14 14.4477 14.4477 14 15 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg> `,
     roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
   },
   {
@@ -91,8 +91,18 @@ const menuItems = [
           <path d="M20 6C20 7.65685 16.4183 9 12 9C7.58172 9 4 7.65685 4 6M20 6C20 4.34315 16.4183 3 12 3C7.58172 3 4 4.34315 4 6M20 6V12M4 6V12M4 12C4 12.7956 4.84285 13.5587 6.34315 14.1213C7.84344 14.6839 9.87827 15 12 15C14.1217 15 16.1566 14.6839 17.6569 14.1213C19.1571 13.5587 20 12.7956 20 12M4 12V18C4 18.7956 4.84285 19.5587 6.34315 20.1213C7.84344 20.6839 9.87827 21 12 21C14.1217 21 16.1566 20.6839 17.6569 20.1213C19.1571 19.5587 20 18.7956 20 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
       `,
-    roles: ["OWNER", "CENTER_ADMIN", "TEACHER", "ASSISTANT"],
-    query: `?type=DOCUMENTS`
+    roles: ["OWNER", "CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT"],
+    query: `?type=DOCUMENTS`,
+  },
+  {
+    title: "Tasks",
+    href: TASKS_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 7H15M9 11H15M9 15H13M7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+    query: `?type=DOCUMENTS`,
   },
   {
     title: "Settings",
@@ -131,7 +141,7 @@ export default function SidebarLinks({ userRole, closeSidebar }) {
         return (
           <Link
             key={item.title}
-            href={item.href + `${item?.query ? item?.query: ""}`}
+            href={item.href + `${item?.query ? item?.query : ""}`}
             onClick={handleClick}
             className={`flex items-center gap-3 relative px-4 py-2 rounded-lg transition-colors duration-200 
               ${

@@ -14,7 +14,6 @@ import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useIntl } from "react-intl";
 
-// Qiyinchilik darajasiga qarab ranglarni belgilash
 const getDifficultyColor = (level) => {
   switch (level?.toUpperCase()) {
     case "BEGINNER":
@@ -68,12 +67,14 @@ export default function TemplateItem({ item, role, user_id }) {
         {/* Hover Actions Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 backdrop-blur-[2px]">
           {/* View / Start Button */}
-          <button
-            className="p-2 bg-white text-indigo-600 rounded-full hover:text-indigo-700 hover:scale-110 transition-all shadow-lg"
-            title="View Details"
-          >
-            <BookOpen size={18} />
-          </button>
+          {role === "STUDENT" && (
+            <button
+              className="p-2 bg-white text-indigo-600 rounded-full hover:text-indigo-700 hover:scale-110 transition-all shadow-lg"
+              title="View Details"
+            >
+              <BookOpen size={18} />
+            </button>
+          )}
 
           {role !== "STUDENT" &&
             (user_id === item?.created_by?.id || role === "CENTER_ADMIN") && (
@@ -117,7 +118,8 @@ export default function TemplateItem({ item, role, user_id }) {
                     openModal(
                       "templateUseAsTask",
                       {
-                        id: item?.id,
+                        template_id: item?.id,
+                        category: item?.category,
                       },
                       "big"
                     )
