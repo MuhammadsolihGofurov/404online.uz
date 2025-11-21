@@ -12,6 +12,7 @@ import {
   AssignUserToDocumentsModal,
   DocumentsModal,
   TemplatesModal,
+  TemplateUseAsTaskModal,
 } from "./materials";
 import { UpdateMockModal } from "./mocks";
 import {
@@ -36,4 +37,5 @@ export const ModalComponents = {
   documentsModal: DocumentsModal,
   assignDocumentToUser: AssignUserToDocumentsModal,
   templatesModal: TemplatesModal,
+  templateUseAsTask: TemplateUseAsTaskModal,
 };

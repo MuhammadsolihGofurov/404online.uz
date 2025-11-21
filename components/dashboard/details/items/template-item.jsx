@@ -90,6 +90,7 @@ export default function TemplateItem({ item, role, user_id }) {
                         old_category: item?.category,
                         old_difficulty_level: item?.difficulty_level,
                         old_mocks: item?.mocks,
+                        old_is_public: item?.is_public,
                       },
                       "big"
                     )
@@ -110,23 +111,22 @@ export default function TemplateItem({ item, role, user_id }) {
                 </button>
 
                 {/* Assign to task Button */}
-                {!item?.is_public && (
-                  <button
-                    onClick={() =>
-                      openModal(
-                        "assignTemplateToUser",
-                        {
-                          id: item?.id,
-                        },
-                        "short"
-                      )
-                    }
-                    className="p-2 bg-white text-green-600 rounded-full hover:bg-green-50 hover:scale-110 transition-all shadow-lg"
-                    title="Assign"
-                  >
-                    <MoveRight size={18} />
-                  </button>
-                )}
+
+                <button
+                  onClick={() =>
+                    openModal(
+                      "templateUseAsTask",
+                      {
+                        id: item?.id,
+                      },
+                      "big"
+                    )
+                  }
+                  className="p-2 bg-white text-green-600 rounded-full hover:bg-green-50 hover:scale-110 transition-all shadow-lg"
+                  title="Template use as task"
+                >
+                  <MoveRight size={18} />
+                </button>
               </>
             )}
         </div>

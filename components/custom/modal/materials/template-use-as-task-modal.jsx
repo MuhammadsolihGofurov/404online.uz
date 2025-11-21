@@ -13,15 +13,7 @@ import Select from "../../details/select";
 import { MOCK_TEMPLATES, TEMPLATE_D_LEVEL } from "@/mock/data";
 import { Input, ToggleSwitch } from "../../details";
 
-export default function TemplatesModal({
-  id,
-  old_title,
-  old_description,
-  old_category,
-  old_difficulty_level,
-  old_mocks,
-  old_is_public, // Agar propsda is_public kelsa
-}) {
+export default function TemplateUseAsTaskModal({ template_id }) {
   const intl = useIntl();
   const { closeModal } = useModal();
   const [reqLoading, setReqLoading] = useState(false);
@@ -33,40 +25,22 @@ export default function TemplatesModal({
     reset,
     register,
     control,
-    watch,
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      title: old_title || "",
-      description: old_description || "",
-      category: old_category || "",
-      difficulty_level: old_difficulty_level || "",
-      mocks: old_mocks || [],
-      is_public: old_is_public || false,
+      title: "",
+      deadline: "",
+      start_time: "",
+      end_time: "",
+      duration_minutes: "",
+      allow_audio_pause: false,
+      hide_results_from_students: false,
+      max_attempts: 1,
+      is_visible: true,
+      assigned_groups: [],
+      assigned_students: [],
     },
   });
-
-  const MockCategory = watch("category");
-
-  useEffect(() => {
-    if (old_title && old_category && old_difficulty_level && old_mocks)
-      reset({
-        title: old_title,
-        description: old_description,
-        category: old_category,
-        difficulty_level: old_difficulty_level,
-        mocks: old_mocks,
-        is_public: old_is_public || false,
-      });
-  }, [
-    old_title,
-    old_description,
-    old_category,
-    old_difficulty_level,
-    old_mocks,
-    old_is_public,
-    reset,
-  ]);
 
   const submitFn = async (data) => {
     const { title, mocks, description, category, difficulty_level, is_public } =
@@ -75,51 +49,29 @@ export default function TemplatesModal({
     try {
       setReqLoading(true);
 
-      // 1. FormData obyekti yaratamiz (Multipart request uchun shart)
       const formData = new FormData();
 
-      // 2. Oddiy maydonlarni qo'shamiz
       formData.append("title", title);
       formData.append("description", description);
       formData.append("category", category);
       formData.append("difficulty_level", difficulty_level);
-      // Boolean qiymatni stringga o'tkazib yuborgan ma'qul (yoki backend o'zi handle qiladi)
-      formData.append("is_public", is_public ? "true" : "false");
+      formData.append("is_public", is_public || false);
 
-      // 3. Arrayni (mocks) to'g'ri formatda qo'shamiz
-      // Backend getlist('mocks') qilishi uchun har bir ID alohida 'mocks' kaliti bilan qo'shilishi kerak
       if (mocks && mocks.length > 0) {
         mocks.forEach((item) => {
-          // Agar item obyekt bo'lsa (MultiSelectdan kelsa) uning ID sini olamiz
           const id = item?.id || item;
           formData.append("mocks", id);
         });
       }
 
-      // Debug uchun: FormData ichini ko'rish
-      // for (var pair of formData.entries()) {
-      //     console.log(pair[0]+ ', ' + pair[1]);
-      // }
-
-      let response;
       const baseUrl = "/material-templates/";
 
-      // Payload o'rniga formData yuboramiz
-      if (id) {
-        response = await authAxios.patch(`${baseUrl}${id}/`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        toast.success(
-          intl.formatMessage({ id: "Template updated successfully!" })
-        );
-      } else {
-        response = await authAxios.post(baseUrl, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        toast.success(
-          intl.formatMessage({ id: "Template created successfully!" })
-        );
-      }
+      const response = await authAxios.patch(`${baseUrl}${id}/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(
+        intl.formatMessage({ id: "Template updated successfully!" })
+      );
 
       setTimeout(() => {
         closeModal("templatesModal", response?.data);
@@ -128,32 +80,46 @@ export default function TemplatesModal({
       const errorData = e?.response?.data;
       let errorMsg = intl.formatMessage({ id: "Something went wrong" });
 
+      // Xatolarni tekshirish
       if (errorData?.error?.mocks) {
         errorMsg = errorData.error?.mocks?.[0];
       } else if (errorData?.error?.category) {
         errorMsg = errorData.error?.category?.[0];
       } else if (errorData?.error?.difficulty_level) {
-        // Note: Backend field name typo might differ, check exact key
         errorMsg = errorData.error?.difficulty_level?.[0];
       } else if (errorData?.mocks) {
-        // Ba'zan error to'g'ridan-to'g'ri array bo'lib kelishi mumkin
         errorMsg = Array.isArray(errorData.mocks)
           ? errorData.mocks[0]
           : errorData.mocks;
       }
 
       toast.error(errorMsg);
-      console.error(e);
+      console.error("Submission Error:", e);
     } finally {
       setReqLoading(false);
     }
   };
 
-  const { data: mocksData } = useSWR(
-    ["/mocks/", router.locale, MockCategory],
+  const { data: groups } = useSWR(
+    ["/groups/", router.locale],
     ([url, locale]) =>
       fetcher(
-        `${url}?page_size=all&category=${MockCategory}`,
+        `${url}?page_size=all`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
+  const { data: students } = useSWR(
+    ["/users/", router.locale],
+    ([url, locale]) =>
+      fetcher(
+        `${url}?page_size=all&role=STUDENT`,
         {
           headers: {
             "Accept-Language": locale,
@@ -167,7 +133,7 @@ export default function TemplatesModal({
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
-        {intl.formatMessage({ id: "Template" })}
+        {intl.formatMessage({ id: "Use as Task" })}
       </h1>
       <form
         onSubmit={handleSubmit(submitFn)}
@@ -236,7 +202,7 @@ export default function TemplatesModal({
                   {...field}
                   title={intl.formatMessage({ id: "Mocks" })}
                   placeholder={intl.formatMessage({ id: "Select" })}
-                  options={mocksData || []}
+                  options={groups || []}
                   error={errors.mocks?.message}
                   value={field.value || []}
                   onChange={(val) => field.onChange(val)}
@@ -246,7 +212,7 @@ export default function TemplatesModal({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between  items-center gap-4">
           <div>
             <ToggleSwitch
               control={control}
