@@ -47,5 +47,17 @@ export const MOCKS_CREATE_FOURTH_STEP_URL = "/dashboard/mocks/create/4-step";
 export const TASKS_URL = "/dashboard/tasks";
 export const MY_TASKS_URL = "/dashboard/my-tasks";
 
+// === REVIEWS ===
+export const REVIEWS_URL = "/dashboard/reviews";
+
 // === LEADERBOARD ===
 export const LEADERBOARD_URL = "/dashboard/leaderboard";
+
+// === CHAT (Student) ===
+export const CHAT_URL = "/dashboard/chat";
+
+// === MY GROUP ===
+export const MY_GROUP_URL = "/dashboard/my-group";
+
+// === PROFILE ===
+export const PROFILE_URL = "/dashboard/profile";

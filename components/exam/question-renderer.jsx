@@ -1,5 +1,6 @@
 import React from "react";
 import { useIntl } from "react-intl";
+import { RichText } from "@/components/ui/RichText";
 
 /**
  * QuestionRenderer
@@ -56,6 +57,16 @@ export function QuestionRenderer({ question, value, onChange, disabled = false }
     case "SUMMARY_FILL_BLANKS":
       return (
         <SummaryFillBlanksRenderer
+          question={question}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
+
+    case "SUMMARY_DRAG_DROP":
+      return (
+        <SummaryDragDropRenderer
           question={question}
           value={value}
           onChange={onChange}
@@ -146,7 +157,9 @@ function MCQSingleRenderer({ question, value, onChange, disabled }) {
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1">
+          <RichText content={prompt} />
+        </div>
       </div>
 
       <div className="space-y-3 ml-[52px]">
@@ -228,7 +241,7 @@ function MCQMultipleRenderer({ question, value, onChange, disabled }) {
           Q{question_number}
         </span>
         <div className="flex-1">
-          <p className="text-gray-900">{prompt}</p>
+          <RichText content={prompt} />
           {maxChoices && (
             <p className="text-sm text-gray-500 mt-1">
               {intl.formatMessage(
@@ -294,7 +307,9 @@ function TFNGRenderer({ question, value, onChange, disabled }) {
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1">
+          <RichText content={prompt} />
+        </div>
       </div>
 
       <div className="flex gap-4 ml-[52px]">
@@ -351,9 +366,11 @@ function ShortAnswerRenderer({ question, value, onChange, disabled }) {
           Q{question_number}
         </span>
         <div className="flex-1">
-          <p className="text-gray-900">{prompt}</p>
+          <RichText content={prompt} />
           {instructions && (
-            <p className="text-sm text-gray-500 mt-1 italic">{instructions}</p>
+            <div className="text-sm text-gray-500 mt-1 italic">
+              <RichText content={instructions} />
+            </div>
           )}
         </div>
       </div>
@@ -458,7 +475,9 @@ function SummaryFillBlanksRenderer({ question, value, onChange, disabled }) {
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1">
+          <RichText content={prompt} />
+        </div>
       </div>
 
       <div className="ml-[52px] p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -473,6 +492,141 @@ function SummaryFillBlanksRenderer({ question, value, onChange, disabled }) {
             )}
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SUMMARY_DRAG_DROP: Summary with draggable word bank
+ */
+function SummaryDragDropRenderer({ question, value, onChange, disabled }) {
+  const intl = useIntl();
+  const { prompt, content, question_number } = question;
+  const text = content?.text || "";
+  const wordBank = content?.word_bank || [];
+  const wordLimit = content?.word_limit || null;
+
+  // Extract blank IDs from text (e.g., ___(1)___, ___(A)___)
+  const blankMatches = text.match(/___\(([^)]+)\)___/g) || [];
+  const blankIds = blankMatches.map((match) =>
+    match.replace(/___\(([^)]+)\)___/, "$1")
+  );
+
+  const currentBlanks = value?.blanks || value?.values || {};
+  
+  // Calculate available words (words not currently used in blanks)
+  const usedWords = Object.values(currentBlanks).filter(Boolean);
+  const availableWords = wordBank.filter((word) => !usedWords.includes(word));
+
+  const handleBlankSelect = (blankId, word) => {
+    if (disabled) return;
+
+    const newBlanks = { ...currentBlanks };
+    // Assign word to blank (overwrites previous if any)
+    newBlanks[blankId] = word;
+    onChange({ blanks: newBlanks });
+  };
+
+  const handleRemoveBlank = (blankId) => {
+    if (disabled) return;
+
+    const newBlanks = { ...currentBlanks };
+    delete newBlanks[blankId];
+    onChange({ blanks: newBlanks });
+  };
+
+  // Render text with drop zones for blanks
+  const renderTextWithBlanks = () => {
+    let parts = text.split(/(___\([^)]+\)___)/);
+    return parts.map((part, idx) => {
+      const blankMatch = part.match(/___\(([^)]+)\)___/);
+      if (blankMatch) {
+        const blankId = blankMatch[1];
+        const blankValue = currentBlanks[blankId] || "";
+
+        return (
+          <span key={idx} className="inline-block mx-1">
+            {blankValue ? (
+              <span
+                className="inline-block px-3 py-1 bg-main text-white rounded-lg cursor-pointer hover:bg-main/90"
+                onClick={() => !disabled && handleRemoveBlank(blankId)}
+                title={intl.formatMessage({ id: "Click to remove" })}
+              >
+                {blankValue}
+              </span>
+            ) : (
+              <span className="inline-block min-w-[120px] px-2 py-1 border-2 border-dashed border-gray-300 rounded text-gray-400 text-center">
+                {blankId}
+              </span>
+            )}
+          </span>
+        );
+      }
+      return <span key={idx}>{part}</span>;
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="font-semibold text-gray-700 min-w-[40px]">
+          Q{question_number}
+        </span>
+        <div className="text-gray-900 flex-1">
+          <RichText content={prompt} />
+        </div>
+      </div>
+
+      <div className="ml-[52px] space-y-4">
+        {/* Word Bank */}
+        {wordBank.length > 0 && (
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm font-semibold text-gray-700 mb-2">
+              {intl.formatMessage({ id: "Word Bank" })}:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {availableWords.map((word, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    // Find first empty blank
+                    const emptyBlank = blankIds.find(
+                      (id) => !currentBlanks[id]
+                    );
+                    if (emptyBlank) {
+                      handleBlankSelect(emptyBlank, word);
+                    }
+                  }}
+                  disabled={disabled || !blankIds.some((id) => !currentBlanks[id])}
+                  className={`px-3 py-1 rounded-lg border-2 transition-colors ${
+                    disabled || !blankIds.some((id) => !currentBlanks[id])
+                      ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100"
+                      : "border-blue-300 bg-white text-blue-700 hover:bg-blue-50 cursor-pointer"
+                  }`}
+                >
+                  {word}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Summary Text with Blanks */}
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="text-gray-800 leading-relaxed">
+            {renderTextWithBlanks()}
+          </div>
+          {wordLimit && (
+            <p className="text-xs text-gray-500 mt-2">
+              {intl.formatMessage(
+                { id: "Maximum {limit} words per blank" },
+                { limit: wordLimit }
+              )}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -506,7 +660,9 @@ function MatchingRenderer({ question, value, onChange, disabled }) {
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1">
+          <RichText content={prompt} />
+        </div>
       </div>
 
       <div className="ml-[52px] space-y-3">
@@ -582,7 +738,9 @@ function TableCompletionRenderer({ question, value, onChange, disabled }) {
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1">
+          <RichText content={prompt} />
+        </div>
       </div>
 
       <div className="ml-[52px] overflow-x-auto">
@@ -674,7 +832,7 @@ function FlowchartCompletionRenderer({ question, value, onChange, disabled }) {
           Q{question_number}
         </span>
         <div className="flex-1">
-          <p className="text-gray-900">{prompt}</p>
+          <RichText content={prompt} />
           {wordLimit && (
             <p className="text-sm text-gray-500 mt-1 italic">{wordLimit}</p>
           )}
@@ -756,9 +914,11 @@ function MapLabellingRenderer({ question, value, onChange, disabled }) {
           Q{question_number}
         </span>
         <div className="flex-1">
-          <p className="text-gray-900">{prompt}</p>
+          <RichText content={prompt} />
           {instructions && (
-            <p className="text-sm text-gray-500 mt-1 italic">{instructions}</p>
+            <div className="text-sm text-gray-500 mt-1 italic">
+              <RichText content={instructions} />
+            </div>
           )}
         </div>
       </div>

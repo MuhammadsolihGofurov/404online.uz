@@ -34,8 +34,9 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
   } = task;
 
   // Check eligibility when component mounts or task changes
+  // Check for EXAM_MOCK and PRACTICE_MOCK (both can have restrictions)
   useEffect(() => {
-    if (task_type === "EXAM_MOCK" && !submission) {
+    if ((task_type === "EXAM_MOCK" || task_type === "PRACTICE_MOCK") && !submission) {
       checkEligibility();
     }
   }, [id, task_type]);
@@ -180,19 +181,88 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
           );
         }
       } else {
+        // Check if reason is deadline-related
+        const isDeadlinePassed = eligibility?.reason?.toLowerCase().includes("deadline");
         return (
           <button
             disabled
             className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 rounded-xl font-medium text-sm cursor-not-allowed"
             title={eligibility?.reason}
           >
-            {eligibility?.reason || intl.formatMessage({ id: "Not Available" })}
+            {isDeadlinePassed
+              ? intl.formatMessage({ id: "Deadline Passed" })
+              : eligibility?.reason || intl.formatMessage({ id: "Not Available" })}
           </button>
         );
       }
     }
 
-    // PRACTICE_MOCK, CUSTOM_MOCK, QUIZ
+    // PRACTICE_MOCK: Only show "Start Practice" button (no Practice Mode)
+    if (task_type === "PRACTICE_MOCK") {
+      if (checkingEligibility) {
+        return (
+          <button
+            disabled
+            className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 rounded-xl font-medium text-sm cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <ButtonSpinner />
+            {intl.formatMessage({ id: "Checking..." })}
+          </button>
+        );
+      }
+
+      // If not eligible (e.g., deadline passed), show reason
+      if (eligibility && !eligibility.can_submit) {
+        const isDeadlinePassed = eligibility.reason?.toLowerCase().includes("deadline");
+        return (
+          <button
+            disabled
+            className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 rounded-xl font-medium text-sm cursor-not-allowed"
+            title={eligibility.reason}
+          >
+            {isDeadlinePassed
+              ? intl.formatMessage({ id: "Deadline Passed" })
+              : eligibility.reason || intl.formatMessage({ id: "Not Available" })}
+          </button>
+        );
+      }
+
+      // Eligible - show Start Practice button
+      if (submission?.status === "DRAFT") {
+        return (
+          <Link
+            href={`/dashboard/exam-room/${id}`}
+            className="w-full px-4 py-2.5 bg-main text-white rounded-xl font-medium text-sm hover:bg-main/90 transition-colors flex items-center justify-center gap-2"
+          >
+            <Play size={16} />
+            {intl.formatMessage({ id: "Continue" })}
+          </Link>
+        );
+      }
+
+      return (
+        <Link
+          href={`/dashboard/exam-room/${id}`}
+          className="w-full px-4 py-2.5 bg-main text-white rounded-xl font-medium text-sm hover:bg-main/90 transition-colors flex items-center justify-center gap-2"
+        >
+          <Play size={16} />
+          {intl.formatMessage({ id: "Start Practice" })}
+        </Link>
+      );
+    }
+
+    // CUSTOM_MOCK, QUIZ: Check deadline
+    if (isExpired) {
+      return (
+        <button
+          disabled
+          className="w-full px-4 py-2.5 bg-gray-200 text-gray-500 rounded-xl font-medium text-sm cursor-not-allowed"
+        >
+          {intl.formatMessage({ id: "Deadline Passed" })}
+        </button>
+      );
+    }
+
     if (submission?.status === "DRAFT") {
       return (
         <Link
@@ -211,9 +281,7 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
         className="w-full px-4 py-2.5 bg-main text-white rounded-xl font-medium text-sm hover:bg-main/90 transition-colors flex items-center justify-center gap-2"
       >
         <Play size={16} />
-        {task_type === "PRACTICE_MOCK"
-          ? intl.formatMessage({ id: "Start Practice" })
-          : intl.formatMessage({ id: "Start" })}
+        {intl.formatMessage({ id: "Start" })}
       </Link>
     );
   };

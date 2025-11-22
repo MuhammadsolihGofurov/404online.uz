@@ -1,5 +1,6 @@
 import { SidebarLinksSkeleton } from "@/components/skeleton";
 import {
+  CHAT_URL,
   DASHBOARD_URL,
   GROUPS_URL,
   INVITECODE_URL,
@@ -7,7 +8,10 @@ import {
   MATERIALSHUB_URL,
   MEMBERSHIPS_URL,
   MOCKS_URL,
+  MY_GROUP_URL,
   MY_TASKS_URL,
+  PROFILE_URL,
+  REVIEWS_URL,
   SETTINGS_URL,
   TASKS_URL,
   TEACHERS_URL,
@@ -107,10 +111,37 @@ const menuItems = [
     query: `?type=DOCUMENTS`,
   },
   {
+    title: "Reviews",
+    href: REVIEWS_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+  },
+  {
     title: "My Tasks",
     href: MY_TASKS_URL,
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M9 7H15M9 11H15M9 15H13M7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["STUDENT", "GUEST"],
+  },
+  {
+    title: "Messages",
+    href: CHAT_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["STUDENT", "GUEST"],
+  },
+  {
+    title: "My Group",
+    href: MY_GROUP_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
     roles: ["STUDENT", "GUEST"],
@@ -123,6 +154,15 @@ const menuItems = [
         </svg>
         `,
     roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT", "GUEST"],
+  },
+  {
+    title: "Profile",
+    href: PROFILE_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["STUDENT", "GUEST"],
   },
   {
     title: "Settings",

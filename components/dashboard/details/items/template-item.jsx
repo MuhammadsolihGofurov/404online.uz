@@ -7,12 +7,14 @@ import {
   CheckCircle,
   BookOpen,
   MoveRight,
+  Play,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
 import { useModal } from "@/context/modal-context";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useIntl } from "react-intl";
+import Link from "next/link";
 
 const getDifficultyColor = (level) => {
   switch (level?.toUpperCase()) {
@@ -66,8 +68,20 @@ export default function TemplateItem({ item, role, user_id }) {
 
         {/* Hover Actions Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 backdrop-blur-[2px]">
-          {/* View / Start Button */}
-          {role === "STUDENT" && (
+          {/* Practice Button for Students */}
+          {role === "STUDENT" && item.category === "PRACTICE_TEMPLATE" && (
+            <Link
+              href={`/dashboard/practice/template/${item.id}`}
+              className="p-3 bg-white text-indigo-600 rounded-full hover:text-indigo-700 hover:scale-110 transition-all shadow-lg flex items-center gap-2"
+              title="Start Practice"
+            >
+              <Play size={18} />
+              <span className="text-xs font-medium">Practice</span>
+            </Link>
+          )}
+          
+          {/* View Details Button for Students (if not practice template) */}
+          {role === "STUDENT" && item.category !== "PRACTICE_TEMPLATE" && (
             <button
               className="p-2 bg-white text-indigo-600 rounded-full hover:text-indigo-700 hover:scale-110 transition-all shadow-lg"
               title="View Details"

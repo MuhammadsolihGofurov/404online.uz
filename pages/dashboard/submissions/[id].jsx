@@ -17,6 +17,7 @@ import {
   User,
   FileText,
   AlertCircle,
+  Play,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
 import Link from "next/link";
@@ -106,6 +107,24 @@ function SubmissionDetailPage({ info, user, loading }) {
       setAnswersMap(map);
     }
   }, [submission]);
+
+  // Extract correct answers from normalized data
+  const getCorrectAnswer = useMemo(() => {
+    if (!normalizedData) return () => null;
+    
+    // Create a map of question_id -> correct_answer
+    const correctAnswersMap = {};
+    
+    normalizedData.sections?.forEach((section) => {
+      section.questions?.forEach((question) => {
+        if (question.correct_answer !== undefined && question.correct_answer !== null) {
+          correctAnswersMap[String(question.id)] = question.correct_answer;
+        }
+      });
+    });
+    
+    return (questionId) => correctAnswersMap[String(questionId)] || null;
+  }, [normalizedData]);
 
   // Determine if we should show correctness indicators
   const showCorrectness = useMemo(() => {
@@ -292,6 +311,34 @@ function SubmissionDetailPage({ info, user, loading }) {
                   </div>
                 </div>
               )}
+
+              {/* Resubmission Section */}
+              {submission.status === "RESUBMISSION" && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle size={20} className="text-orange-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-orange-900 mb-2">
+                          {intl.formatMessage({ id: "Resubmission Required" })}
+                        </h3>
+                        <p className="text-orange-800 mb-4">
+                          {intl.formatMessage({
+                            id: "Please review the feedback above and resubmit your work."
+                          })}
+                        </p>
+                        <Link
+                          href={`/dashboard/exam-room/${submission.task?.id}`}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                        >
+                          <Play size={18} />
+                          {intl.formatMessage({ id: "Resubmit Task" })}
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Questions Section */}
@@ -309,9 +356,7 @@ function SubmissionDetailPage({ info, user, loading }) {
 
                     {section.questions?.map((question) => {
                       const userAnswer = answersMap[String(question.id)];
-                      // For read-only view, we don't have correct answers from backend
-                      // They would need to be fetched separately or included in submission response
-                      const correctAnswer = null; // TODO: Fetch correct answers if needed
+                      const correctAnswer = getCorrectAnswer(question.id);
 
                       return (
                         <div

@@ -8,13 +8,17 @@ import { authAxios } from "@/utils/axios";
 import { useState, useEffect, useMemo } from "react";
 import { ExamRoomLayout } from "@/components/exam/exam-room-layout";
 import { ExamDataNormalizer } from "@/components/exam/exam-data-normalizer";
+import { TaskCompletionModal } from "@/components/exam/task-completion-modal";
 
 function ExamRoomPage({ info, user, loading }) {
   const intl = useIntl();
   const router = useRouter();
-  const { id } = router.query;
+  const { id, mode } = router.query;
   const [normalizedData, setNormalizedData] = useState(null);
   const [existingDraft, setExistingDraft] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completedSubmission, setCompletedSubmission] = useState(null);
+  const isPracticeMode = mode === 'practice';
 
   // Fetch task details
   const { data: task, isLoading: taskLoading, error: taskError } = useSWR(
@@ -60,9 +64,9 @@ function ExamRoomPage({ info, user, loading }) {
     }
   );
 
-  // Fetch existing draft submission
+  // Fetch existing draft submission (skip in practice mode)
   const { data: draftData } = useSWR(
-    id && user?.id ? ["/submissions/", router.locale, id, user.id] : null,
+    id && user?.id && !isPracticeMode ? ["/submissions/", router.locale, id, user.id] : null,
     async ([url, locale]) => {
       try {
         const response = await authAxios.get(`${url}?task=${id}&status=DRAFT`);
@@ -90,6 +94,27 @@ function ExamRoomPage({ info, user, loading }) {
       setExistingDraft(draftData);
     }
   }, [draftData]);
+
+  // Handle submission completion (for non-EXAM tasks)
+  const handleSubmissionComplete = (submission) => {
+    setCompletedSubmission(submission);
+    setShowCompletionModal(true);
+  };
+
+  // Handle retry (replay workflow)
+  const handleRetry = () => {
+    setShowCompletionModal(false);
+    setCompletedSubmission(null);
+    setExistingDraft(null);
+    // Reload page to start fresh (backend will create new submission)
+    router.reload();
+  };
+
+  // Handle exit to dashboard
+  const handleExit = () => {
+    setShowCompletionModal(false);
+    router.push("/dashboard/my-tasks");
+  };
 
   // Loading state
   if (loading || taskLoading || !normalizedData) {
@@ -132,9 +157,22 @@ function ExamRoomPage({ info, user, loading }) {
       <ExamRoomLayout
         task={task}
         normalizedData={normalizedData}
-        existingDraft={existingDraft}
+        existingDraft={isPracticeMode ? null : existingDraft}
         user={user}
+        mode={isPracticeMode ? 'practice' : 'exam'}
+        onSubmissionComplete={isPracticeMode ? null : handleSubmissionComplete}
       />
+
+      {/* Task Completion Modal (for non-EXAM tasks) */}
+      {!isPracticeMode && task?.task_type !== 'EXAM_MOCK' && (
+        <TaskCompletionModal
+          isOpen={showCompletionModal}
+          onRetry={handleRetry}
+          onExit={handleExit}
+          submission={completedSubmission}
+          task={task}
+        />
+      )}
     </>
   );
 }
