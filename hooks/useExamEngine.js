@@ -126,24 +126,56 @@ export function useExamEngine(task, normalizedData, existingDraft, mode = 'exam'
   );
 
   // Count answered questions (needed by handleFinalSubmit)
+  // For grouped questions, counts individual sub-questions
   const getAnsweredCount = useCallback(() => {
-    return Object.keys(answers).filter((qId) => {
+    let count = 0;
+    
+    // Get all questions to check for grouped questions
+    const allQuestions = normalizedData?.allQuestions || [];
+    const questionMap = {};
+    allQuestions.forEach((q) => {
+      questionMap[String(q.id)] = q;
+    });
+    
+    Object.keys(answers).forEach((qId) => {
       const answer = answers[qId];
-      if (!answer || typeof answer !== "object") return false;
+      if (!answer || typeof answer !== "object") return;
       
-      // Check if answer has any non-empty value
-      const hasValue = Object.values(answer).some((val) => {
-        if (Array.isArray(val)) return val.length > 0;
-        if (typeof val === "string") return val.trim().length > 0;
-        if (typeof val === "object" && val !== null) {
-          return Object.keys(val).length > 0;
+      const question = questionMap[qId];
+      const isGrouped = question && question.question_number_end && 
+                       question.question_number_end > question.question_number_start;
+      
+      if (isGrouped && answer.values) {
+        // For grouped questions, count each answered sub-question
+        const questionRange = question.question_number_end - question.question_number_start + 1;
+        const answeredSubQuestions = Object.keys(answer.values).filter(
+          (key) => answer.values[key] && String(answer.values[key]).trim().length > 0
+        ).length;
+        count += answeredSubQuestions;
+      } else {
+        // For single questions, check if answer has any non-empty value
+        const hasValue = Object.values(answer).some((val) => {
+          if (Array.isArray(val)) return val.length > 0;
+          if (typeof val === "string") return val.trim().length > 0;
+          if (typeof val === "object" && val !== null) {
+            // Skip nested values object (handled above)
+            if (Object.keys(val).length === 0) return false;
+            // Check if it's a values object with actual answers
+            return Object.values(val).some((subVal) => 
+              subVal && String(subVal).trim().length > 0
+            );
+          }
+          return Boolean(val);
+        });
+        
+        if (hasValue) {
+          count += 1;
         }
-        return Boolean(val);
-      });
-      
-      return hasValue;
-    }).length;
-  }, [answers]);
+      }
+    });
+    
+    return count;
+  }, [answers, normalizedData]);
 
   // Auto-save function (needed by auto-save useEffect)
   const handleAutoSave = useCallback(async () => {

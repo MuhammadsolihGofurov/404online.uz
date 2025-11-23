@@ -55,6 +55,18 @@ export class ExamDataNormalizer {
       section_title: "Quiz Questions",
     }));
 
+    // Calculate total questions (count grouped questions as multiple sub-questions)
+    let totalQuestions = 0;
+    normalizedQuestions.forEach((q) => {
+      if (q.question_number_end && q.question_number_end > q.question_number_start) {
+        // Grouped question: count each sub-question
+        totalQuestions += (q.question_number_end - q.question_number_start + 1);
+      } else {
+        // Single question
+        totalQuestions += 1;
+      }
+    });
+
     return {
       task_type: "QUIZ",
       sections: [
@@ -66,7 +78,7 @@ export class ExamDataNormalizer {
         },
       ],
       allQuestions: normalizedQuestions,
-      totalQuestions: normalizedQuestions.length,
+      totalQuestions,
     };
   }
 
@@ -137,11 +149,23 @@ export class ExamDataNormalizer {
       });
     });
 
+    // Calculate total questions (count grouped questions as multiple sub-questions)
+    let totalQuestions = 0;
+    allQuestions.forEach((q) => {
+      if (q.question_number_end && q.question_number_end > q.question_number_start) {
+        // Grouped question: count each sub-question
+        totalQuestions += (q.question_number_end - q.question_number_start + 1);
+      } else {
+        // Single question
+        totalQuestions += 1;
+      }
+    });
+
     return {
       task_type: task.task_type,
       sections,
       allQuestions,
-      totalQuestions: allQuestions.length,
+      totalQuestions,
     };
   }
 

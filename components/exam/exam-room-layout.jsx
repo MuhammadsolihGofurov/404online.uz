@@ -252,10 +252,33 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
                       <div className="ml-4 space-y-1">
                         {section.questions?.map((question, questionIdx) => {
                           const questionAnswer = getAnswer(question.id);
-                          const isAnswered = questionAnswer && Object.keys(questionAnswer).length > 0;
+                          const isGrouped = question.question_number_end && 
+                                           question.question_number_end > question.question_number_start;
+                          
+                          // Check if answered (handle both single and grouped questions)
+                          let isAnswered = false;
+                          if (questionAnswer && Object.keys(questionAnswer).length > 0) {
+                            if (isGrouped && questionAnswer.values) {
+                              // For grouped questions, check if all sub-questions are answered
+                              const questionRange = question.question_number_end - question.question_number_start + 1;
+                              const answeredCount = Object.keys(questionAnswer.values).filter(
+                                (key) => questionAnswer.values[key] && String(questionAnswer.values[key]).trim().length > 0
+                              ).length;
+                              isAnswered = answeredCount === questionRange;
+                            } else {
+                              // Single question
+                              isAnswered = true;
+                            }
+                          }
+                          
                           const isCurrent =
                             currentSectionIndex === sectionIdx &&
                             currentQuestionIndex === questionIdx;
+
+                          // Display question number(s)
+                          const questionLabel = isGrouped
+                            ? `Q${question.question_number_start}-${question.question_number_end}`
+                            : `Q${question.question_number}`;
 
                           return (
                             <button
@@ -269,7 +292,7 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
                                   : "text-gray-600 hover:bg-gray-50"
                               }`}
                             >
-                              Q{question.question_number}
+                              {questionLabel}
                               {isAnswered && (
                                 <span className="ml-2 text-green-500">✓</span>
                               )}

@@ -4,9 +4,12 @@ import { Plus, Trash2 } from "lucide-react";
 export default function ShortAnswerBuilder({
   content,
   correctAnswer,
+  questionNumberStart = 1,
+  questionNumberEnd = 1,
   onContentChange,
   onAnswerChange,
 }) {
+  const isGrouped = questionNumberEnd > questionNumberStart;
   const variants = content?.variants || [];
 
   const updateContent = (key, value) => {
@@ -90,18 +93,109 @@ export default function ShortAnswerBuilder({
         </div>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-slate-700">
-          Correct answer
-        </label>
-        <input
-          type="text"
-          value={correctAnswer?.value || ""}
-          onChange={(e) => onAnswerChange({ value: e.target.value })}
-          placeholder="Exact or model answer"
-          className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-main focus:ring-4 focus:ring-main/10"
-        />
-      </div>
+      {/* Statements for grouped questions */}
+      {isGrouped && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-slate-700">
+              Sub-question statements (optional)
+            </label>
+            {(!content?.statements || content.statements.length === 0) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const newStatements = [];
+                  for (let i = questionNumberStart; i <= questionNumberEnd; i++) {
+                    newStatements.push("");
+                  }
+                  updateContent("statements", newStatements);
+                }}
+                className="text-sm text-main hover:underline"
+              >
+                Add statements
+              </button>
+            )}
+          </div>
+          {content?.statements && content.statements.length > 0 && (
+            <div className="space-y-2">
+              {content.statements.map((stmt, idx) => {
+                const qNum = questionNumberStart + idx;
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-600 min-w-[40px]">
+                      Q{qNum}:
+                    </span>
+                    <input
+                      type="text"
+                      value={stmt}
+                      onChange={(e) => {
+                        const newStatements = [...content.statements];
+                        newStatements[idx] = e.target.value;
+                        updateContent("statements", newStatements);
+                      }}
+                      placeholder={`Statement for Q${qNum}`}
+                      className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/20"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Correct answers section */}
+      {isGrouped ? (
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-slate-700">
+            Correct answers (Q{questionNumberStart}-{questionNumberEnd})
+          </p>
+          {(() => {
+            const questionRange = [];
+            for (let i = questionNumberStart; i <= questionNumberEnd; i++) {
+              questionRange.push(i);
+            }
+            const statements = content?.statements || [];
+            const currentValues = correctAnswer?.values || {};
+
+            return questionRange.map((qNum) => (
+              <div key={qNum}>
+                <label className="text-sm font-medium text-slate-700">
+                  Q{qNum} {statements[qNum - questionNumberStart] && (
+                    <span className="text-slate-500 font-normal">
+                      - {statements[qNum - questionNumberStart]}
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={currentValues[String(qNum)] || ""}
+                  onChange={(e) => {
+                    const newValues = { ...currentValues };
+                    newValues[String(qNum)] = e.target.value;
+                    onAnswerChange({ values: newValues });
+                  }}
+                  placeholder={`Model answer for Q${qNum}`}
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-main focus:ring-4 focus:ring-main/10"
+                />
+              </div>
+            ));
+          })()}
+        </div>
+      ) : (
+        <div>
+          <label className="text-sm font-medium text-slate-700">
+            Correct answer
+          </label>
+          <input
+            type="text"
+            value={correctAnswer?.value || ""}
+            onChange={(e) => onAnswerChange({ value: e.target.value })}
+            placeholder="Exact or model answer"
+            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-main focus:ring-4 focus:ring-main/10"
+          />
+        </div>
+      )}
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">

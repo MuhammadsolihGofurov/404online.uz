@@ -92,111 +92,127 @@ export default function MatchingBuilder({
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">Items</p>
-          <button
-            type="button"
-            onClick={() =>
-              updateList("list_a", [
-                ...listA,
-                { id: crypto.randomUUID(), text: "" },
-              ])
-            }
-            className="inline-flex items-center gap-2 rounded-full bg-main px-4 py-2 text-white text-sm"
-          >
-            <Plus size={14} />
-            Item
-          </button>
+    <div className="space-y-6">
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-sm font-semibold text-blue-900">
+            IELTS Matching Headings Support
+          </p>
+        </div>
+        <p className="text-xs text-blue-700">
+          List B (Options/Headings) can have more items than List A (Questions/Paragraphs). 
+          Extra options act as distractors and will remain unused.
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-700">List A (Questions/Paragraphs)</p>
+              <p className="text-xs text-slate-500 mt-1">{listA.length} item{listA.length !== 1 ? 's' : ''}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                updateList("list_a", [
+                  ...listA,
+                  { id: crypto.randomUUID(), text: "" },
+                ])
+              }
+              className="inline-flex items-center gap-2 rounded-full bg-main px-4 py-2 text-white text-sm"
+            >
+              <Plus size={14} />
+              Add Item
+            </button>
+          </div>
+
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <SortableContext
+              items={listA.map((item) => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {listA.map((item) => (
+                  <SortableListItem
+                    key={item.id}
+                    item={item}
+                    onChange={(id, text) =>
+                      updateList(
+                        "list_a",
+                        listA.map((el) =>
+                          el.id === id ? { ...el, text } : el
+                        )
+                      )
+                    }
+                    onRemove={(id) =>
+                      updateList(
+                        "list_a",
+                        listA.filter((el) => el.id !== id)
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={listA.map((item) => item.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-3">
-              {listA.map((item) => (
-                <SortableListItem
-                  key={item.id}
-                  item={item}
-                  onChange={(id, text) =>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-700">List B (Options/Headings)</p>
+              <p className="text-xs text-slate-500 mt-1">{listB.length} option{listB.length !== 1 ? 's' : ''} {listB.length > listA.length && `(${listB.length - listA.length} unused distractor${listB.length - listA.length !== 1 ? 's' : ''})`}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                updateList("list_b", [
+                  ...listB,
+                  { id: crypto.randomUUID(), text: "" },
+                ])
+              }
+              className="inline-flex items-center gap-2 rounded-full bg-main px-4 py-2 text-white text-sm"
+            >
+              <Plus size={14} />
+              Add Option
+            </button>
+          </div>
+          <div className="space-y-3">
+            {listB.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2"
+              >
+                <input
+                  type="text"
+                  value={item.text}
+                  onChange={(e) =>
                     updateList(
-                      "list_a",
-                      listA.map((el) =>
-                        el.id === id ? { ...el, text } : el
+                      "list_b",
+                      listB.map((el) =>
+                        el.id === item.id ? { ...el, text: e.target.value } : el
                       )
                     )
                   }
-                  onRemove={
-                    listA.length > 1
-                      ? (id) =>
-                          updateList(
-                            "list_a",
-                            listA.filter((el) => el.id !== id)
-                          )
-                      : null
-                  }
+                  placeholder="Option text"
+                  className="flex-1 rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/10"
                 />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">Matches</p>
-          <button
-            type="button"
-            onClick={() =>
-              updateList("list_b", [
-                ...listB,
-                { id: crypto.randomUUID(), text: "" },
-              ])
-            }
-            className="inline-flex items-center gap-2 rounded-full bg-main px-4 py-2 text-white text-sm"
-          >
-            <Plus size={14} />
-            Option
-          </button>
-        </div>
-        <div className="space-y-3">
-          {listB.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2"
-            >
-              <input
-                type="text"
-                value={item.text}
-                onChange={(e) =>
-                  updateList(
-                    "list_b",
-                    listB.map((el) =>
-                      el.id === item.id ? { ...el, text: e.target.value } : el
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateList(
+                      "list_b",
+                      listB.filter((el) => el.id !== item.id)
                     )
-                  )
-                }
-                placeholder="Option text"
-                className="flex-1 rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/10"
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  updateList(
-                    "list_b",
-                    listB.filter((el) => el.id !== item.id)
-                  )
-                }
-                className="text-red-500 hover:text-red-600 disabled:opacity-50"
-                disabled={listB.length <= 1}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
+                  }
+                  className="text-red-500 hover:text-red-600"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

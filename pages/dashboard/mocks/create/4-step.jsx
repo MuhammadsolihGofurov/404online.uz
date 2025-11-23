@@ -232,10 +232,8 @@ function FourthPage({ info, user, loading }) {
     sections.every((section) => (section.questions?.length || 0) > 0);
 
   const handleAddQuestion = () => {
-    if (!activeSection) {
-      toast.error("Select a section first");
-      return;
-    }
+    // Allow opening editor even without active section
+    // The editor will show a blocking message if needed
     setEditingQuestion(null);
     setEditorOpen(true);
   };
@@ -250,16 +248,142 @@ function FourthPage({ info, user, loading }) {
       "Delete this question? This action cannot be undone."
     );
     if (!confirmed) return;
+    
+    // Verify we have a valid question ID
+    if (!question?.id) {
+      toast.error("Invalid question ID");
+      console.error("Question missing ID:", question);
+      return;
+    }
+    
+    const questionId = question.id;
+    console.log("Deleting question with ID:", questionId);
+    console.log("Question object:", question);
+    console.log("Question ID type:", typeof questionId);
+    console.log("Question ID length:", questionId?.length);
+    
+    // Optimistically update the UI by removing the question from the cache
+    const updateCacheOptimistically = () => {
+      if (!data) {
+        console.warn("No data available for optimistic update");
+        return;
+      }
+      
+      const updatedData = {
+        ...data,
+        sections: data.sections?.map((section) => {
+          if (!section.questions) return section;
+          
+          const beforeCount = section.questions.length;
+          // Filter out the deleted question from this section
+          // Use String() to ensure proper comparison (UUIDs might be strings or objects)
+          const updatedQuestions = section.questions.filter(
+            (q) => {
+              const qId = String(q.id || '');
+              const targetId = String(questionId || '');
+              const matches = qId !== targetId;
+              if (!matches) {
+                console.log("Removing question from section:", {
+                  questionId: qId,
+                  targetId: targetId,
+                  types: { qId: typeof qId, targetId: typeof targetId },
+                  equal: qId === targetId
+                });
+              }
+              return matches;
+            }
+          );
+          const afterCount = updatedQuestions.length;
+          
+          if (beforeCount !== afterCount) {
+            console.log(`Removed question from section ${section.id}: ${beforeCount} -> ${afterCount}`);
+          } else {
+            console.warn(`Question not found in section ${section.id} to remove. Question ID: ${questionId}`);
+          }
+          
+          return {
+            ...section,
+            questions: updatedQuestions,
+          };
+        }) || [],
+      };
+      
+      // Update cache with new data immediately
+      mutate(updatedData, { revalidate: false });
+      console.log("Optimistic update applied");
+    };
+    
     try {
-      await authAxios.delete(`/mock-questions/${question.id}/`);
-      toast.success("Question removed");
-      mutate();
+      // Optimistically update the cache immediately (UI updates instantly)
+      updateCacheOptimistically();
+      
+      // Then make the API call
+      console.log(`Making DELETE request to: /mock-questions/${questionId}/`);
+      const response = await authAxios.delete(`/mock-questions/${questionId}/`);
+      console.log("Delete successful:", response.status);
+      toast.success("Question deleted");
+      
+      // Re-fetch to ensure consistency with server
+      await mutate();
     } catch (e) {
+      // If 404, the question doesn't exist on the server - handle gracefully
+      if (e?.response?.status === 404) {
+        const errorDetail = e?.response?.data?.error?.detail || e?.response?.data?.detail;
+        console.log("404 - Question not found (handled gracefully):", errorDetail);
+        console.log("Question ID:", questionId);
+        
+        // The optimistic update already removed it from UI
+        // The 404 means the question doesn't exist with this ID on the server
+        // This could mean:
+        // 1. Question was already deleted (success - our optimistic update is correct)
+        // 2. Question ID is stale/incorrect (the question might still exist with a different ID)
+        // 
+        // To handle both cases, we'll refresh the data from the server
+        // If the question truly doesn't exist, it won't come back
+        // If it exists with a different ID, it will reappear (which is correct)
+        toast.success("Question removed");
+        
+        // Re-fetch to sync with server state
+        // This ensures we don't have stale data
+        // Use optimisticData to keep the question filtered out during revalidation
+        // This prevents it from reappearing if it was already deleted
+        await mutate(undefined, {
+          optimisticData: (current) => {
+            if (!current?.sections) return current;
+            return {
+              ...current,
+              sections: current.sections?.map((section) => ({
+                ...section,
+                questions: section.questions?.filter((q) => String(q.id) !== String(questionId)) || [],
+              })) || [],
+            };
+          },
+          revalidate: true,
+        });
+        
+        // Return early to prevent the error from propagating
+        // This prevents Next.js from showing it as a runtime error
+        return;
+      }
+      
+      // For non-404 errors, log them properly
+      console.error("Delete error:", e);
+      console.error("Error response:", e?.response);
+      console.error("Error status:", e?.response?.status);
+      console.error("Error data:", e?.response?.data);
+      console.error("Question ID used:", questionId);
+      console.error("Full question object:", question);
+      
+      // For other errors, revert the optimistic update and show error
       const message =
+        e?.response?.data?.error?.detail ||
         e?.response?.data?.detail ||
         e?.response?.data?.error ||
         "Unable to delete question";
       toast.error(message);
+      
+      // Re-fetch to revert to server state (in case optimistic update was wrong)
+      await mutate();
     }
   };
 
@@ -375,7 +499,7 @@ function FourthPage({ info, user, loading }) {
           </div>
         </StepsWrapper>
       </DashboardLayout>
-      {editorOpen && activeSection && (
+      {editorOpen && (
         <QuestionEditor
           isOpen={editorOpen}
           section={activeSection}

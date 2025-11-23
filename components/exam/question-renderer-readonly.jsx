@@ -450,26 +450,141 @@ function ShortAnswerReadOnly({ question, userAnswer, correctAnswer, isCorrect, s
 function SummaryFillBlanksReadOnly({ question, userAnswer, correctAnswer, showCorrectness }) {
   const intl = useIntl();
   const { prompt, content, question_number } = question;
+  const items = content?.items || [];
   const text = content?.text || "";
-  const blanks = content?.blanks || [];
+  
+  // Legacy support: if items array doesn't exist, fall back to text-based rendering
+  const hasLegacyFormat = !items.length && text;
+  
+  const userBlanks = userAnswer?.blanks || userAnswer?.values || {};
+  const correctBlanks = correctAnswer?.blanks || correctAnswer?.values || {};
 
-  const userBlanks = userAnswer?.blanks || [];
-  const correctBlanks = correctAnswer?.blanks || [];
+  // New structured format: Render items array
+  const renderStructuredItems = () => {
+    if (!items.length) return null;
 
-  const blankMatches = text.match(/___\(([^)]+)\)___/g) || [];
-  const blankIds = blankMatches.map((match) =>
-    match.replace(/___\(([^)]+)\)___/, "$1")
-  );
+    const elements = [];
+    let listItems = []; // Track items in current bullet list
+    let listKey = null; // Track the key for the current list
 
-  const renderTextWithBlanks = () => {
+    items.forEach((item, index) => {
+      if (item.type === "heading") {
+        // Close any open list
+        if (listItems.length > 0) {
+          elements.push(
+            <ul key={listKey} className="list-disc list-inside space-y-1 my-2">
+              {listItems}
+            </ul>
+          );
+          listItems = [];
+          listKey = null;
+        }
+        elements.push(
+          <h3 key={`heading-${index}`} className="mt-4 mb-2 text-lg font-bold text-gray-900">
+            {item.text}
+          </h3>
+        );
+      } else if (item.type === "subheading") {
+        // Close any open list
+        if (listItems.length > 0) {
+          elements.push(
+            <ul key={listKey} className="list-disc list-inside space-y-1 my-2">
+              {listItems}
+            </ul>
+          );
+          listItems = [];
+          listKey = null;
+        }
+        elements.push(
+          <h4 key={`subheading-${index}`} className="mt-3 mb-2 text-base font-semibold text-gray-800">
+            {item.text}
+          </h4>
+        );
+      } else if (item.type === "question") {
+        const userValue = userBlanks[item.id] || "";
+        const correctValue = showCorrectness ? (correctBlanks[item.id] || "") : null;
+        const isCorrect = showCorrectness && correctValue && 
+          userValue.toLowerCase().trim() === correctValue.toLowerCase().trim();
+
+        const questionRow = (
+          <span className="inline-flex items-center gap-1 flex-wrap">
+            {item.pre && <span>{item.pre}</span>}
+            <span className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 text-center font-medium ${
+              isCorrect === true ? "border-green-500 bg-green-50" :
+              isCorrect === false ? "border-red-500 bg-red-50" :
+              "border-blue-500 bg-blue-50"
+            }`}>
+              {userValue || "___"}
+            </span>
+            {showCorrectness && correctValue && (
+              <span className="text-xs text-green-600 ml-1">
+                ({intl.formatMessage({ id: "Correct" })}: {correctValue})
+              </span>
+            )}
+            {item.post && <span>{item.post}</span>}
+          </span>
+        );
+
+        if (item.is_bullet) {
+          // Add to current list or start new one
+          if (!listKey) {
+            listKey = `list-${index}`;
+          }
+          listItems.push(
+            <li key={`item-${index}`} className="text-gray-800">
+              {questionRow}
+            </li>
+          );
+        } else {
+          // Close any open list
+          if (listItems.length > 0) {
+            elements.push(
+              <ul key={listKey} className="list-disc list-inside space-y-1 my-2">
+                {listItems}
+              </ul>
+            );
+            listItems = [];
+            listKey = null;
+          }
+          // Regular paragraph
+          elements.push(
+            <p key={`para-${index}`} className="my-2 text-gray-800">
+              {questionRow}
+            </p>
+          );
+        }
+      }
+    });
+
+    // Close any remaining open list
+    if (listItems.length > 0) {
+      elements.push(
+        <ul key={listKey || "list-final"} className="list-disc list-inside space-y-1 my-2">
+          {listItems}
+        </ul>
+      );
+    }
+
+    return <div className="space-y-2">{elements}</div>;
+  };
+
+  // Legacy format: Render text with placeholders
+  const renderLegacyText = () => {
+    if (!hasLegacyFormat) return null;
+
+    const blankMatches = text.match(/___\(([^)]+)\)___/g) || [];
+    const blankIds = blankMatches.map((match) =>
+      match.replace(/___\(([^)]+)\)___/, "$1")
+    );
+
     let parts = text.split(/(___\([^)]+\)___)/);
     return parts.map((part, idx) => {
       const blankMatch = part.match(/___\(([^)]+)\)___/);
       if (blankMatch) {
         const blankId = blankMatch[1];
         const blankIndex = blankIds.indexOf(blankId);
-        const userValue = userBlanks[blankIndex] || "";
-        const correctValue = showCorrectness && correctBlanks ? correctBlanks[blankIndex] : null;
+        const userValue = userBlanks[blankIndex] || userBlanks[blankId] || "";
+        const correctValue = showCorrectness && correctBlanks ? (correctBlanks[blankIndex] || correctBlanks[blankId] || "") : null;
         const isCorrect = showCorrectness && correctValue && userValue.toLowerCase().trim() === correctValue.toLowerCase().trim();
 
         return (
@@ -504,7 +619,7 @@ function SummaryFillBlanksReadOnly({ question, userAnswer, correctAnswer, showCo
 
       <div className="ml-[52px] p-4 bg-gray-50 rounded-lg border border-gray-200">
         <div className="text-gray-800 leading-relaxed">
-          {renderTextWithBlanks()}
+          {items.length > 0 ? renderStructuredItems() : renderLegacyText()}
         </div>
       </div>
     </div>
