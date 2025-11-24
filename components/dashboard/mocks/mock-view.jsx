@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   ArrowLeft,
   BookOpen,
   Users,
   Calendar,
   Edit,
+  Layers,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/router";
@@ -19,6 +20,16 @@ import { toast } from "react-toastify";
 export default function MockView({ mock, loading }) {
   const router = useRouter();
   const { openModal } = useModal();
+  const mockId = mock?.id;
+  const editWizardUrl = mockId
+    ? `/dashboard/mocks/create/3-step?mock_id=${mockId}&mock_type=${encodeURIComponent(
+        mock?.mock_type || ""
+      )}&category=${encodeURIComponent(mock?.category || "")}&mode=edit`
+    : null;
+
+  const redirectToList = useCallback(() => {
+    router.push(MOCKS_URL);
+  }, [router]);
 
   if (loading) {
     return <MockViewSkeleton />;
@@ -40,14 +51,14 @@ export default function MockView({ mock, loading }) {
         description:
           "Are you sure you want to delete this mock? This action cannot be undone.",
         onConfirm: async () => {
-          await authAxios.delete(`/mocks/${id}/`);
-          toast.success(
-            intl.formatMessage({ id: "Mock deleted successfully!" })
-          );
-          setTimeout(() => {
-            router.push(MOCKS_URL);
-          }, 300);
-        },
+          try {
+            await authAxios.delete(`/mocks/${id}/`);
+            toast.success("Mock deleted successfully");
+            redirectToList();
+          } catch (error) {
+            toast.error("Failed to delete mock");
+          }
+        }
       },
       "short"
     );
@@ -91,6 +102,20 @@ export default function MockView({ mock, loading }) {
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
             <button
               onClick={() => {
+                if (editWizardUrl) {
+                  router.push(editWizardUrl);
+                }
+              }}
+              className="flex items-center space-x-2 px-4 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 text-sm"
+            >
+              <Layers size={15} />
+              <span className="hidden sm:inline">
+                Edit Questions & Sections
+              </span>
+              <span className="sm:hidden">Edit Q&S</span>
+            </button>
+            <button
+              onClick={() => {
                 openModal(
                   "updateMock",
                   { id: mock?.id, initialData: mock },
@@ -110,7 +135,7 @@ export default function MockView({ mock, loading }) {
               <span className="hidden sm:inline">Delete Mock</span>
             </button>
             <button
-              onClick={() => router.push(MOCKS_URL)}
+              onClick={redirectToList}
               className="flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 transform text-sm"
             >
               <ArrowLeft size={15} />

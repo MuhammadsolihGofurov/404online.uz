@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/router";
@@ -9,7 +9,13 @@ import { useParams } from "@/hooks/useParams";
 import { getPartNumbers } from "@/utils/funcs";
 import { Dynamic3PartsForm } from "./details";
 import { MOCK_CONFIG } from "@/mock/data";
-import { MOCKS_CREATE_FOURTH_STEP_URL } from "@/mock/router";
+import {
+  MOCKS_CREATE_FOURTH_STEP_URL,
+  MOCKS_VIEW_URL,
+} from "@/mock/router";
+import useSWR from "swr";
+import fetcher from "@/utils/fetcher";
+import Link from "next/link";
 
 export default function ThirdStepForms() {
   const intl = useIntl();
@@ -19,6 +25,9 @@ export default function ThirdStepForms() {
 
   const MockType = findParams("mock_type");
   const MockId = findParams("mock_id");
+  const category = findParams("category");
+  const mode = findParams("mode");
+  const isEditMode = mode === "edit";
 
   // Default values parts soni mockType ga qarab
   const defaultParts = useMemo(() => {
@@ -28,6 +37,7 @@ export default function ThirdStepForms() {
       instructions: "",
       images: [],
       audio_file: null,
+      section_id: null,
     }));
   }, [MockType]);
 
@@ -36,12 +46,50 @@ export default function ThirdStepForms() {
     handleSubmit,
     control,
     formState: { errors },
+    reset,
   } = useForm({
     mode: "onChange",
     defaultValues: { parts: defaultParts },
   });
 
   const partOptions = useMemo(() => getPartNumbers(MockType), [MockType]);
+
+  const { data: existingMock } = useSWR(
+    MockId ? [`/mocks/${MockId}/`, router.locale] : null,
+    ([url, locale]) =>
+      fetcher(
+        url,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      ),
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
+  useEffect(() => {
+    if (!existingMock?.sections?.length) return;
+    const formattedSections = [...existingMock.sections]
+      .sort((a, b) => (a.part_number || 0) - (b.part_number || 0))
+      .map((section) => ({
+        section_id: section.id,
+        part_number: section.part_number,
+        instructions: section.instructions || "",
+        images:
+          section.images?.map((img) => ({
+            id: img.id,
+            preview: img.image,
+            isExisting: true,
+          })) || [],
+        audio_file: null,
+      }));
+    reset({ parts: formattedSections });
+  }, [existingMock, reset]);
 
   const submitFn = async (data) => {
     console.log("Submitting data:", data);
@@ -52,7 +100,11 @@ export default function ThirdStepForms() {
         if (!part) continue;
 
         const formData = new FormData();
-        formData.append("mock", MockId);
+        const sectionId = part.section_id;
+        const isUpdate = Boolean(sectionId);
+        if (!isUpdate) {
+          formData.append("mock", MockId);
+        }
         formData.append("instructions", part.instructions || "");
         formData.append("part_number", part.part_number); // original part_number
 
@@ -60,19 +112,32 @@ export default function ThirdStepForms() {
           formData.append("audio_file", part.audio_file);
         }
 
-        // 1️⃣ Send section
-        const response = await authAxios.post("/mock-sections/", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        const sectionId = response?.data?.id;
+        let persistedSectionId = sectionId;
+        if (isUpdate) {
+          const response = await authAxios.patch(
+            `/mock-sections/${persistedSectionId}/`,
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            }
+          );
+          persistedSectionId = response?.data?.id || persistedSectionId;
+        } else {
+          const response = await authAxios.post("/mock-sections/", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          persistedSectionId = response?.data?.id;
+        }
 
         // 2️⃣ Send images if any
-        if (part.images?.length) {
+        const newImages =
+          part.images?.filter((img) => img.file instanceof File) || [];
+
+        if (newImages.length) {
           const imagesForm = new FormData();
-          imagesForm.append("section_id", sectionId);
-          Array.from(part.images).forEach((img) => {
-            imagesForm.append("images", img);
+          imagesForm.append("section_id", persistedSectionId);
+          newImages.forEach((img) => {
+            imagesForm.append("images", img.file);
           });
 
           await authAxios.post(
@@ -87,9 +152,17 @@ export default function ThirdStepForms() {
 
       toast.success("Success!");
       setTimeout(() => {
-        router.push(
-          `${MOCKS_CREATE_FOURTH_STEP_URL}?mock_id=${MockId}&mock_type=${MockType}`
-        );
+        const params = new URLSearchParams({
+          mock_id: MockId,
+          mock_type: MockType,
+        });
+        if (category) {
+          params.append("category", category);
+        }
+        if (isEditMode) {
+          params.append("mode", "edit");
+        }
+        router.push(`${MOCKS_CREATE_FOURTH_STEP_URL}?${params.toString()}`);
       });
     } catch (e) {
       console.error(e.response?.data || e.message);
@@ -102,6 +175,22 @@ export default function ThirdStepForms() {
     }
   };
 
+  const handleExistingImageDelete = async (image) => {
+    if (!image?.id) return false;
+    try {
+      await authAxios.delete(`/mock-section-images/${image.id}/`);
+      toast.success("Image removed");
+      return true;
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error?.response?.data?.detail ||
+          intl.formatMessage({ id: "Failed to delete image" })
+      );
+      return false;
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(submitFn)} className="flex flex-col gap-5">
       <Dynamic3PartsForm
@@ -111,17 +200,26 @@ export default function ThirdStepForms() {
         errors={errors}
         intl={intl}
         partOptions={partOptions}
+        onDeleteExistingImage={handleExistingImageDelete}
       />
 
-      <div className="w-full flex items-center justify-end">
+      <div className="flex flex-col gap-4 w-full sm:flex-row sm:items-center sm:justify-between">
+        {isEditMode && (
+          <Link
+            href={`${MOCKS_VIEW_URL}?mock_id=${MockId}`}
+            className="text-sm font-semibold text-main hover:underline"
+          >
+            Back to Mock Details
+          </Link>
+        )}
         <button
           type="submit"
-          className="rounded-xl bg-main flex items-center justify-center text-white p-4 hover:bg-blue-800 transition-colors duration-200"
+          className="flex items-center justify-center p-4 text-white transition-colors duration-200 rounded-xl bg-main hover:bg-blue-800 sm:ml-auto"
         >
           {reqLoading ? (
             <ButtonSpinner />
           ) : (
-            intl.formatMessage({ id: "Submit" })
+            "Save & Continue to Questions"
           )}
         </button>
       </div>

@@ -1,19 +1,30 @@
 import { X } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-export default function ImageUploadBox({ value, onChange }) {
+export default function ImageUploadBox({
+  value = [],
+  onChange = () => {},
+  onDeleteExisting,
+}) {
   const [images, setImages] = useState([]);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (Array.isArray(value)) {
+      setImages(value);
+    }
+  }, [value]);
 
   const handleFiles = (files) => {
     const arr = Array.from(files).map((file) => ({
       file,
       preview: URL.createObjectURL(file),
       id: Math.random().toString(36).substring(2),
+      isExisting: false,
     }));
     const updated = [...images, ...arr];
     setImages(updated);
-    onChange(updated.map((i) => i.file));
+    onChange(updated);
   };
 
   const handleDrop = (e) => {
@@ -21,10 +32,16 @@ export default function ImageUploadBox({ value, onChange }) {
     handleFiles(e.dataTransfer.files);
   };
 
-  const handleRemove = (id) => {
-    const updated = images.filter((img) => img.id !== id);
+  const handleRemove = async (image) => {
+    if (image.isExisting && typeof onDeleteExisting === "function") {
+      const success = await onDeleteExisting(image);
+      if (!success) {
+        return;
+      }
+    }
+    const updated = images.filter((img) => img.id !== image.id);
     setImages(updated);
-    onChange(updated.map((i) => i.file));
+    onChange(updated);
   };
 
   const dragItem = useRef();
@@ -49,7 +66,7 @@ export default function ImageUploadBox({ value, onChange }) {
     dragOverItem.current = null;
 
     setImages(newList);
-    onChange(newList.map((i) => i.file));
+    onChange(newList);
   };
 
   return (
@@ -80,7 +97,7 @@ export default function ImageUploadBox({ value, onChange }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation(); // dragni oldini olish
-                handleRemove(img.id);
+                handleRemove(img);
               }}
               className="absolute top-1 right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-600"
             >
@@ -93,7 +110,7 @@ export default function ImageUploadBox({ value, onChange }) {
               className="w-24 h-24 object-cover rounded-lg"
             />
             <p className="text-xs text-gray-600 mt-1 max-w-[90px] truncate">
-              {img.file.name}
+              {img.file?.name || img.caption || "Image"}
             </p>
           </div>
         ))}

@@ -14,9 +14,27 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 
-function SortableListItem({ item, onChange, onRemove, ...sortable }) {
+const getItemIdentifier = (item, index, prefix) => {
+  if (!item) return `${prefix}-${index}`;
+  return (
+    item.id ||
+    item.key ||
+    item.value ||
+    item.label ||
+    `${prefix}-${index}`
+  );
+};
+
+const getItemText = (item) => {
+  if (typeof item === "object" && item !== null) {
+    return item.text ?? "";
+  }
+  return typeof item === "string" ? item : "";
+};
+
+function SortableListItem({ item, sortableId, itemIndex, onChange, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: item.id });
+    useSortable({ id: sortableId });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -27,7 +45,7 @@ function SortableListItem({ item, onChange, onRemove, ...sortable }) {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3"
+      className="flex items-start gap-3 p-3 border bg-slate-50 border-slate-200 rounded-xl"
     >
       <button
         type="button"
@@ -39,16 +57,21 @@ function SortableListItem({ item, onChange, onRemove, ...sortable }) {
       </button>
       <input
         type="text"
-        value={item.text}
-        onChange={(e) => onChange(item.id, e.target.value)}
+        value={getItemText(item)}
+        onChange={(e) => onChange(itemIndex, e.target.value)}
         placeholder="List item text"
-        className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/10"
+        className="flex-1 px-3 py-2 text-sm border rounded-lg border-slate-200 focus:border-main focus:ring-2 focus:ring-main/10"
       />
       <button
         type="button"
-        onClick={() => onRemove(item.id)}
-        className="mt-2 text-red-500 hover:text-red-600 disabled:opacity-50"
-        disabled={!onRemove}
+        onPointerDown={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onRemove(itemIndex);
+        }}
+        className="mt-2 text-red-500 hover:text-red-600"
       >
         <Trash2 size={16} />
       </button>
@@ -67,6 +90,8 @@ export default function MatchingBuilder({
   const listA = useMemo(() => content?.list_a || [], [content]);
   const listB = useMemo(() => content?.list_b || [], [content]);
   const pairs = useMemo(() => correctAnswer?.pairs || [], [correctAnswer]);
+  const listAHeading = content?.list_a_heading ?? "";
+  const listBHeading = content?.list_b_heading ?? "";
 
   const updateList = (key, list) => {
     onContentChange({
@@ -82,18 +107,31 @@ export default function MatchingBuilder({
     });
   };
 
+  const updateHeading = (key, value) => {
+    onContentChange({
+      ...content,
+      [key]: value,
+    });
+  };
+
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = listA.findIndex((item) => item.id === active.id);
-    const newIndex = listA.findIndex((item) => item.id === over.id);
+    const oldIndex = sortableIds.indexOf(active.id);
+    const newIndex = sortableIds.indexOf(over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
     updateList("list_a", arrayMove(listA, oldIndex, newIndex));
   };
 
+  const sortableIds = useMemo(
+    () => listA.map((item, index) => getItemIdentifier(item, index, "listA")),
+    [listA]
+  );
+
   return (
     <div className="space-y-6">
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+      <div className="p-4 border border-blue-200 bg-blue-50 rounded-xl">
         <div className="flex items-center gap-2 mb-2">
           <p className="text-sm font-semibold text-blue-900">
             IELTS Matching Headings Support
@@ -107,10 +145,22 @@ export default function MatchingBuilder({
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-wide uppercase text-slate-500">
+              Left column header
+            </label>
+            <input
+              type="text"
+              value={listAHeading}
+              onChange={(e) => updateHeading("list_a_heading", e.target.value)}
+              placeholder="List A Heading (optional)"
+              className="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 focus:border-main focus:ring-2 focus:ring-main/10"
+            />
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-slate-700">List A (Questions/Paragraphs)</p>
-              <p className="text-xs text-slate-500 mt-1">{listA.length} item{listA.length !== 1 ? 's' : ''}</p>
+              <p className="mt-1 text-xs text-slate-500">{listA.length} item{listA.length !== 1 ? 's' : ''}</p>
             </div>
             <button
               type="button"
@@ -120,7 +170,7 @@ export default function MatchingBuilder({
                   { id: crypto.randomUUID(), text: "" },
                 ])
               }
-              className="inline-flex items-center gap-2 rounded-full bg-main px-4 py-2 text-white text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white rounded-full bg-main"
             >
               <Plus size={14} />
               Add Item
@@ -129,28 +179,44 @@ export default function MatchingBuilder({
 
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext
-              items={listA.map((item) => item.id)}
+              items={sortableIds}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-3">
-                {listA.map((item) => (
+                {listA.map((item, index) => (
                   <SortableListItem
-                    key={item.id}
+                    key={sortableIds[index]}
                     item={item}
-                    onChange={(id, text) =>
+                    sortableId={sortableIds[index]}
+                    itemIndex={index}
+                    onChange={(itemIndex, text) =>
                       updateList(
                         "list_a",
-                        listA.map((el) =>
-                          el.id === id ? { ...el, text } : el
+                        listA.map((el, idx) =>
+                          idx === itemIndex
+                            ? typeof el === "object" && el !== null
+                              ? { ...el, text }
+                              : { text }
+                            : el
                         )
                       )
                     }
-                    onRemove={(id) =>
-                      updateList(
-                        "list_a",
-                        listA.filter((el) => el.id !== id)
-                      )
-                    }
+                    onRemove={(itemIndex) => {
+                      const itemId = sortableIds[itemIndex];
+                      const updatedList = listA.filter(
+                        (_, idx) => idx !== itemIndex
+                      );
+                      updateList("list_a", updatedList);
+
+                      if (itemId) {
+                        const withoutPairs = pairs.filter(
+                          (pair) => pair.from !== itemId
+                        );
+                        if (withoutPairs.length !== pairs.length) {
+                          onAnswerChange({ pairs: withoutPairs });
+                        }
+                      }
+                    }}
                   />
                 ))}
               </div>
@@ -159,10 +225,22 @@ export default function MatchingBuilder({
         </div>
 
         <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-wide uppercase text-slate-500">
+              Right column header
+            </label>
+            <input
+              type="text"
+              value={listBHeading}
+              onChange={(e) => updateHeading("list_b_heading", e.target.value)}
+              placeholder="List B Heading (optional)"
+              className="w-full px-3 py-2 text-sm border rounded-lg border-slate-200 focus:border-main focus:ring-2 focus:ring-main/10"
+            />
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-slate-700">List B (Options/Headings)</p>
-              <p className="text-xs text-slate-500 mt-1">{listB.length} option{listB.length !== 1 ? 's' : ''} {listB.length > listA.length && `(${listB.length - listA.length} unused distractor${listB.length - listA.length !== 1 ? 's' : ''})`}</p>
+              <p className="mt-1 text-xs text-slate-500">{listB.length} option{listB.length !== 1 ? 's' : ''} {listB.length > listA.length && `(${listB.length - listA.length} unused distractor${listB.length - listA.length !== 1 ? 's' : ''})`}</p>
             </div>
             <button
               type="button"
@@ -172,38 +250,42 @@ export default function MatchingBuilder({
                   { id: crypto.randomUUID(), text: "" },
                 ])
               }
-              className="inline-flex items-center gap-2 rounded-full bg-main px-4 py-2 text-white text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white rounded-full bg-main"
             >
               <Plus size={14} />
               Add Option
             </button>
           </div>
           <div className="space-y-3">
-            {listB.map((item) => (
+            {listB.map((item, index) => (
               <div
-                key={item.id}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2"
+                key={getItemIdentifier(item, index, "listB")}
+                className="flex items-center gap-3 px-3 py-2 bg-white border rounded-xl border-slate-200"
               >
                 <input
                   type="text"
-                  value={item.text}
+                  value={getItemText(item)}
                   onChange={(e) =>
                     updateList(
                       "list_b",
-                      listB.map((el) =>
-                        el.id === item.id ? { ...el, text: e.target.value } : el
+                      listB.map((el, idx) =>
+                        idx === index
+                          ? typeof el === "object" && el !== null
+                            ? { ...el, text: e.target.value }
+                            : { text: e.target.value }
+                          : el
                       )
                     )
                   }
                   placeholder="Option text"
-                  className="flex-1 rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/10"
+                  className="flex-1 px-3 py-2 text-sm border rounded-md border-slate-200 focus:border-main focus:ring-2 focus:ring-main/10"
                 />
                 <button
                   type="button"
                   onClick={() =>
                     updateList(
                       "list_b",
-                      listB.filter((el) => el.id !== item.id)
+                      listB.filter((_, idx) => idx !== index)
                     )
                   }
                   className="text-red-500 hover:text-red-600"
@@ -216,31 +298,37 @@ export default function MatchingBuilder({
         </div>
       </div>
 
-      <div className="md:col-span-2 space-y-4">
+      <div className="space-y-4 md:col-span-2">
         <p className="text-sm font-semibold text-slate-700">Pair answers</p>
         <div className="space-y-3">
-          {listA.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 md:flex-row md:items-center"
-            >
-              <p className="text-sm font-medium text-slate-600 flex-1">
-                {item.text || "Untitled item"}
-              </p>
-              <select
-                value={pairs.find((pair) => pair.from === item.id)?.to || ""}
-                onChange={(e) => updatePairs(item.id, e.target.value)}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/10"
+          {listA.map((item, index) => {
+            const itemId = sortableIds[index];
+            return (
+              <div
+                key={itemId}
+                className="flex flex-col gap-2 p-4 bg-white border rounded-2xl border-slate-200 md:flex-row md:items-center"
               >
-                <option value="">No match</option>
-                {listB.map((match) => (
-                  <option key={match.id} value={match.id}>
-                    {match.text || "Untitled option"}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
+                <p className="flex-1 text-sm font-medium text-slate-600">
+                  {getItemText(item) || "Untitled item"}
+                </p>
+                <select
+                  value={pairs.find((pair) => pair.from === itemId)?.to || ""}
+                  onChange={(e) => updatePairs(itemId, e.target.value)}
+                  className="px-3 py-2 text-sm border rounded-lg border-slate-200 focus:border-main focus:ring-2 focus:ring-main/10"
+                >
+                  <option value="">No match</option>
+                  {listB.map((match, idx) => {
+                    const matchId = getItemIdentifier(match, idx, "listB");
+                    return (
+                      <option key={matchId} value={matchId}>
+                        {getItemText(match) || "Untitled option"}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

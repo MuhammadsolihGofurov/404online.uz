@@ -115,6 +115,16 @@ export function QuestionRenderer({ question, value, onChange, disabled = false }
         />
       );
 
+    case "ESSAY":
+      return (
+        <EssayRenderer
+          question={question}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
+
     default:
       return (
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -655,7 +665,7 @@ function SummaryFillBlanksRenderer({ question, value, onChange, disabled }) {
     
     if (!containsHtml) {
       // Plain text mode
-      let parts = text.split(/(___\([^)]+)\)___)/);
+      let parts = text.split(/(___\([^)]+\)___)/);
       return parts.map((part, idx) => {
         const blankMatch = part.match(/___\(([^)]+)\)___/);
         if (blankMatch) {
@@ -972,7 +982,7 @@ function SummaryFillBlanksRenderer({ question, value, onChange, disabled }) {
     
     if (!containsHtml) {
       // Plain text mode
-      let parts = text.split(/(___\([^)]+)\)___)/);
+      let parts = text.split(/(___\([^)]+\)___)/);
       return parts.map((part, idx) => {
         const blankMatch = part.match(/___\(([^)]+)\)___/);
         if (blankMatch) {
@@ -1264,6 +1274,14 @@ function MatchingRenderer({ question, value, onChange, disabled }) {
   const { prompt, content, question_number } = question;
   const listA = content?.list_a || [];
   const listB = content?.list_b || [];
+  const listAHeading =
+    typeof content?.list_a_heading === "string"
+      ? content.list_a_heading.trim()
+      : "";
+  const listBHeading =
+    typeof content?.list_b_heading === "string"
+      ? content.list_b_heading.trim()
+      : "";
 
   const currentMatches = value?.matches || value?.pairs || [];
 
@@ -1293,6 +1311,18 @@ function MatchingRenderer({ question, value, onChange, disabled }) {
       </div>
 
       <div className="ml-[52px] space-y-4">
+        {(listAHeading || listBHeading) && (
+          <div className="flex flex-col gap-1 text-purple-700 font-semibold mb-2 md:flex-row md:items-center md:justify-between">
+            {listAHeading && (
+              <p className="text-sm text-left md:text-base">{listAHeading}</p>
+            )}
+            {listBHeading && (
+              <p className="text-sm text-left md:text-base md:text-right">
+                {listBHeading}
+              </p>
+            )}
+          </div>
+        )}
         {/* List A items with matching dropdowns */}
         <div className="space-y-3">
           {listA.map((itemA) => {
@@ -1394,6 +1424,58 @@ function MatchingRenderer({ question, value, onChange, disabled }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function EssayRenderer({ question, value, onChange, disabled }) {
+  const intl = useIntl();
+  const { prompt, question_number, content } = question;
+  const minWords = Number(content?.min_word_count) || null;
+  const text = value?.text || "";
+  const trimmed = text.trim();
+  const wordCount = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+  const meetsMin = !minWords || wordCount >= minWords;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="font-semibold text-gray-700 min-w-[40px]">
+          Q{question_number}
+        </span>
+        <div className="text-gray-900 flex-1">
+          <RichText content={prompt} />
+        </div>
+      </div>
+
+      <div className="ml-[52px] space-y-3">
+        <textarea
+          rows={12}
+          value={text}
+          onChange={(e) => {
+            if (!disabled) {
+              onChange({ text: e.target.value });
+            }
+          }}
+          disabled={disabled}
+          placeholder={intl.formatMessage({
+            id: "Write your essay response here",
+          })}
+          className={`w-full px-4 py-3 text-base border rounded-2xl focus:outline-none focus:ring-4 ${
+            disabled
+              ? "bg-gray-100 text-gray-500"
+              : "border-slate-300 focus:border-main focus:ring-main/20"
+          }`}
+        />
+        <div
+          className={`text-sm font-semibold ${
+            meetsMin ? "text-emerald-600" : "text-red-600"
+          }`}
+        >
+          Words: {wordCount}
+          {minWords ? ` / Min: ${minWords}` : ""}
+        </div>
       </div>
     </div>
   );

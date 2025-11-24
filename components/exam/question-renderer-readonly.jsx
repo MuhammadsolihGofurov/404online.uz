@@ -119,6 +119,16 @@ export function QuestionRendererReadOnly({
         />
       );
 
+    case "ESSAY":
+      return (
+        <EssayReadOnly
+          question={question}
+          userAnswer={userAnswer}
+          correctAnswer={correctAnswer}
+          showCorrectness={showCorrectness}
+        />
+      );
+
     default:
       return (
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -914,6 +924,59 @@ function MapLabellingReadOnly({ question, userAnswer, correctAnswer, showCorrect
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function EssayReadOnly({ question, userAnswer, correctAnswer, showCorrectness }) {
+  const { question_number, prompt, content } = question;
+  const minWords = Number(content?.min_word_count) || null;
+  const text = userAnswer?.text || "";
+  const trimmed = text.trim();
+  const wordCount = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+  const meetsMin = !minWords || wordCount >= minWords;
+  const modelAnswer = correctAnswer?.text;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="font-semibold text-gray-700 min-w-[40px]">
+          Q{question_number}
+        </span>
+        <p className="flex-1 text-gray-900">{prompt}</p>
+        {showCorrectness && (
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700">
+            Manual review required
+          </span>
+        )}
+      </div>
+      <div className="ml-[52px] space-y-3">
+        <div className="text-sm font-semibold text-slate-700">
+          Student response
+        </div>
+        <div className="p-4 bg-white border rounded-2xl border-slate-200 text-slate-700 whitespace-pre-wrap min-h-[150px]">
+          {text || "No response submitted."}
+        </div>
+        <div
+          className={`text-sm font-semibold ${
+            meetsMin ? "text-emerald-600" : "text-red-600"
+          }`}
+        >
+          Words: {wordCount}
+          {minWords ? ` / Min: ${minWords}` : ""}
+        </div>
+        {modelAnswer && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-500">
+              Model answer
+            </p>
+            <div
+              className="p-4 text-sm text-slate-700 bg-slate-50 border border-dashed rounded-2xl border-slate-300"
+              dangerouslySetInnerHTML={{ __html: modelAnswer }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

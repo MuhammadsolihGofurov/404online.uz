@@ -72,6 +72,10 @@ const QUESTION_TYPE_CONFIG = {
     label: "Table Completion",
     helper: "Fill missing values in a table.",
   },
+  ESSAY: {
+    label: "Essay / Writing Task",
+    helper: "Collects long-form responses.",
+  },
 };
 
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -107,6 +111,8 @@ const defaultContentByType = {
       { id: createId(), text: "" },
       { id: createId(), text: "" },
     ],
+    list_a_heading: "",
+    list_b_heading: "",
   }),
   MATCHING_TABLE_CLICK: () => ({
     columns: ["Option A", "Option B"],
@@ -193,6 +199,9 @@ const defaultContentByType = {
     columns: ["Column 1", "Column 2"],
     rows: [{ id: createId(), label: "Row 1", cells: ["", ""] }],
   }),
+  ESSAY: (_start, _end, section) => ({
+    min_word_count: section?.part_number === 1 ? 150 : 250,
+  }),
 };
 
 const defaultAnswerByType = {
@@ -237,6 +246,7 @@ const defaultAnswerByType = {
   MAP_LABELLING: () => ({ labels: {} }),
   FLOWCHART_COMPLETION: () => ({ values: {} }),
   TABLE_COMPLETION: () => ({ values: {} }),
+  ESSAY: () => ({ text: "" }),
 };
 
 const initialState = {
@@ -268,10 +278,14 @@ function getNextQuestionNumber(section) {
 }
 
 function buildInitialState(question, section) {
-  const baseType = question?.question_type || "MCQ_SINGLE";
+  const mockType = section?.mock?.mock_type || section?.mock_type;
+  const isWritingMock = mockType === "WRITING";
+  const baseType = isWritingMock ? "ESSAY" : (question?.question_type || "MCQ_SINGLE");
   const nextNumber = getNextQuestionNumber(section);
   const questionNumberStart = question?.question_number_start || nextNumber || 1;
-  const questionNumberEnd = question?.question_number_end || nextNumber || 1;
+  const questionNumberEnd = isWritingMock
+    ? questionNumberStart
+    : (question?.question_number_end || nextNumber || 1);
   
   // For SUMMARY_FILL_BLANKS, ensure proper structure with summary_type
   let content = question?.content || {};
@@ -324,11 +338,21 @@ function buildInitialState(question, section) {
     if (!content.rows) {
       content.rows = [];
     }
+  } else if (baseType === "ESSAY") {
+    const defaultMin = question?.content?.min_word_count ??
+      (section?.part_number === 1 ? 150 : 250);
+    content = {
+      min_word_count: defaultMin,
+      ...(question?.content || {}),
+    };
   } else {
     // For other types, use default or existing content
     content = question?.content ||
       (defaultContentByType[baseType]
-        ? defaultContentByType[baseType]()
+        ? defaultContentByType[baseType](questionNumberStart, questionNumberEnd, section)
+        : {});
+      (defaultContentByType[baseType]
+        ? defaultContentByType[baseType](questionNumberStart, questionNumberEnd, section)
         : {});
   }
   
@@ -341,7 +365,7 @@ function buildInitialState(question, section) {
     correct_answer:
       question?.correct_answer ||
       (defaultAnswerByType[baseType]
-        ? defaultAnswerByType[baseType](questionNumberStart, questionNumberEnd)
+        ? defaultAnswerByType[baseType](questionNumberStart, questionNumberEnd, section)
         : {}),
   };
 }
@@ -412,12 +436,75 @@ export default function QuestionEditor({
   
   // ReactQuill ref for Summary Fill Blanks editor (must be at top level)
   const quillRef = useRef(null);
+  const mockType = section?.mock?.mock_type || section?.mock_type;
+  const isWritingMock = mockType === "WRITING";
+  const isEssayType = state.question_type === "ESSAY";
+  const isWritingMode = isWritingMock || isEssayType;
+  const essayDefaultMinWordCount =
+    section?.part_number === 1 ? 150 : section?.part_number === 2 ? 250 : 250;
 
   useEffect(() => {
     if (section) {
       dispatch({ type: "RESET", payload: buildInitialState(question, section) });
     }
   }, [section?.id, question?.id]);
+
+  useEffect(() => {
+    if (isWritingMock && state.question_type !== "ESSAY") {
+      dispatch({
+        type: "PATCH",
+        payload: { question_type: "ESSAY" },
+      });
+    }
+  }, [isWritingMock, state.question_type]);
+
+  useEffect(() => {
+    if (
+      isWritingMock &&
+      state.question_number_end !== state.question_number_start
+    ) {
+      dispatch({
+        type: "PATCH",
+        payload: { question_number_end: state.question_number_start },
+      });
+    }
+  }, [isWritingMock, state.question_number_start, state.question_number_end]);
+
+  useEffect(() => {
+    if (!isWritingMode) return;
+    if (state.content?.min_word_count == null) {
+      dispatch({
+        type: "PATCH",
+        payload: {
+          content: {
+            ...(state.content || {}),
+            min_word_count: essayDefaultMinWordCount,
+          },
+        },
+      });
+    }
+  }, [isWritingMode, state.content?.min_word_count, essayDefaultMinWordCount]);
+
+  useEffect(() => {
+    if (!isWritingMode) return;
+    if (
+      !state.correct_answer ||
+      typeof state.correct_answer !== "object" ||
+      state.correct_answer.text === undefined
+    ) {
+      dispatch({
+        type: "PATCH",
+        payload: {
+          correct_answer: {
+            ...(typeof state.correct_answer === "object"
+              ? state.correct_answer
+              : {}),
+            text: state.correct_answer?.text || "",
+          },
+        },
+      });
+    }
+  }, [isWritingMode, state.correct_answer]);
 
   // Handle question range changes - update correct_answer structure
   useEffect(() => {
@@ -847,10 +934,10 @@ export default function QuestionEditor({
       payload: {
         question_type: value,
         content: defaultContentByType[value]
-          ? defaultContentByType[value](state.question_number_start, state.question_number_end)
+          ? defaultContentByType[value](state.question_number_start, state.question_number_end, section)
           : {},
         correct_answer: defaultAnswerByType[value]
-          ? defaultAnswerByType[value](state.question_number_start, state.question_number_end)
+          ? defaultAnswerByType[value](state.question_number_start, state.question_number_end, section)
           : {},
       },
     });
@@ -1055,6 +1142,13 @@ export default function QuestionEditor({
     if (state.question_type === "MAP_LABELLING") {
       if (!state.content?.map_image_url) {
         return "Provide map image URL.";
+      }
+    }
+
+    if (state.question_type === "ESSAY") {
+      const minWord = Number(state.content?.min_word_count);
+      if (!minWord || minWord <= 0) {
+        return "Set a minimum word count for the essay.";
       }
     }
 
@@ -2224,6 +2318,53 @@ export default function QuestionEditor({
     );
   };
 
+  const renderEssayBuilder = () => {
+    const minWord = state.content?.min_word_count ?? essayDefaultMinWordCount;
+    const modelAnswer = state.correct_answer?.text || "";
+
+    return (
+      <div className="space-y-5">
+        <div>
+          <label className="text-sm font-medium text-slate-700">
+            Minimum word count
+          </label>
+          <input
+            type="number"
+            min={50}
+            value={minWord}
+            onChange={(e) =>
+              updateContent({
+                ...state.content,
+                min_word_count: Number(e.target.value) || 0,
+              })
+            }
+            className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10"
+          />
+          <p className="mt-2 text-xs text-slate-500">
+            Students must meet this requirement before submission.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">
+            Model answer (optional)
+          </label>
+          <ReactQuill
+            theme="snow"
+            value={modelAnswer}
+            onChange={(value) =>
+              updateAnswer({ ...(state.correct_answer || {}), text: value })
+            }
+            placeholder="Provide a reference response or scoring notes."
+          />
+          <p className="text-xs text-slate-500">
+            Visible to reviewers only; students cannot see the model answer.
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   const renderBuilder = () => {
     switch (state.question_type) {
       case "MCQ_SINGLE":
@@ -2289,6 +2430,8 @@ export default function QuestionEditor({
         return renderMapBuilder();
       case "FLOWCHART_COMPLETION":
         return renderFlowchartBuilder();
+      case "ESSAY":
+        return renderEssayBuilder();
       default:
         return (
           <div className="p-6 text-sm border border-dashed rounded-2xl border-slate-300 text-slate-500">
@@ -2308,7 +2451,7 @@ export default function QuestionEditor({
         className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative flex flex-col w-full h-full max-w-5xl ml-auto overflow-y-auto bg-white shadow-2xl">
+      <div className="relative flex flex-col w-full h-full ml-auto overflow-y-auto bg-white shadow-2xl max-w-7xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
             <p className="text-xs font-semibold tracking-wide uppercase text-slate-400">
@@ -2334,71 +2477,108 @@ export default function QuestionEditor({
         ) : (
           <div className="grid flex-1 gap-6 px-6 py-6 lg:grid-cols-[1.2fr,0.8fr]">
             <div className="space-y-6">
-              <div className="p-4 space-y-4 border rounded-3xl border-slate-200 bg-slate-50">
-                <label className="text-sm font-semibold text-slate-600">
-                  Question type
-                </label>
-                <select
-                  value={state.question_type}
-                  onChange={(e) => handleTypeChange(e.target.value)}
-                  className="w-full px-4 py-3 text-sm font-semibold bg-white border rounded-2xl border-slate-200 text-slate-700 focus:border-main focus:ring-4 focus:ring-main/10"
-                >
-                  {typeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {selectedTypeMeta && (
-                  <p className="flex items-center gap-2 text-xs text-slate-500">
-                    <Sparkles size={14} className="text-main" />
-                    {selectedTypeMeta.helper}
-                  </p>
-                )}
-              </div>
+              {!isWritingMode && (
+                <div className="p-4 space-y-4 border rounded-3xl border-slate-200 bg-slate-50">
+                  <label className="text-sm font-semibold text-slate-600">
+                    Question type
+                  </label>
+                  <select
+                    value={state.question_type}
+                    onChange={(e) => handleTypeChange(e.target.value)}
+                    className="w-full px-4 py-3 text-sm font-semibold bg-white border rounded-2xl border-slate-200 text-slate-700 focus:border-main focus:ring-4 focus:ring-main/10"
+                  >
+                    {typeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedTypeMeta && (
+                    <p className="flex items-center gap-2 text-xs text-slate-500">
+                      <Sparkles size={14} className="text-main" />
+                      {selectedTypeMeta.helper}
+                    </p>
+                  )}
+                </div>
+              )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700">
-                    Question starts at
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={state.question_number_start}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "PATCH",
-                        payload: {
-                          question_number_start: Number(e.target.value),
-                          question_number_end: Math.max(
-                            Number(e.target.value),
-                            Number(state.question_number_end || 0)
-                          ),
-                        },
-                      })
-                    }
-                    className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10"
-                  />
+              {isWritingMode ? (
+                <div className="p-4 space-y-3 border rounded-3xl border-slate-200 bg-slate-50">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Essay question numbers
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Writing tasks use a single prompt. Question numbers are automatically managed.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">
+                        Question number
+                      </label>
+                      <input
+                        type="number"
+                        value={state.question_number_start}
+                        readOnly
+                        className="w-full px-4 py-3 mt-1 text-sm bg-white border rounded-2xl border-slate-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">
+                        Ends at
+                      </label>
+                      <input
+                        type="number"
+                        value={state.question_number_start}
+                        readOnly
+                        className="w-full px-4 py-3 mt-1 text-sm bg-white border rounded-2xl border-slate-200"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">
-                    Ends at
-                  </label>
-                  <input
-                    type="number"
-                    min={state.question_number_start}
-                    value={state.question_number_end}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "PATCH",
-                        payload: { question_number_end: Number(e.target.value) },
-                      })
-                    }
-                    className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10"
-                  />
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">
+                      Question starts at
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={state.question_number_start}
+                      onChange={(e) =>
+                        dispatch({
+                          type: "PATCH",
+                          payload: {
+                            question_number_start: Number(e.target.value),
+                            question_number_end: Math.max(
+                              Number(e.target.value),
+                              Number(state.question_number_end || 0)
+                            ),
+                          },
+                        })
+                      }
+                      className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">
+                      Ends at
+                    </label>
+                    <input
+                      type="number"
+                      min={state.question_number_start}
+                      value={state.question_number_end}
+                      onChange={(e) =>
+                        dispatch({
+                          type: "PATCH",
+                          payload: { question_number_end: Number(e.target.value) },
+                        })
+                      }
+                      className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">

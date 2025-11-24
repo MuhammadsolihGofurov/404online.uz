@@ -98,6 +98,15 @@ export class ExamDataNormalizer {
     const sections = [];
     const allQuestions = [];
 
+    const formatMockType = (type) => {
+      if (!type) return "Section";
+      return type
+        .toLowerCase()
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    };
+
     mocks.forEach((mock) => {
       // Handle both full mock objects and mock IDs
       const mockData = typeof mock === "string" || typeof mock === "object" && !mock.sections 
@@ -114,10 +123,15 @@ export class ExamDataNormalizer {
       mockData.sections.forEach((section) => {
         if (!section.questions || !Array.isArray(section.questions)) return;
 
+        const sectionTitle =
+          section.title?.trim() ||
+          section.name?.trim() ||
+          `${formatMockType(mockType)} - Part ${section.part_number || sections.length + 1}`;
+
         const normalizedSection = {
           id: section.id || `section-${sections.length}`,
           type: mockType,
-          title: section.instructions || `${mockType} - Part ${section.part_number || sections.length + 1}`,
+          title: sectionTitle,
           part_number: section.part_number || null,
           instructions: section.instructions || "",
           audio_file: section.audio_file || null,
