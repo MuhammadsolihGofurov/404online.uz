@@ -1,14 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useIntl } from "react-intl";
-import { X, Clock, Save, CheckCircle, AlertCircle, Play, Pause } from "lucide-react";
+import { X, Clock, Save, CheckCircle, AlertCircle, Lock } from "lucide-react";
 import Link from "next/link";
 import { useModal } from "@/context/modal-context";
 import { useExamEngine } from "@/hooks/useExamEngine";
+import { useExamStatus } from "@/hooks/useExamStatus";
 import { QuestionRenderer } from "./question-renderer";
 import { AudioPlayer } from "./audio-player";
 import { PracticeResultsModal } from "./practice-results-modal";
 import { RichText } from "@/components/ui/RichText";
+import { toast } from "react-toastify";
 
 /**
  * ExamRoomLayout
@@ -26,11 +28,31 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [practiceResults, setPracticeResults] = useState(null);
   const [showPracticeResults, setShowPracticeResults] = useState(false);
+  const [submissionId, setSubmissionId] = useState(existingDraft?.id || null);
 
   const isPracticeMode = mode === 'practice';
   const isTemplatePractice = isPracticeMode && templateId !== null;
   const isExamMock = task?.task_type === 'EXAM_MOCK';
-  const isStrictMode = isExamMock && !isPracticeMode;
+  
+  // Initialize exam status hook (only for non-practice task-based exams)
+  const useStatusHook = !isPracticeMode && !isTemplatePractice && task?.id;
+  const {
+    examStatus,
+    isLoading: statusLoading,
+    currentSection: apiCurrentSection,
+    sectionTimeRemaining,
+    totalTimeRemaining,
+    isStrictMode: apiStrictMode,
+    allowsSectionSwitching,
+    sections: apiSections,
+    completeSection: apiCompleteSection,
+    switchSection: apiSwitchSection,
+    isSectionAccessible,
+    isActionPending,
+  } = useExamStatus(submissionId, useStatusHook);
+  
+  // Determine strict mode from API or fallback to task type
+  const isStrictMode = useStatusHook ? (apiStrictMode || false) : (isExamMock && !isPracticeMode);
 
   // Initialize exam engine
   const {
@@ -55,6 +77,43 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
   const currentSection = normalizedData?.sections?.[currentSectionIndex];
   const totalQuestions = normalizedData?.totalQuestions || 0;
   const answeredCount = getAnsweredCount();
+
+  // Map section index to section type for API calls
+  const getSectionType = (sectionIndex) => {
+    const section = normalizedData?.sections?.[sectionIndex];
+    if (!section) return null;
+    // Assume section has mock_type or title that indicates type
+    const mockType = section.mock_type || section.type || section.title?.toUpperCase();
+    if (mockType?.includes('LISTENING')) return 'LISTENING';
+    if (mockType?.includes('READING')) return 'READING';
+    if (mockType?.includes('WRITING')) return 'WRITING';
+    return null;
+  };
+
+  // Auto-advance section when timer expires (Strict Mode only)
+  useEffect(() => {
+    if (!isStrictMode || !sectionTimeRemaining || !useStatusHook) return;
+    
+    // When section timer hits 0, complete section automatically
+    if (sectionTimeRemaining === 0 && !isActionPending) {
+      console.log('Section timer expired - auto-advancing');
+      apiCompleteSection().then((result) => {
+        if (result?.success && result?.nextSection) {
+          // Move UI to next section
+          const nextSectionIndex = normalizedData?.sections?.findIndex(
+            s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
+          );
+          if (nextSectionIndex !== -1) {
+            goToSection(nextSectionIndex);
+          }
+        } else if (result?.success && !result?.nextSection) {
+          // All sections completed - trigger final submit
+          toast.info("All sections completed! Submitting your exam...");
+          handleFinalSubmit(true); // Auto-submit
+        }
+      });
+    }
+  }, [sectionTimeRemaining, isStrictMode, isActionPending, useStatusHook]);
 
   // Handle final submit with confirmation
   const handleSubmitClick = async () => {
@@ -192,14 +251,16 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
 
             {/* Right: Timer & Actions */}
             <div className="flex items-center gap-4">
-              {timeRemaining !== null && (
+              {/* Display section timer from API if available, otherwise fallback to task timer */}
+              {(useStatusHook ? sectionTimeRemaining !== undefined : timeRemaining !== null) && (
                 <div
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-mono text-sm ${
-                    isTimeUp || timeRemaining < 300
+                    // Determine which timer value to use for styling
+                    ((useStatusHook && sectionTimeRemaining !== undefined ? sectionTimeRemaining : timeRemaining) < 300 || isTimeUp)
                       ? isStrictMode
                         ? "bg-red-200 text-red-800 border-2 border-red-400"
                         : "bg-red-100 text-red-700"
-                      : timeRemaining < 600
+                      : (useStatusHook && sectionTimeRemaining !== undefined ? sectionTimeRemaining : timeRemaining) < 600
                       ? isStrictMode
                         ? "bg-red-100 text-red-700 border border-red-300"
                         : "bg-yellow-100 text-yellow-700"
@@ -209,7 +270,15 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
                   }`}
                 >
                   <Clock size={16} />
-                  <span>{formatTime(timeRemaining)}</span>
+                  <span>
+                    {useStatusHook && sectionTimeRemaining !== undefined
+                      ? formatTime(sectionTimeRemaining)
+                      : formatTime(timeRemaining)}
+                  </span>
+                  {/* Label for section timer in strict mode */}
+                  {useStatusHook && isStrictMode && sectionTimeRemaining !== undefined && (
+                    <span className="text-xs opacity-75 ml-1">(Section)</span>
+                  )}
                 </div>
               )}
 
@@ -236,18 +305,69 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
                 {intl.formatMessage({ id: "Navigation" })}
               </h2>
               <div className="space-y-2">
-                {normalizedData?.sections?.map((section, sectionIdx) => (
-                  <div key={section.id} className="space-y-1">
-                    <button
-                      onClick={() => goToSection(sectionIdx)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        currentSectionIndex === sectionIdx
-                          ? "bg-main text-white"
-                          : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      {section.title || `Section ${sectionIdx + 1}`}
-                    </button>
+                {normalizedData?.sections?.map((section, sectionIdx) => {
+                  // Get section status from API if available
+                  const sectionType = getSectionType(sectionIdx);
+                  const apiSection = useStatusHook && sectionType 
+                    ? apiSections?.find(s => s.type === sectionType)
+                    : null;
+                  
+                  const sectionStatus = apiSection?.status || 'AVAILABLE';
+                  const isLocked = sectionStatus === 'LOCKED';
+                  const isCompleted = sectionStatus === 'COMPLETED';
+                  const isInProgress = sectionStatus === 'IN_PROGRESS';
+                  
+                  // Determine if section is clickable
+                  const isClickable = !isLocked && (
+                    allowsSectionSwitching || // Practice mode
+                    currentSectionIndex === sectionIdx || // Current section
+                    !isStrictMode // Non-strict mode
+                  );
+                  
+                  return (
+                    <div key={section.id} className="space-y-1">
+                      <button
+                        onClick={() => {
+                          if (!isClickable) {
+                            toast.warning(
+                              isStrictMode 
+                                ? "This section is locked. Complete the current section first."
+                                : "This section is not yet available."
+                            );
+                            return;
+                          }
+                          
+                          // If switching to a different section in practice mode, call API
+                          if (useStatusHook && allowsSectionSwitching && sectionIdx !== currentSectionIndex && sectionType) {
+                            apiSwitchSection(sectionType).then((result) => {
+                              if (result?.success) {
+                                goToSection(sectionIdx);
+                              }
+                            });
+                          } else {
+                            goToSection(sectionIdx);
+                          }
+                        }}
+                        disabled={!isClickable && !isActionPending}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between ${
+                          currentSectionIndex === sectionIdx
+                            ? "bg-main text-white"
+                            : isLocked
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
+                            : isCompleted
+                            ? "bg-green-50 text-green-700 hover:bg-green-100"
+                            : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        <span>{section.title || `Section ${sectionIdx + 1}`}</span>
+                        <span className="flex items-center gap-1">
+                          {isLocked && <Lock size={14} className="text-gray-400" />}
+                          {isCompleted && <CheckCircle size={14} className="text-green-600" />}
+                          {isInProgress && currentSectionIndex === sectionIdx && (
+                            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                          )}
+                        </span>
+                      </button>
                     {currentSectionIndex === sectionIdx && (
                       <div className="ml-4 space-y-1">
                         {section.questions?.map((question, questionIdx) => {
@@ -300,9 +420,10 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
                           );
                         })}
                       </div>
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </aside>
@@ -425,6 +546,48 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
                 {intl.formatMessage({ id: "Next" })}
               </button>
             </div>
+
+            {/* Complete Section Button (Strict Mode Only) */}
+            {useStatusHook && isStrictMode && apiCurrentSection && (
+              <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-3">
+                  <p className="text-sm text-blue-700 font-medium">
+                    Current Section: {apiCurrentSection}
+                  </p>
+                  {sectionTimeRemaining !== undefined && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Time Remaining: {formatTime(sectionTimeRemaining)}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={async () => {
+                    const result = await apiCompleteSection();
+                    if (result?.success && result?.nextSection) {
+                      // Navigate to next section
+                      const nextSectionIndex = normalizedData?.sections?.findIndex(
+                        s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
+                      );
+                      if (nextSectionIndex !== -1) {
+                        goToSection(nextSectionIndex);
+                      }
+                    } else if (result?.success && !result?.nextSection) {
+                      // All sections completed
+                      toast.success("All sections completed! You can now submit your exam.");
+                    }
+                  }}
+                  disabled={isActionPending || isSubmitting}
+                  className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isActionPending
+                    ? "Processing..."
+                    : "Complete Section & Continue"}
+                </button>
+                <p className="text-xs text-blue-600 mt-2">
+                  ⚠️ You cannot return to this section after completing it.
+                </p>
+              </div>
+            )}
 
             {/* Submit Button */}
             <div className="p-6 bg-white rounded-lg shadow-sm">

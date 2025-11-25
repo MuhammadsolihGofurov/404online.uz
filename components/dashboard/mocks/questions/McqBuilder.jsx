@@ -383,56 +383,36 @@ export default function McqBuilder({
           </div>
         ) : (
           <>
-            {/* Optional: Add statements input */}
-            {statements.length === 0 && (
-              <div className="mb-4">
-                <label className="text-sm font-medium text-slate-700 mb-2 block">
-                  Sub-question statements (optional)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newStatements = [];
-                    for (let i = questionNumberStart; i <= questionNumberEnd; i++) {
-                      newStatements.push("");
-                    }
-                    onContentChange({ ...content, statements: newStatements });
-                  }}
-                  className="text-sm text-main hover:underline"
-                >
-                  Add statements for each sub-question
-                </button>
-              </div>
-            )}
-
-            {statements.length > 0 && (
-              <div className="mb-4 space-y-2">
-                <label className="text-sm font-medium text-slate-700">
-                  Sub-question statements
-                </label>
-                {statements.map((stmt, idx) => {
-                  const qNum = questionNumberStart + idx;
-                  return (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600 min-w-[40px]">
-                        Q{qNum}:
-                      </span>
-                      <input
-                        type="text"
-                        value={stmt}
-                        onChange={(e) => {
-                          const newStatements = [...statements];
-                          newStatements[idx] = e.target.value;
-                          onContentChange({ ...content, statements: newStatements });
-                        }}
-                        placeholder={`Statement for Q${qNum}`}
-                        className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/20"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {/* Required: Sub-question statements */}
+            <div className="mb-4 space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Sub-question statements <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-slate-500 mb-2">
+                Each sub-question must have a statement. These will be displayed to students.
+              </p>
+              {statements.map((stmt, idx) => {
+                const qNum = questionNumberStart + idx;
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-600 min-w-[40px]">
+                      Q{qNum}:
+                    </span>
+                    <input
+                      type="text"
+                      value={stmt || ""}
+                      onChange={(e) => {
+                        const newStatements = [...statements];
+                        newStatements[idx] = e.target.value;
+                        onContentChange({ ...content, statements: newStatements });
+                      }}
+                      placeholder={`Statement for Q${qNum}`}
+                      className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-main focus:ring-2 focus:ring-main/20"
+                    />
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="space-y-6">
               {/* Master Options List (Editable) */}

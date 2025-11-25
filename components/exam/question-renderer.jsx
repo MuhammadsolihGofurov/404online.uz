@@ -203,7 +203,8 @@ function MCQSingleRenderer({ question, value, onChange, disabled }) {
         <div className="ml-[52px] space-y-4">
           {questionRange.map((qNum) => {
             const currentValue = currentValues[String(qNum)] || "";
-            const statement = statements[qNum - question_number_start] || null; // Get statement for this sub-question
+            const statementIndex = qNum - question_number_start;
+            const statement = statements?.[statementIndex];
 
             // Get options for this question (independent mode) or use shared options
             const questionData = !useSameOptions 
@@ -212,7 +213,12 @@ function MCQSingleRenderer({ question, value, onChange, disabled }) {
             const questionOptions = questionData?.options 
               ? normalizeOptions(questionData.options)
               : normalizedOptions;
+            
+            // Fail-safe: Use fallback text if statement/questionText is missing or empty
             const questionText = questionData?.text || statement;
+            const displayText = (questionText && String(questionText).trim())
+              ? questionText
+              : `Question ${qNum}`;
 
             return (
               <div key={qNum} className="space-y-3">
@@ -220,11 +226,9 @@ function MCQSingleRenderer({ question, value, onChange, disabled }) {
                   <span className="font-semibold text-gray-700 min-w-[40px]">
                     Q{qNum}
                   </span>
-                  {questionText && (
-                    <div className="text-gray-800 flex-1">
-                      <RichText content={questionText} />
-                    </div>
-                  )}
+                  <div className="text-gray-800 flex-1">
+                    <RichText content={displayText} />
+                  </div>
                 </div>
                 <div className="space-y-3 ml-[52px]">
                   {questionOptions.map((option) => (
@@ -464,7 +468,12 @@ function TFNGRenderer({ question, value, onChange, disabled }) {
         <div className="ml-[52px] space-y-4">
           {questionRange.map((qNum) => {
             const currentValue = currentValues[String(qNum)] || "";
-            const statement = statements[qNum - question_number_start] || null; // Get statement for this sub-question
+            const statementIndex = qNum - question_number_start;
+            const statement = statements?.[statementIndex];
+            // Fail-safe: Use fallback text if statement is missing or empty
+            const displayText = (statement && String(statement).trim()) 
+              ? statement 
+              : `Question ${qNum}`;
 
             return (
               <div key={qNum} className="space-y-2">
@@ -472,11 +481,9 @@ function TFNGRenderer({ question, value, onChange, disabled }) {
                   <span className="font-semibold text-gray-700 min-w-[40px]">
                     Q{qNum}
                   </span>
-                  {statement && (
-                    <div className="text-gray-800 flex-1">
-                      <RichText content={statement} />
-                    </div>
-                  )}
+                  <div className="text-gray-800 flex-1">
+                    <RichText content={displayText} />
+                  </div>
                 </div>
                 <div className="flex gap-4 ml-[52px]">
                   {options.map((option) => (

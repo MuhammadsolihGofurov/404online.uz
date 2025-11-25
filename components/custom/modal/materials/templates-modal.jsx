@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { Controller, useForm } from "react-hook-form";
@@ -12,6 +12,126 @@ import MultiSelect from "../../details/multi-select";
 import Select from "../../details/select";
 import { MOCK_TEMPLATES, TEMPLATE_D_LEVEL } from "@/mock/data";
 import { Input, ToggleSwitch } from "../../details";
+
+// ============================================================================
+// CLIENT-SIDE VALIDATION HELPER
+// ============================================================================
+
+/**
+ * Validate Material Template selection according to business rules.
+ * 
+ * Business Rules:
+ * 1. MUST contain exactly 3 mocks
+ * 2. MUST have distinct types: 1 LISTENING, 1 READING, 1 WRITING (no duplicates)
+ * 3. All mocks MUST match the template category
+ * 
+ * @param {Array} selectedMocks - Array of mock objects with { id, title, mock_type, category }
+ * @param {String} templateCategory - Template category ("EXAM_TEMPLATE" or "PRACTICE_TEMPLATE")
+ * @returns {Object} { isValid: boolean, error: string | null }
+ */
+function validateTemplateSelection(selectedMocks, templateCategory) {
+  // Only validate for EXAM_TEMPLATE and PRACTICE_TEMPLATE
+  if (!templateCategory || !["EXAM_TEMPLATE", "PRACTICE_TEMPLATE"].includes(templateCategory)) {
+    return { isValid: true, error: null };
+  }
+
+  // ========================================================================
+  // RULE 1: Must have exactly 3 mocks
+  // ========================================================================
+  if (!selectedMocks || selectedMocks.length === 0) {
+    return {
+      isValid: false,
+      error: "Please select mocks for the template."
+    };
+  }
+
+  if (selectedMocks.length < 3) {
+    return {
+      isValid: false,
+      error: `You selected ${selectedMocks.length} mock(s). Please select exactly 3 mocks (1 Listening, 1 Reading, 1 Writing).`
+    };
+  }
+
+  if (selectedMocks.length > 3) {
+    return {
+      isValid: false,
+      error: `You selected ${selectedMocks.length} mocks. Please select exactly 3 mocks (1 Listening, 1 Reading, 1 Writing).`
+    };
+  }
+
+  // ========================================================================
+  // RULE 2: Must have 1 LISTENING, 1 READING, 1 WRITING (no duplicates)
+  // ========================================================================
+  const mockTypeCounts = {};
+  const mockTypes = [];
+
+  selectedMocks.forEach((mock) => {
+    const type = mock.mock_type;
+    mockTypes.push(type);
+    mockTypeCounts[type] = (mockTypeCounts[type] || 0) + 1;
+  });
+
+  // Required types
+  const requiredTypes = ["LISTENING", "READING", "WRITING"];
+  const presentTypes = new Set(mockTypes);
+  const missingTypes = requiredTypes.filter(type => !presentTypes.has(type));
+  const duplicateTypes = Object.entries(mockTypeCounts)
+    .filter(([type, count]) => count > 1)
+    .map(([type, count]) => ({ type, count }));
+
+  // Check for missing types
+  if (missingTypes.length > 0) {
+    const missingDisplay = missingTypes.map(type => {
+      switch(type) {
+        case "LISTENING": return "Listening";
+        case "READING": return "Reading";
+        case "WRITING": return "Writing";
+        default: return type;
+      }
+    }).join(", ");
+
+    return {
+      isValid: false,
+      error: `Missing required mock type(s): ${missingDisplay}. Please select exactly 1 Listening, 1 Reading, and 1 Writing mock.`
+    };
+  }
+
+  // Check for duplicates
+  if (duplicateTypes.length > 0) {
+    const duplicateDisplay = duplicateTypes.map(({ type, count }) => {
+      const typeName = type === "LISTENING" ? "Listening" : 
+                       type === "READING" ? "Reading" : 
+                       type === "WRITING" ? "Writing" : type;
+      return `${typeName} (${count} selected)`;
+    }).join(", ");
+
+    return {
+      isValid: false,
+      error: `You selected duplicate mock types: ${duplicateDisplay}. Please select exactly 1 Listening, 1 Reading, and 1 Writing mock.`
+    };
+  }
+
+  // ========================================================================
+  // RULE 3: All mocks must match template category
+  // ========================================================================
+  const mismatchedMocks = selectedMocks.filter(
+    mock => mock.category && mock.category !== templateCategory
+  );
+
+  if (mismatchedMocks.length > 0) {
+    const mismatchedTitles = mismatchedMocks
+      .map(mock => `"${mock.title}" (${mock.category})`)
+      .join(", ");
+
+    return {
+      isValid: false,
+      error: `Category mismatch detected. The following mock(s) do not match the template category (${templateCategory}): ${mismatchedTitles}`
+    };
+  }
+
+  // All validations passed
+  return { isValid: true, error: null };
+}
 
 export default function TemplatesModal({
   id,
@@ -47,6 +167,169 @@ export default function TemplatesModal({
   });
 
   const MockCategory = watch("category");
+  const selectedMocks = watch("mocks");
+
+  // Real-time validation feedback with smart guidance
+  const getSelectionFeedback = () => {
+    if (!MockCategory || !["EXAM_TEMPLATE", "PRACTICE_TEMPLATE"].includes(MockCategory)) {
+      return null;
+    }
+
+    if (!selectedMocks || selectedMocks.length === 0) {
+      return {
+        type: "info",
+        message: "📋 Select 3 mocks: 1 Listening, 1 Reading, and 1 Writing"
+      };
+    }
+
+    // Build a helpful message showing what's been selected and what's needed
+    const types = {
+      LISTENING: selectedMocks.some(m => m.mock_type === "LISTENING"),
+      READING: selectedMocks.some(m => m.mock_type === "READING"),
+      WRITING: selectedMocks.some(m => m.mock_type === "WRITING")
+    };
+
+    const selectedCount = selectedMocks.length;
+    const selectedTypesArray = [];
+    const neededTypesArray = [];
+
+    if (types.LISTENING) selectedTypesArray.push("✓ Listening");
+    else neededTypesArray.push("Listening");
+
+    if (types.READING) selectedTypesArray.push("✓ Reading");
+    else neededTypesArray.push("Reading");
+
+    if (types.WRITING) selectedTypesArray.push("✓ Writing");
+    else neededTypesArray.push("Writing");
+
+    // All types selected (valid)
+    if (selectedCount === 3 && selectedTypesArray.length === 3) {
+      return {
+        type: "success",
+        message: `✓ Perfect! ${selectedTypesArray.join(", ")}`
+      };
+    }
+
+    // Partially selected - show progress
+    if (selectedCount < 3) {
+      const progressMsg = selectedTypesArray.length > 0 
+        ? `Selected: ${selectedTypesArray.join(", ")}. Still need: ${neededTypesArray.join(", ")}`
+        : `Still need: ${neededTypesArray.join(", ")}`;
+      
+      return {
+        type: "info",
+        message: `📋 ${progressMsg}`
+      };
+    }
+
+    // Validation failed (should not happen with smart disabling, but just in case)
+    const validation = validateTemplateSelection(selectedMocks, MockCategory);
+    if (!validation.isValid) {
+      return {
+        type: "error",
+        message: validation.error
+      };
+    }
+
+    return null;
+  };
+
+  const selectionFeedback = getSelectionFeedback();
+
+  // ========================================================================
+  // SMART MOCK FILTERING & DISABLING LOGIC
+  // ========================================================================
+
+  /**
+   * Get all available mocks, filtered by:
+   * 1. Category match (only show mocks of the selected template category)
+   * 2. Non-deleted mocks
+   */
+  const { data: mocksData } = useSWR(
+    ["/mocks/", router.locale, MockCategory],
+    ([url, locale]) =>
+      fetcher(
+        `${url}?page_size=all&category=${MockCategory}`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
+  const allMocks = useMemo(() => {
+    return Array.isArray(mocksData?.results)
+      ? mocksData.results
+      : Array.isArray(mocksData)
+      ? mocksData
+      : [];
+  }, [mocksData]);
+
+  /**
+   * REQUIREMENT 1: Auto-Filtering (Category Match)
+   * Filter mocks to only show those matching the selected category.
+   * This prevents category mismatches at the UI level.
+   */
+  const filteredMocksByCategory = useMemo(() => {
+    if (!MockCategory || !["EXAM_TEMPLATE", "PRACTICE_TEMPLATE"].includes(MockCategory)) {
+      return allMocks;
+    }
+
+    // Only show mocks that match the selected template category
+    return allMocks.filter(mock => mock.category === MockCategory);
+  }, [allMocks, MockCategory]);
+
+  /**
+   * REQUIREMENT 2: Smart Disabling (Unique Types Enforcement)
+   * Determine which mock types are already selected.
+   * Used to disable options of already-selected types.
+   */
+  const selectedMockTypes = useMemo(() => {
+    if (!selectedMocks || selectedMocks.length === 0) {
+      return new Set();
+    }
+    return new Set(selectedMocks.map(mock => mock.mock_type));
+  }, [selectedMocks]);
+
+  /**
+   * Check if a specific mock option should be disabled.
+   * 
+   * A mock is disabled if:
+   * 1. Its type (LISTENING/READING/WRITING) is already selected
+   * 2. AND it's not already in the selected list (allow deselection)
+   * 
+   * @param {Object} option - The mock option to check
+   * @returns {boolean} - True if option should be disabled
+   */
+  const isOptionDisabled = (option) => {
+    // If this option is already selected, allow it (for deselection)
+    const isAlreadySelected = selectedMocks?.some(mock => mock.id === option.id);
+    if (isAlreadySelected) {
+      return false;
+    }
+
+    // If the type is already selected, disable this option
+    if (selectedMockTypes.has(option.mock_type)) {
+      return true;
+    }
+
+    // Otherwise, allow selection
+    return false;
+  };
+
+  /**
+   * Enhanced mock options with disabled state for UI feedback.
+   * This allows the MultiSelect to visually show which options are disabled.
+   */
+  const mockOptionsWithDisabledState = useMemo(() => {
+    return filteredMocksByCategory.map(mock => ({
+      ...mock,
+      isDisabled: isOptionDisabled(mock)
+    }));
+  }, [filteredMocksByCategory, selectedMockTypes, selectedMocks]);
 
   const { data: template } = useSWR(
     ["/material-templates/", router.locale, id],
@@ -86,6 +369,15 @@ export default function TemplatesModal({
   const submitFn = async (data) => {
     const { title, mocks, description, category, difficulty_level, is_public } =
       data;
+
+    // ========================================================================
+    // CLIENT-SIDE VALIDATION: Check template structure before submitting
+    // ========================================================================
+    const validationResult = validateTemplateSelection(mocks, category);
+    if (!validationResult.isValid) {
+      toast.error(validationResult.error);
+      return; // Stop submission
+    }
 
     try {
       setReqLoading(true);
@@ -164,27 +456,6 @@ export default function TemplatesModal({
     }
   };
 
-  const { data: mocksData } = useSWR(
-    ["/mocks/", router.locale, MockCategory],
-    ([url, locale]) =>
-      fetcher(
-        `${url}?page_size=all&category=${MockCategory}`,
-        {
-          headers: {
-            "Accept-Language": locale,
-          },
-        },
-        {},
-        true
-      )
-  );
-
-  const mockOptions = Array.isArray(mocksData?.results)
-    ? mocksData.results
-    : Array.isArray(mocksData)
-    ? mocksData
-    : [];
-
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
@@ -256,15 +527,32 @@ export default function TemplatesModal({
               control={control}
               rules={{ required: intl.formatMessage({ id: "Required" }) }}
               render={({ field }) => (
-                <MultiSelect
-                  {...field}
-                  title={intl.formatMessage({ id: "Mocks" })}
-                  placeholder={intl.formatMessage({ id: "Select" })}
-                  options={mockOptions}
-                  error={errors.mocks?.message}
-                  value={field.value || []}
-                  onChange={(val) => field.onChange(val)}
-                />
+                <div className="flex flex-col gap-2">
+                  <MultiSelect
+                    {...field}
+                    title={intl.formatMessage({ id: "Mocks" })}
+                    placeholder={intl.formatMessage({ id: "Select" })}
+                    options={mockOptionsWithDisabledState}
+                    error={errors.mocks?.message}
+                    value={field.value || []}
+                    onChange={(val) => field.onChange(val)}
+                    isOptionDisabled={(option) => option.isDisabled === true}
+                    maxSelections={3}
+                  />
+                  {selectionFeedback && (
+                    <div
+                      className={`text-sm px-3 py-2 rounded-lg ${
+                        selectionFeedback.type === "success"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : selectionFeedback.type === "error"
+                          ? "bg-red-50 text-red-700 border border-red-200"
+                          : "bg-blue-50 text-blue-700 border border-blue-200"
+                      }`}
+                    >
+                      {selectionFeedback.message}
+                    </div>
+                  )}
+                </div>
               )}
             />
           </div>
