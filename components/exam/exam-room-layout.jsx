@@ -8,6 +8,7 @@ import { useExamEngine } from "@/hooks/useExamEngine";
 import { useExamStatus } from "@/hooks/useExamStatus";
 import { QuestionRenderer } from "./question-renderer";
 import { AudioPlayer } from "./audio-player";
+import { SplitScreenLayout } from "./SplitScreenLayout";
 import { PracticeResultsModal } from "./practice-results-modal";
 import { RichText } from "@/components/ui/RichText";
 import { toast } from "react-toastify";
@@ -79,16 +80,24 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
   const answeredCount = getAnsweredCount();
 
   // Map section index to section type for API calls
+  // IMPORTANT: Must be declared before use
   const getSectionType = (sectionIndex) => {
     const section = normalizedData?.sections?.[sectionIndex];
     if (!section) return null;
-    // Assume section has mock_type or title that indicates type
-    const mockType = section.mock_type || section.type || section.title?.toUpperCase();
-    if (mockType?.includes('LISTENING')) return 'LISTENING';
-    if (mockType?.includes('READING')) return 'READING';
-    if (mockType?.includes('WRITING')) return 'WRITING';
+    
+    // Check multiple properties and normalize to uppercase for case-insensitive comparison
+    const mockType = (section.mock_type || section.type || section.title || '').toUpperCase();
+    
+    if (mockType.includes('LISTENING')) return 'LISTENING';
+    if (mockType.includes('READING')) return 'READING';
+    if (mockType.includes('WRITING')) return 'WRITING';
+    
     return null;
   };
+
+  // Detect section type for UI rendering
+  const currentSectionType = getSectionType(currentSectionIndex);
+  const isReadingSection = currentSectionType === 'READING';
 
   // Auto-advance section when timer expires (Strict Mode only)
   useEffect(() => {
@@ -430,186 +439,356 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
         )}
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl px-4 py-6 mx-auto sm:px-6 lg:px-8">
-            {existingDraft && (
-              <div className="p-3 mb-4 border border-blue-200 rounded-lg bg-blue-50">
-                <p className="text-sm text-blue-700">
-                  {intl.formatMessage({ id: "Resuming from saved draft" })}
-                </p>
-              </div>
-            )}
+        <main className={`flex-1 ${isReadingSection ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          {/* Reading Section: Split Screen Layout */}
+          {isReadingSection ? (
+            <div className="h-full">
+              <SplitScreenLayout
+                passage={
+                  <div className="space-y-4">
+                    {/* Section Title */}
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {currentSection?.title}
+                    </h2>
 
-            {currentSection && (
-              <div className="mb-6">
-                <h2 className="mb-2 text-2xl font-bold text-gray-900">
-                  {currentSection.title}
-                </h2>
-                {currentSection.instructions && (
-                  <div className="mb-4 text-gray-600">
-                    <RichText content={currentSection.instructions} />
-                  </div>
-                )}
-
-                {/* Audio Player for Listening sections */}
-                {currentSection.audio_file && (
-                  <div className="mb-6">
-                    <AudioPlayer
-                      audioUrl={currentSection.audio_file}
-                      allowPause={task?.allow_audio_pause !== false}
-                    />
-                  </div>
-                )}
-
-                {/* Section Images */}
-                {currentSection.images && currentSection.images.length > 0 && (
-                  <div className="mb-6 space-y-4">
-                    {currentSection.images.map((image, idx) => (
-                      <div key={image.id || idx} className="relative">
-                        <img
-                          src={image.image || image.image_url || image.url}
-                          alt={image.caption || `Section image ${idx + 1}`}
-                          className="w-full max-w-full border border-gray-200 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => {
-                            // Open image in modal/lightbox on click
-                            window.open(image.image || image.image_url || image.url, '_blank');
-                          }}
-                        />
-                        {image.caption && (
-                          <p className="mt-2 text-sm text-gray-600 text-center italic">
-                            {image.caption}
-                          </p>
-                        )}
+                    {/* Passage Instructions/Text */}
+                    {currentSection?.instructions && (
+                      <div className="text-gray-700 leading-relaxed select-text">
+                        <RichText content={currentSection.instructions} />
                       </div>
-                    ))}
+                    )}
+
+                    {/* Section Images (e.g., diagrams, maps) */}
+                    {currentSection?.images && currentSection.images.length > 0 && (
+                      <div className="space-y-4">
+                        {currentSection.images.map((image, idx) => (
+                          <div key={image.id || idx} className="relative">
+                            <img
+                              src={image.image || image.image_url || image.url}
+                              alt={image.caption || `Section image ${idx + 1}`}
+                              className="w-full max-w-full border border-gray-200 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                window.open(image.image || image.image_url || image.url, '_blank');
+                              }}
+                            />
+                            {image.caption && (
+                              <p className="mt-2 text-sm text-gray-600 text-center italic">
+                                {image.caption}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Current Question */}
-            {currentQuestion ? (
-              <div className="p-6 mb-6 bg-white rounded-lg shadow-sm">
-                <QuestionRenderer
-                  question={currentQuestion}
-                  value={getAnswer(currentQuestion.id)}
-                  onChange={(answerData) =>
-                    updateAnswer(currentQuestion.id, answerData)
-                  }
-                  disabled={isSubmitting || isTimeUp}
-                />
-              </div>
-            ) : (
-              <div className="p-6 text-center text-gray-500 bg-white rounded-lg shadow-sm">
-                {intl.formatMessage({ id: "No question selected" })}
-              </div>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between mb-6">
-              <button
-                onClick={() => {
-                  if (currentQuestionIndex > 0) {
-                    goToQuestion(currentSectionIndex, currentQuestionIndex - 1);
-                  } else if (currentSectionIndex > 0) {
-                    const prevSection = normalizedData.sections[currentSectionIndex - 1];
-                    const lastQuestionIdx = (prevSection?.questions?.length || 1) - 1;
-                    goToQuestion(currentSectionIndex - 1, lastQuestionIdx);
-                  }
-                }}
-                disabled={
-                  currentSectionIndex === 0 && currentQuestionIndex === 0
                 }
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {intl.formatMessage({ id: "Previous" })}
-              </button>
+                questions={
+                  <div className="h-full flex flex-col">
+                    <div className="flex-1 space-y-6 mb-6">
+                      {/* Draft Resume Notice */}
+                      {existingDraft && (
+                        <div className="p-3 border border-blue-200 rounded-lg bg-blue-50">
+                          <p className="text-sm text-blue-700">
+                            {intl.formatMessage({ id: "Resuming from saved draft" })}
+                          </p>
+                        </div>
+                      )}
 
-              <button
-                onClick={() => {
-                  const currentSection = normalizedData.sections[currentSectionIndex];
-                  const maxQuestionIdx = (currentSection?.questions?.length || 1) - 1;
-                  
-                  if (currentQuestionIndex < maxQuestionIdx) {
-                    goToQuestion(currentSectionIndex, currentQuestionIndex + 1);
-                  } else if (currentSectionIndex < (normalizedData.sections?.length || 1) - 1) {
-                    goToQuestion(currentSectionIndex + 1, 0);
-                  }
-                }}
-                disabled={
-                  currentSectionIndex === (normalizedData.sections?.length || 1) - 1 &&
-                  currentQuestionIndex ===
-                    ((normalizedData.sections[currentSectionIndex]?.questions?.length || 1) - 1)
+                      {/* Current Question */}
+                      {currentQuestion ? (
+                        <div className="p-6 bg-white rounded-lg shadow-sm">
+                          <QuestionRenderer
+                            question={currentQuestion}
+                            value={getAnswer(currentQuestion.id)}
+                            onChange={(answerData) =>
+                              updateAnswer(currentQuestion.id, answerData)
+                            }
+                            disabled={isSubmitting || isTimeUp}
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-6 text-center text-gray-500 bg-white rounded-lg shadow-sm">
+                          {intl.formatMessage({ id: "No question selected" })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Navigation and Submit Buttons */}
+                    <div className="sticky bottom-0 bg-white border-t border-gray-200 pt-4 space-y-4">
+                      {/* Navigation Buttons */}
+                      <div className="flex items-center justify-between mb-4">
+                        <button
+                          onClick={() => {
+                            if (currentQuestionIndex > 0) {
+                              goToQuestion(currentSectionIndex, currentQuestionIndex - 1);
+                            } else if (currentSectionIndex > 0) {
+                              const prevSection = normalizedData.sections[currentSectionIndex - 1];
+                              const lastQuestionIdx = (prevSection?.questions?.length || 1) - 1;
+                              goToQuestion(currentSectionIndex - 1, lastQuestionIdx);
+                            }
+                          }}
+                          disabled={currentSectionIndex === 0 && currentQuestionIndex === 0}
+                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {intl.formatMessage({ id: "Previous" })}
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            const sectionData = normalizedData.sections[currentSectionIndex];
+                            const maxQuestionIdx = (sectionData?.questions?.length || 1) - 1;
+                            
+                            if (currentQuestionIndex < maxQuestionIdx) {
+                              goToQuestion(currentSectionIndex, currentQuestionIndex + 1);
+                            } else if (currentSectionIndex < (normalizedData.sections?.length || 1) - 1) {
+                              goToQuestion(currentSectionIndex + 1, 0);
+                            }
+                          }}
+                          disabled={
+                            currentSectionIndex === (normalizedData.sections?.length || 1) - 1 &&
+                            currentQuestionIndex === ((normalizedData.sections[currentSectionIndex]?.questions?.length || 1) - 1)
+                          }
+                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {intl.formatMessage({ id: "Next" })}
+                        </button>
+                      </div>
+
+                      {/* Complete Section Button (Strict Mode Only) */}
+                      {useStatusHook && isStrictMode && apiCurrentSection && (
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                          <div className="mb-3">
+                            <p className="text-sm text-blue-700 font-medium">
+                              Current Section: {apiCurrentSection}
+                            </p>
+                            {sectionTimeRemaining !== undefined && (
+                              <p className="text-xs text-blue-600 mt-1">
+                                Time Remaining: {formatTime(sectionTimeRemaining)}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={async () => {
+                              const result = await apiCompleteSection();
+                              if (result?.success && result?.nextSection) {
+                                const nextSectionIndex = normalizedData?.sections?.findIndex(
+                                  s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
+                                );
+                                if (nextSectionIndex !== -1) {
+                                  goToSection(nextSectionIndex);
+                                }
+                              } else if (result?.success && !result?.nextSection) {
+                                toast.success("All sections completed! You can now submit your exam.");
+                              }
+                            }}
+                            disabled={isActionPending || isSubmitting}
+                            className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isActionPending ? "Processing..." : "Complete Section & Continue"}
+                          </button>
+                          <p className="text-xs text-blue-600 mt-2">
+                            ⚠️ You cannot return to this section after completing it.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Submit Button */}
+                      <div className="p-4 bg-white rounded-lg border border-gray-200">
+                        <button
+                          onClick={handleSubmitClick}
+                          disabled={isSubmitting || isTimeUp}
+                          className={`w-full px-4 py-2 font-semibold text-white transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                            isStrictMode ? "bg-red-600 hover:bg-red-700" : "bg-main hover:bg-main/90"
+                          }`}
+                        >
+                          {isSubmitting
+                            ? intl.formatMessage({ id: "Submitting..." })
+                            : isPracticeMode
+                            ? intl.formatMessage({ id: "Check Answers" })
+                            : isStrictMode
+                            ? intl.formatMessage({ id: "Submit Exam" })
+                            : intl.formatMessage({ id: "Finish Task" })}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 }
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {intl.formatMessage({ id: "Next" })}
-              </button>
+                sectionTitle={currentSection?.title}
+                onMobile="tabs"
+              />
             </div>
-
-            {/* Complete Section Button (Strict Mode Only) */}
-            {useStatusHook && isStrictMode && apiCurrentSection && (
-              <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="mb-3">
-                  <p className="text-sm text-blue-700 font-medium">
-                    Current Section: {apiCurrentSection}
+          ) : (
+            /* Standard Layout (Listening/Writing) */
+            <div className="max-w-4xl px-4 py-6 mx-auto sm:px-6 lg:px-8">
+              {existingDraft && (
+                <div className="p-3 mb-4 border border-blue-200 rounded-lg bg-blue-50">
+                  <p className="text-sm text-blue-700">
+                    {intl.formatMessage({ id: "Resuming from saved draft" })}
                   </p>
-                  {sectionTimeRemaining !== undefined && (
-                    <p className="text-xs text-blue-600 mt-1">
-                      Time Remaining: {formatTime(sectionTimeRemaining)}
-                    </p>
+                </div>
+              )}
+
+              {currentSection && (
+                <div className="mb-6">
+                  <h2 className="mb-2 text-2xl font-bold text-gray-900">
+                    {currentSection.title}
+                  </h2>
+                  {currentSection.instructions && (
+                    <div className="mb-4 text-gray-600">
+                      <RichText content={currentSection.instructions} />
+                    </div>
+                  )}
+
+                  {/* Audio Player for Listening sections */}
+                  {currentSection.audio_file && (
+                    <div className="mb-6">
+                      <AudioPlayer
+                        audioUrl={currentSection.audio_file}
+                        strictMode={isStrictMode}
+                        allowPause={task?.allow_audio_pause !== false}
+                      />
+                    </div>
+                  )}
+
+                  {/* Section Images */}
+                  {currentSection.images && currentSection.images.length > 0 && (
+                    <div className="mb-6 space-y-4">
+                      {currentSection.images.map((image, idx) => (
+                        <div key={image.id || idx} className="relative">
+                          <img
+                            src={image.image || image.image_url || image.url}
+                            alt={image.caption || `Section image ${idx + 1}`}
+                            className="w-full max-w-full border border-gray-200 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => {
+                              // Open image in modal/lightbox on click
+                            }}
+                          />
+                          {image.caption && (
+                            <p className="mt-2 text-sm text-gray-600 text-center italic">
+                              {image.caption}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
+              )}
+
+              {/* Current Question */}
+              {currentQuestion ? (
+                <div className="p-6 mb-6 bg-white rounded-lg shadow-sm">
+                  <QuestionRenderer
+                    question={currentQuestion}
+                    value={getAnswer(currentQuestion.id)}
+                    onChange={(answerData) =>
+                      updateAnswer(currentQuestion.id, answerData)
+                    }
+                    disabled={isSubmitting || isTimeUp}
+                  />
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-500 bg-white rounded-lg shadow-sm">
+                  {intl.formatMessage({ id: "No question selected" })}
+                </div>
+              )}
+              {/* Navigation Buttons */}
+              <div className="flex items-center justify-between mb-6">
                 <button
-                  onClick={async () => {
-                    const result = await apiCompleteSection();
-                    if (result?.success && result?.nextSection) {
-                      // Navigate to next section
-                      const nextSectionIndex = normalizedData?.sections?.findIndex(
-                        s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
-                      );
-                      if (nextSectionIndex !== -1) {
-                        goToSection(nextSectionIndex);
-                      }
-                    } else if (result?.success && !result?.nextSection) {
-                      // All sections completed
-                      toast.success("All sections completed! You can now submit your exam.");
+                  onClick={() => {
+                    if (currentQuestionIndex > 0) {
+                      goToQuestion(currentSectionIndex, currentQuestionIndex - 1);
+                    } else if (currentSectionIndex > 0) {
+                      const prevSection = normalizedData.sections[currentSectionIndex - 1];
+                      const lastQuestionIdx = (prevSection?.questions?.length || 1) - 1;
+                      goToQuestion(currentSectionIndex - 1, lastQuestionIdx);
                     }
                   }}
-                  disabled={isActionPending || isSubmitting}
-                  className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={currentSectionIndex === 0 && currentQuestionIndex === 0}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isActionPending
-                    ? "Processing..."
-                    : "Complete Section & Continue"}
+                  {intl.formatMessage({ id: "Previous" })}
                 </button>
-                <p className="text-xs text-blue-600 mt-2">
-                  ⚠️ You cannot return to this section after completing it.
-                </p>
-              </div>
-            )}
 
-            {/* Submit Button */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <button
-                onClick={handleSubmitClick}
-                disabled={isSubmitting || isTimeUp}
-                className={`w-full px-6 py-3 font-semibold text-white transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isStrictMode
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-main hover:bg-main/90"
-                }`}
-              >
-                {isSubmitting
-                  ? intl.formatMessage({ id: "Submitting..." })
-                  : isPracticeMode
-                  ? intl.formatMessage({ id: "Check Answers" })
-                  : isStrictMode
-                  ? intl.formatMessage({ id: "Submit Exam" })
-                  : intl.formatMessage({ id: "Finish Task" })}
-              </button>
+                <button
+                  onClick={() => {
+                    const sectionData = normalizedData.sections[currentSectionIndex];
+                    const maxQuestionIdx = (sectionData?.questions?.length || 1) - 1;
+                    
+                    if (currentQuestionIndex < maxQuestionIdx) {
+                      goToQuestion(currentSectionIndex, currentQuestionIndex + 1);
+                    } else if (currentSectionIndex < (normalizedData.sections?.length || 1) - 1) {
+                      goToQuestion(currentSectionIndex + 1, 0);
+                    }
+                  }}
+                  disabled={
+                    currentSectionIndex === (normalizedData.sections?.length || 1) - 1 &&
+                    currentQuestionIndex === ((normalizedData.sections[currentSectionIndex]?.questions?.length || 1) - 1)
+                  }
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {intl.formatMessage({ id: "Next" })}
+                </button>
+              </div>
+
+              {/* Complete Section Button (Strict Mode Only) */}
+              {useStatusHook && isStrictMode && apiCurrentSection && (
+                <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg mb-6">
+                  <div className="mb-3">
+                    <p className="text-sm text-blue-700 font-medium">
+                      Current Section: {apiCurrentSection}
+                    </p>
+                    {sectionTimeRemaining !== undefined && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        Time Remaining: {formatTime(sectionTimeRemaining)}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const result = await apiCompleteSection();
+                      if (result?.success && result?.nextSection) {
+                        const nextSectionIndex = normalizedData?.sections?.findIndex(
+                          s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
+                        );
+                        if (nextSectionIndex !== -1) {
+                          goToSection(nextSectionIndex);
+                        }
+                      } else if (result?.success && !result?.nextSection) {
+                        toast.success("All sections completed! You can now submit your exam.");
+                      }
+                    }}
+                    disabled={isActionPending || isSubmitting}
+                    className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isActionPending ? "Processing..." : "Complete Section & Continue"}
+                  </button>
+                  <p className="text-xs text-blue-600 mt-2">
+                    ⚠️ You cannot return to this section after completing it.
+                  </p>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="p-6 bg-white rounded-lg shadow-sm">
+                <button
+                  onClick={handleSubmitClick}
+                  disabled={isSubmitting || isTimeUp}
+                  className={`w-full px-6 py-3 font-semibold text-white transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isStrictMode ? "bg-red-600 hover:bg-red-700" : "bg-main hover:bg-main/90"
+                  }`}
+                >
+                  {isSubmitting
+                    ? intl.formatMessage({ id: "Submitting..." })
+                    : isPracticeMode
+                    ? intl.formatMessage({ id: "Check Answers" })
+                    : isStrictMode
+                    ? intl.formatMessage({ id: "Submit Exam" })
+                    : intl.formatMessage({ id: "Finish Task" })}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </main>
       </div>
 

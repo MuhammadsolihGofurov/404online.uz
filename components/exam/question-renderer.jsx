@@ -1,6 +1,7 @@
 import React from "react";
 import { useIntl } from "react-intl";
 import { RichText } from "@/components/ui/RichText";
+import { BLANK_REGEX, extractBlanksFromText } from "@/components/dashboard/mocks/fourth-step/utils/questionUtils";
 
 /**
  * QuestionRenderer
@@ -663,52 +664,66 @@ function SummaryFillBlanksRenderer({ question, value, onChange, disabled }) {
   const renderStoryMode = () => {
     if (!text) return null;
     
-    const blankMatches = text.match(/___\(([^)]+)\)___/g) || [];
-    const blankIds = blankMatches.map((match) =>
-      match.replace(/___\(([^)]+)\)___/, "$1")
-    );
+    // Use robust regex that handles spaces and extra underscores
+    const blankIds = extractBlanksFromText(text);
 
     const containsHtml = /<[a-z][\s\S]*>/i.test(text);
     
     if (!containsHtml) {
-      // Plain text mode
-      let parts = text.split(/(___\([^)]+\)___)/);
-      return parts.map((part, idx) => {
-        const blankMatch = part.match(/___\(([^)]+)\)___/);
-        if (blankMatch) {
-          const blankId = blankMatch[1];
-          const blankValue = currentBlanks[blankId] || "";
-          return (
-            <input
-              key={idx}
-              type="text"
-              value={blankValue}
-              onChange={(e) => handleBlankChange(blankId, e.target.value)}
-              disabled={disabled}
-              placeholder={blankId}
-              className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 border-main focus:outline-none focus:border-main/80 text-center ${
-                disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent"
-              }`}
-            />
-          );
+      // Plain text mode - use robust regex
+      const parts = [];
+      let lastIndex = 0;
+      const regex = new RegExp(BLANK_REGEX.source, 'g');
+      let match;
+      let idx = 0;
+      
+      while ((match = regex.exec(text)) !== null) {
+        // Add text before the blank
+        if (match.index > lastIndex) {
+          parts.push(<span key={`text-${idx++}`}>{text.substring(lastIndex, match.index)}</span>);
         }
-        return <span key={idx}>{part}</span>;
-      });
+        
+        // Add the blank input
+        const blankId = match[1]?.trim();
+        const blankValue = currentBlanks[blankId] || "";
+        parts.push(
+          <input
+            key={`input-${idx++}`}
+            type="text"
+            value={blankValue}
+            onChange={(e) => handleBlankChange(blankId, e.target.value)}
+            disabled={disabled}
+            placeholder={blankId}
+            className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 border-main focus:outline-none focus:border-main/80 text-center ${
+              disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent"
+            }`}
+          />
+        );
+        
+        lastIndex = match.index + match[0].length;
+      }
+      
+      // Add remaining text
+      if (lastIndex < text.length) {
+        parts.push(<span key={`text-${idx++}`}>{text.substring(lastIndex)}</span>);
+      }
+      
+      return parts;
     }
 
     // HTML mode: Parse HTML and create React elements with inputs
-    const placeholderRegex = /___\(([^)]+)\)___/g;
     const parts = [];
     let lastIndex = 0;
     let match;
     let keyCounter = 0;
 
     const matches = [];
-    while ((match = placeholderRegex.exec(text)) !== null) {
+    const regex = new RegExp(BLANK_REGEX.source, 'g');
+    while ((match = regex.exec(text)) !== null) {
       matches.push({
         index: match.index,
         length: match[0].length,
-        blankId: match[1],
+        blankId: match[1]?.trim(),
         fullMatch: match[0]
       });
     }
@@ -980,54 +995,68 @@ function SummaryFillBlanksRenderer({ question, value, onChange, disabled }) {
   const renderLegacyText = () => {
     if (!hasLegacyFormat) return null;
 
-    const blankMatches = text.match(/___\(([^)]+)\)___/g) || [];
-    const blankIds = blankMatches.map((match) =>
-      match.replace(/___\(([^)]+)\)___/, "$1")
-    );
+    // Use robust regex that handles spaces and extra underscores
+    const blankIds = extractBlanksFromText(text);
 
     const containsHtml = /<[a-z][\s\S]*>/i.test(text);
     
     if (!containsHtml) {
-      // Plain text mode
-      let parts = text.split(/(___\([^)]+\)___)/);
-      return parts.map((part, idx) => {
-        const blankMatch = part.match(/___\(([^)]+)\)___/);
-        if (blankMatch) {
-          const blankId = blankMatch[1];
-          const blankIndex = blankIds.indexOf(blankId);
-          const blankValue = currentBlanks[blankIndex] || currentBlanks[blankId] || "";
-
-          return (
-            <input
-              key={idx}
-              type="text"
-              value={blankValue}
-              onChange={(e) => handleBlankChange(blankId, e.target.value)}
-              disabled={disabled}
-              placeholder={blankId}
-              className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 border-main focus:outline-none focus:border-main/80 text-center ${
-                disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent"
-              }`}
-            />
-          );
+      // Plain text mode - use robust regex
+      const parts = [];
+      let lastIndex = 0;
+      const regex = new RegExp(BLANK_REGEX.source, 'g');
+      let match;
+      let idx = 0;
+      
+      while ((match = regex.exec(text)) !== null) {
+        // Add text before the blank
+        if (match.index > lastIndex) {
+          parts.push(<span key={`text-${idx++}`}>{text.substring(lastIndex, match.index)}</span>);
         }
-        return <span key={idx}>{part}</span>;
-      });
+        
+        // Add the blank input
+        const blankId = match[1]?.trim();
+        const blankIndex = blankIds.indexOf(blankId);
+        const blankValue = currentBlanks[blankIndex] || currentBlanks[blankId] || "";
+        
+        parts.push(
+          <input
+            key={`input-${idx++}`}
+            type="text"
+            value={blankValue}
+            onChange={(e) => handleBlankChange(blankId, e.target.value)}
+            disabled={disabled}
+            placeholder={blankId}
+            className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 border-main focus:outline-none focus:border-main/80 text-center ${
+              disabled ? "bg-gray-100 cursor-not-allowed" : "bg-transparent"
+            }`}
+          />
+        );
+        
+        lastIndex = match.index + match[0].length;
+      }
+      
+      // Add remaining text
+      if (lastIndex < text.length) {
+        parts.push(<span key={`text-${idx++}`}>{text.substring(lastIndex)}</span>);
+      }
+      
+      return parts;
     }
 
     // HTML mode: Parse HTML and create React elements with inputs
-    const placeholderRegex = /___\(([^)]+)\)___/g;
     const parts = [];
     let lastIndex = 0;
     let match;
     let keyCounter = 0;
 
     const matches = [];
-    while ((match = placeholderRegex.exec(text)) !== null) {
+    const regex = new RegExp(BLANK_REGEX.source, 'g');
+    while ((match = regex.exec(text)) !== null) {
       matches.push({
         index: match.index,
         length: match[0].length,
-        blankId: match[1],
+        blankId: match[1]?.trim(),
         fullMatch: match[0]
       });
     }
@@ -1121,11 +1150,8 @@ function SummaryDragDropRenderer({ question, value, onChange, disabled }) {
   const wordBank = content?.word_bank || [];
   const wordLimit = content?.word_limit || null;
 
-  // Extract blank IDs from text (e.g., ___(1)___, ___(A)___)
-  const blankMatches = text.match(/___\(([^)]+)\)___/g) || [];
-  const blankIds = blankMatches.map((match) =>
-    match.replace(/___\(([^)]+)\)___/, "$1")
-  );
+  // Extract blank IDs from text using robust regex
+  const blankIds = extractBlanksFromText(text);
 
   const currentBlanks = value?.blanks || value?.values || {};
   
@@ -1169,33 +1195,49 @@ function SummaryDragDropRenderer({ question, value, onChange, disabled }) {
 
   // Render text with drop zones for blanks
   const renderTextWithBlanks = () => {
-    let parts = text.split(/(___\([^)]+\)___)/);
-    return parts.map((part, idx) => {
-      const blankMatch = part.match(/___\(([^)]+)\)___/);
-      if (blankMatch) {
-        const blankId = blankMatch[1];
-        const blankValue = currentBlanks[blankId] || "";
-
-        return (
-          <span key={idx} className="inline-block mx-1">
-            {blankValue ? (
-              <span
-                className="inline-block px-3 py-1 bg-main text-white rounded-lg cursor-pointer hover:bg-main/90"
-                onClick={() => !disabled && handleRemoveBlank(blankId)}
-                title={intl.formatMessage({ id: "Click to remove" })}
-              >
-                {blankValue}
-              </span>
-            ) : (
-              <span className="inline-block min-w-[120px] px-2 py-1 border-2 border-dashed border-gray-300 rounded text-gray-400 text-center">
-                {blankId}
-              </span>
-            )}
-          </span>
-        );
+    const parts = [];
+    let lastIndex = 0;
+    const regex = new RegExp(BLANK_REGEX.source, 'g');
+    let match;
+    let idx = 0;
+    
+    while ((match = regex.exec(text)) !== null) {
+      // Add text before the blank
+      if (match.index > lastIndex) {
+        parts.push(<span key={`text-${idx++}`}>{text.substring(lastIndex, match.index)}</span>);
       }
-      return <span key={idx}>{part}</span>;
-    });
+      
+      // Add the blank drop zone
+      const blankId = match[1]?.trim();
+      const blankValue = currentBlanks[blankId] || "";
+      
+      parts.push(
+        <span key={`blank-${idx++}`} className="inline-block mx-1">
+          {blankValue ? (
+            <span
+              className="inline-block px-3 py-1 bg-main text-white rounded-lg cursor-pointer hover:bg-main/90"
+              onClick={() => !disabled && handleRemoveBlank(blankId)}
+              title={intl.formatMessage({ id: "Click to remove" })}
+            >
+              {blankValue}
+            </span>
+          ) : (
+            <span className="inline-block min-w-[120px] px-2 py-1 border-2 border-dashed border-gray-300 rounded text-gray-400 text-center">
+              {blankId}
+            </span>
+          )}
+        </span>
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(<span key={`text-${idx++}`}>{text.substring(lastIndex)}</span>);
+    }
+    
+    return parts;
   };
 
   return (

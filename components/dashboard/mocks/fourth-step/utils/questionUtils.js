@@ -5,6 +5,97 @@
 
 import { SUMMARY_TYPES, defaultContentByType, defaultAnswerByType } from "./questionConfig";
 
+// ============================================================================
+// SUMMARY FILL BLANKS UTILITIES
+// ============================================================================
+
+/**
+ * Robust regex for detecting blanks in summary text.
+ * Matches patterns like:
+ * - ___(1)___
+ * - ____(1)____  (extra underscores)
+ * - ___( 1 )___  (spaces inside parentheses)
+ * - ___ (1) ___  (spaces outside parentheses)
+ * 
+ * Pattern explanation:
+ * - _{3,}        : 3 or more underscores
+ * - \s*          : Optional whitespace
+ * - \(           : Opening parenthesis
+ * - \s*          : Optional whitespace
+ * - (.*?)        : Capture group (non-greedy) for the blank ID
+ * - \s*          : Optional whitespace
+ * - \)           : Closing parenthesis
+ * - \s*          : Optional whitespace
+ * - _{3,}        : 3 or more underscores
+ */
+export const BLANK_REGEX = /_{3,}\s*\(\s*(.*?)\s*\)\s*_{3,}/g;
+
+/**
+ * Extract blank IDs from summary text
+ * @param {string} text - The text containing blank placeholders
+ * @returns {string[]} Array of unique blank IDs (trimmed)
+ */
+export function extractBlanksFromText(text) {
+  if (!text || typeof text !== 'string') return [];
+  
+  const blankIds = [];
+  const matches = text.matchAll(BLANK_REGEX);
+  
+  for (const match of matches) {
+    const blankId = match[1]?.trim(); // Extract and trim the ID
+    if (blankId && !blankIds.includes(blankId)) {
+      blankIds.push(blankId);
+    }
+  }
+  
+  return blankIds;
+}
+
+/**
+ * Split text by blank placeholders for rendering
+ * @param {string} text - The text containing blank placeholders
+ * @returns {Array} Array of text parts and blank IDs
+ */
+export function splitTextByBlanks(text) {
+  if (!text || typeof text !== 'string') return [{ type: 'text', content: '' }];
+  
+  const parts = [];
+  let lastIndex = 0;
+  
+  // Create a new regex instance (non-global) for iteration
+  const regex = new RegExp(BLANK_REGEX.source, 'g');
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before the blank
+    if (match.index > lastIndex) {
+      parts.push({
+        type: 'text',
+        content: text.substring(lastIndex, match.index)
+      });
+    }
+    
+    // Add the blank
+    parts.push({
+      type: 'blank',
+      id: match[1]?.trim(), // Trimmed blank ID
+      fullMatch: match[0]
+    });
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push({
+      type: 'text',
+      content: text.substring(lastIndex)
+    });
+  }
+  
+  return parts;
+}
+
 // Helper: Normalize word bank items
 export const normalizeWordBankItems = (wordBank = []) =>
   (wordBank || []).map((word, idx) => {
@@ -266,7 +357,13 @@ export const ensureAnswerStructure = (
     return { pairs: Array.isArray(baseAnswer.pairs) ? baseAnswer.pairs : [] };
   }
 
-  if (questionType === "MATCHING_TABLE_CLICK" || questionType === "TABLE_COMPLETION") {
+  if (questionType === "MATCHING_TABLE_CLICK") {
+    // MATCHING_TABLE_CLICK uses selections structure: { row_id: [column_values] }
+    return { selections: baseAnswer.selections || {} };
+  }
+
+  if (questionType === "TABLE_COMPLETION") {
+    // TABLE_COMPLETION uses values structure: { row_col_key: value }
     return { values: baseAnswer.values || {} };
   }
 

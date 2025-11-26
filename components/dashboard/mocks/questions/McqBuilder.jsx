@@ -93,6 +93,13 @@ export default function McqBuilder({
   );
 
   const options = useMemo(() => content?.options || [], [content]);
+  
+  // 🛡️ CRITICAL: Safety limit to prevent browser crash
+  // Maximum 26 options (A-Z) is typical, but we allow up to 50 as hard limit
+  const MAX_SAFE_OPTIONS = 50;
+  const safeOptions = options.length > MAX_SAFE_OPTIONS ? options.slice(0, MAX_SAFE_OPTIONS) : options;
+  const hasExceededOptionLimit = options.length > MAX_SAFE_OPTIONS;
+  
   const isMultiple = questionType === "MCQ_MULTIPLE";
   const isGrouped = questionNumberEnd > questionNumberStart;
 
@@ -431,13 +438,23 @@ export default function McqBuilder({
                   </button>
                 </div>
 
+                {hasExceededOptionLimit && (
+                  <div className="p-4 border-2 border-red-500 rounded-lg bg-red-50">
+                    <p className="font-semibold text-red-700">⚠️ Option Limit Exceeded</p>
+                    <p className="text-sm text-red-600">
+                      You have {options.length} options, but only the first {MAX_SAFE_OPTIONS} are shown to prevent browser crash.
+                      Please remove some options.
+                    </p>
+                  </div>
+                )}
+
                 <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                   <SortableContext
-                    items={options.map((opt) => opt.id)}
+                    items={safeOptions.map((opt) => opt.id)}
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="flex flex-col gap-3">
-                      {options.map((opt) => (
+                      {safeOptions.map((opt) => (
                         <SortableOption
                           key={opt.id}
                           option={opt}
@@ -478,7 +495,7 @@ export default function McqBuilder({
                           )}
                         </div>
                         <div className="flex flex-col gap-2">
-                          {options.map((opt) => (
+                          {safeOptions.map((opt) => (
                             <label
                               key={opt.id}
                               className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition ${
@@ -547,13 +564,23 @@ export default function McqBuilder({
           </button>
         </div>
 
+        {hasExceededOptionLimit && (
+          <div className="p-4 border-2 border-red-500 rounded-lg bg-red-50">
+            <p className="font-semibold text-red-700">⚠️ Option Limit Exceeded</p>
+            <p className="text-sm text-red-600">
+              You have {options.length} options, but only the first {MAX_SAFE_OPTIONS} are shown to prevent browser crash.
+              Please remove some options.
+            </p>
+          </div>
+        )}
+
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <SortableContext
-            items={options.map((opt) => opt.id)}
+            items={safeOptions.map((opt) => opt.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="flex flex-col gap-3">
-              {options.map((opt) => (
+              {safeOptions.map((opt) => (
                 <SortableOption
                   key={opt.id}
                   option={opt}

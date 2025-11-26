@@ -89,6 +89,14 @@ export default function MatchingBuilder({
 
   const listA = useMemo(() => content?.list_a || [], [content]);
   const listB = useMemo(() => content?.list_b || [], [content]);
+  
+  // 🛡️ CRITICAL: Safety limits to prevent browser crash
+  const MAX_SAFE_LIST_ITEMS = 50; // Reasonable limit for matching items
+  const safeListA = listA.length > MAX_SAFE_LIST_ITEMS ? listA.slice(0, MAX_SAFE_LIST_ITEMS) : listA;
+  const safeListB = listB.length > MAX_SAFE_LIST_ITEMS ? listB.slice(0, MAX_SAFE_LIST_ITEMS) : listB;
+  const hasExceededListALimit = listA.length > MAX_SAFE_LIST_ITEMS;
+  const hasExceededListBLimit = listB.length > MAX_SAFE_LIST_ITEMS;
+  
   const pairs = useMemo(() => correctAnswer?.pairs || [], [correctAnswer]);
   const listAHeading = content?.list_a_heading ?? "";
   const listBHeading = content?.list_b_heading ?? "";
@@ -125,8 +133,8 @@ export default function MatchingBuilder({
   };
 
   const sortableIds = useMemo(
-    () => listA.map((item, index) => getItemIdentifier(item, index, "listA")),
-    [listA]
+    () => safeListA.map((item, index) => getItemIdentifier(item, index, "listA")),
+    [safeListA]
   );
 
   return (
@@ -177,13 +185,22 @@ export default function MatchingBuilder({
             </button>
           </div>
 
+          {hasExceededListALimit && (
+            <div className="p-4 mb-4 border-2 border-red-500 rounded-lg bg-red-50">
+              <p className="font-semibold text-red-700">⚠️ List A Limit Exceeded</p>
+              <p className="text-sm text-red-600">
+                You have {listA.length} items, but only the first {MAX_SAFE_LIST_ITEMS} are shown to prevent browser crash.
+              </p>
+            </div>
+          )}
+
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext
               items={sortableIds}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-3">
-                {listA.map((item, index) => (
+                {safeListA.map((item, index) => (
                   <SortableListItem
                     key={sortableIds[index]}
                     item={item}
@@ -256,8 +273,16 @@ export default function MatchingBuilder({
               Add Option
             </button>
           </div>
+          {hasExceededListBLimit && (
+            <div className="p-4 mb-4 border-2 border-red-500 rounded-lg bg-red-50">
+              <p className="font-semibold text-red-700">⚠️ List B Limit Exceeded</p>
+              <p className="text-sm text-red-600">
+                You have {listB.length} items, but only the first {MAX_SAFE_LIST_ITEMS} are shown to prevent browser crash.
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
-            {listB.map((item, index) => (
+            {safeListB.map((item, index) => (
               <div
                 key={getItemIdentifier(item, index, "listB")}
                 className="flex items-center gap-3 px-3 py-2 bg-white border rounded-xl border-slate-200"
@@ -301,7 +326,7 @@ export default function MatchingBuilder({
       <div className="space-y-4 md:col-span-2">
         <p className="text-sm font-semibold text-slate-700">Pair answers</p>
         <div className="space-y-3">
-          {listA.map((item, index) => {
+          {safeListA.map((item, index) => {
             const itemId = sortableIds[index];
             return (
               <div
@@ -317,7 +342,7 @@ export default function MatchingBuilder({
                   className="px-3 py-2 text-sm border rounded-lg border-slate-200 focus:border-main focus:ring-2 focus:ring-main/10"
                 >
                   <option value="">No match</option>
-                  {listB.map((match, idx) => {
+                  {safeListB.map((match, idx) => {
                     const matchId = getItemIdentifier(match, idx, "listB");
                     return (
                       <option key={matchId} value={matchId}>

@@ -252,34 +252,45 @@ export default function QuestionEditor({
                     <label className="text-sm font-medium text-slate-700">
                       Question starts at
                     </label>
-                    <input
-                      type="number"
-                      min={1}
+                    <select
                       value={state.question_number_start}
                       onChange={(e) => {
-                        const start = Number(e.target.value);
+                        const start = parseInt(e.target.value, 10);
                         const end = Math.max(start, state.question_number_end);
                         updateQuestionRange(start, end);
                       }}
-                      className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10"
-                    />
+                      className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10 bg-white"
+                    >
+                      {Array.from({ length: 40 }, (_, i) => i + 1).map((num) => (
+                        <option key={num} value={num}>
+                          {num}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700">
                       Ends at
                     </label>
-                    <input
-                      type="number"
-                      min={state.question_number_start}
+                    <select
                       value={state.question_number_end}
-                      onChange={(e) =>
-                        updateQuestionRange(
-                          state.question_number_start,
-                          Number(e.target.value)
-                        )
-                      }
-                      className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10"
-                    />
+                      onChange={(e) => {
+                        const end = parseInt(e.target.value, 10);
+                        // Ensure end is not less than start
+                        if (end >= state.question_number_start) {
+                          updateQuestionRange(state.question_number_start, end);
+                        }
+                      }}
+                      className="w-full px-4 py-3 mt-2 text-sm border rounded-2xl border-slate-200 focus:border-main focus:ring-4 focus:ring-main/10 bg-white"
+                    >
+                      {Array.from({ length: 40 }, (_, i) => i + 1)
+                        .filter((num) => num >= state.question_number_start)
+                        .map((num) => (
+                          <option key={num} value={num}>
+                            {num}
+                          </option>
+                        ))}
+                    </select>
                   </div>
                 </div>
               )}
