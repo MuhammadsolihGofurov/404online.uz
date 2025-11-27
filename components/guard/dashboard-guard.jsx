@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { authAxios } from "@/utils/axios";
 import { PRIVATEAUTHKEY } from "@/mock/keys";
+import { ROLES } from "@/utils/constants/roles";
 
 export function withAuthGuard(WrappedComponent, allowedRoles = []) {
   return function GuardedPage(props) {

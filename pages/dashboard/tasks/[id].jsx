@@ -183,7 +183,10 @@ function TaskDetailPage({ info, user, loading }) {
 
   const canEdit =
     user?.role === "CENTER_ADMIN" ||
-    (user?.role !== "STUDENT" && task?.created_by?.id === user?.id);
+    (user?.role !== "STUDENT" && (task?.created_by?.id || task?.created_by) === user?.id);
+  
+  // Exam Controls Permission: Center Admin OR Task Owner
+  const canControlExam = canEdit; 
 
   if (loading || isLoading) {
     return (
@@ -380,7 +383,7 @@ function TaskDetailPage({ info, user, loading }) {
 
             {/* Exam Controls (for Teachers/Admins) */}
             {task.task_type === "EXAM_MOCK" &&
-              ["CENTER_ADMIN", "TEACHER", "ASSISTANT"].includes(user?.role) && (
+              canControlExam && (
                 <div className="pt-6 border-t">
                   <div className="flex items-center gap-4">
                     {!task.is_exam_active ? (

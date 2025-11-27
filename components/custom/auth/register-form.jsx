@@ -14,6 +14,7 @@ export default function RegisterForm() {
   const intl = useIntl();
   const router = useRouter();
   const [reqLoading, setReqLoading] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const {
     register,
     handleSubmit,
@@ -37,7 +38,7 @@ export default function RegisterForm() {
 
       const payload = {
         email,
-        password,
+        password: isGuest ? null : password,
         full_name,
         invitation_code,
       };
@@ -126,19 +127,36 @@ export default function RegisterForm() {
           }}
           error={errors?.invitation_code?.message}
         />
-        <Input
-          type={"password"}
-          register={register}
-          name={"password"}
-          title={intl.formatMessage({ id: "Password" })}
-          placeholder={"********"}
-          id="password"
-          required
-          validation={{
-            required: intl.formatMessage({ id: "Password is requried" }),
-          }}
-          error={errors?.password?.message}
-        />
+        
+        {/* Guest Toggle */}
+        <div className="flex items-center gap-2 justify-start">
+          <input
+            type="checkbox"
+            id="is_guest"
+            checked={isGuest}
+            onChange={(e) => setIsGuest(e.target.checked)}
+            className="rounded border-gray-300 text-main focus:ring-main w-4 h-4 cursor-pointer"
+          />
+          <label htmlFor="is_guest" className="text-sm text-textSecondary cursor-pointer select-none">
+            {intl.formatMessage({ id: "I am a Guest (No Password required)" })}
+          </label>
+        </div>
+
+        {!isGuest && (
+          <Input
+            type={"password"}
+            register={register}
+            name={"password"}
+            title={intl.formatMessage({ id: "Password" })}
+            placeholder={"********"}
+            id="password"
+            required
+            validation={{
+              required: intl.formatMessage({ id: "Password is requried" }),
+            }}
+            error={errors?.password?.message}
+          />
+        )}
       </div>
       <div className="flex flex-col gap-4">
         <button

@@ -17,6 +17,7 @@ import {
   TEACHERS_URL,
   USERS_URL,
 } from "@/mock/router";
+import { ROLES } from "@/utils/constants/roles";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
@@ -30,7 +31,7 @@ const OwnerMenuItems = [
       <path d="M3 21H21M5 21V7L13 3V21M19 21V11L13 7M9 9V9.01M9 12V12.01M9 15V15.01M9 18V18.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       `,
-    roles: ["OWNER"],
+    roles: [ROLES.OWNER],
   },
 ];
 
@@ -41,7 +42,7 @@ const CenterAdminMenuItems = [
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M18.364 18.3639C19.6227 17.1052 20.4798 15.5016 20.8271 13.7558C21.1743 12.0099 20.9961 10.2004 20.3149 8.55582C19.6337 6.91129 18.4802 5.50569 17.0001 4.51677C15.5201 3.52784 13.78 3 12 3C10.22 3 8.47992 3.52784 6.99988 4.51677C5.51984 5.50569 4.36629 6.91129 3.6851 8.55582C3.00391 10.2004 2.82567 12.0099 3.17293 13.7558C3.52019 15.5016 4.37734 17.1052 5.636 18.3639M11.7661 21.9999H12.2341C12.7216 22 13.1924 21.822 13.558 21.4994C13.9235 21.1768 14.1586 20.7317 14.2191 20.2479L14.7191 16.2479C14.7542 15.9665 14.7291 15.6808 14.6455 15.4098C14.5618 15.1388 14.4214 14.8887 14.2337 14.6761C14.046 14.4635 13.8152 14.2933 13.5566 14.1767C13.2981 14.0601 13.0177 13.9999 12.7341 13.9999H11.2661C10.9824 13.9999 10.7021 14.0601 10.4435 14.1767C10.185 14.2933 9.95416 14.4635 9.76644 14.6761C9.57871 14.8887 9.43835 15.1388 9.35466 15.4098C9.27098 15.6808 9.24589 15.9665 9.28106 16.2479L9.78106 20.2479C9.84152 20.7317 10.0766 21.1768 10.4422 21.4994C10.8077 21.822 11.2785 22 11.7661 21.9999ZM14 8.99992C14 10.1045 13.1046 10.9999 12 10.9999C10.8954 10.9999 10 10.1045 10 8.99992C10 7.89535 10.8954 6.99992 12 6.99992C13.1046 6.99992 14 7.89535 14 8.99992Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`,
-    roles: ["CENTER_ADMIN"],
+    roles: [ROLES.CENTER_ADMIN],
   },
   {
     title: "Invitation codes",
@@ -50,7 +51,7 @@ const CenterAdminMenuItems = [
         <path d="M9 12H15M12 9V15M6 19C5.46957 19 4.96086 18.7893 4.58579 18.4142C4.21071 18.0391 4 17.5304 4 17V13L3 12L4 11V7C4 6.46957 4.21071 5.96086 4.58579 5.58579C4.96086 5.21071 5.46957 5 6 5M18 19C18.5304 19 19.0391 18.7893 19.4142 18.4142C19.7893 18.0391 20 17.5304 20 17V13L21 12L20 11V7C20 6.46957 19.7893 5.96086 19.4142 5.58579C19.0391 5.21071 18.5304 5 18 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["CENTER_ADMIN"],
+    roles: [ROLES.CENTER_ADMIN],
   },
   {
     title: "Groups",
@@ -59,7 +60,7 @@ const CenterAdminMenuItems = [
       <path d="M4 12L12 16L20 12M4 16L12 20L20 16M12 4L4 8L12 12L20 8L12 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       `,
-    roles: ["CENTER_ADMIN"],
+    roles: [ROLES.CENTER_ADMIN],
   },
 ];
 
@@ -78,7 +79,7 @@ const menuItems = [
       </defs>
       </svg>
       `,
-    roles: ["OWNER", "CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT"],
+    roles: [ROLES.OWNER, ROLES.CENTER_ADMIN, ROLES.TEACHER, ROLES.ASSISTANT, ROLES.STUDENT],
   },
   ...OwnerMenuItems,
   ...CenterAdminMenuItems,
@@ -88,7 +89,7 @@ const menuItems = [
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14 7H20M17 4V10M5 4H9C9.55228 4 10 4.44772 10 5V9C10 9.55228 9.55228 10 9 10H5C4.44772 10 4 9.55228 4 9V5C4 4.44772 4.44772 4 5 4ZM5 14H9C9.55228 14 10 14.4477 10 15V19C10 19.5523 9.55228 20 9 20H5C4.44772 20 4 19.5523 4 19V15C4 14.4477 4.44772 14 5 14ZM15 14H19C19.5523 14 20 14.4477 20 15V19C20 19.5523 19.5523 20 19 20H15C14.4477 20 14 19.5523 14 19V15C14 14.4477 14.4477 14 15 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg> `,
-    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+    roles: [ROLES.CENTER_ADMIN, ROLES.TEACHER, ROLES.ASSISTANT],
   },
   {
     title: "Materials Hub",
@@ -97,7 +98,7 @@ const menuItems = [
           <path d="M20 6C20 7.65685 16.4183 9 12 9C7.58172 9 4 7.65685 4 6M20 6C20 4.34315 16.4183 3 12 3C7.58172 3 4 4.34315 4 6M20 6V12M4 6V12M4 12C4 12.7956 4.84285 13.5587 6.34315 14.1213C7.84344 14.6839 9.87827 15 12 15C14.1217 15 16.1566 14.6839 17.6569 14.1213C19.1571 13.5587 20 12.7956 20 12M4 12V18C4 18.7956 4.84285 19.5587 6.34315 20.1213C7.84344 20.6839 9.87827 21 12 21C14.1217 21 16.1566 20.6839 17.6569 20.1213C19.1571 19.5587 20 18.7956 20 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
       `,
-    roles: ["OWNER", "CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT"],
+    roles: [ROLES.OWNER, ROLES.CENTER_ADMIN, ROLES.TEACHER, ROLES.ASSISTANT, ROLES.STUDENT],
     query: `?type=DOCUMENTS`,
   },
   {
@@ -107,7 +108,7 @@ const menuItems = [
         <path d="M9 7H15M9 11H15M9 15H13M7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+    roles: [ROLES.CENTER_ADMIN, ROLES.TEACHER, ROLES.ASSISTANT],
     query: `?type=DOCUMENTS`,
   },
   {
@@ -117,7 +118,15 @@ const menuItems = [
         <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+    roles: [ROLES.CENTER_ADMIN, ROLES.TEACHER, ROLES.ASSISTANT],
+  },
+  {
+    title: "Exams",
+    href: "/dashboard/exams",
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+    roles: [ROLES.STUDENT, ROLES.GUEST],
   },
   {
     title: "My Tasks",
@@ -126,7 +135,7 @@ const menuItems = [
         <path d="M9 7H15M9 11H15M9 15H13M7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["STUDENT", "GUEST"],
+    roles: [ROLES.STUDENT, ROLES.GUEST],
   },
   {
     title: "Messages",
@@ -135,7 +144,7 @@ const menuItems = [
         <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["STUDENT", "GUEST"],
+    roles: [ROLES.STUDENT, ROLES.GUEST],
   },
   {
     title: "My Group",
@@ -144,7 +153,7 @@ const menuItems = [
         <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["STUDENT", "GUEST"],
+    roles: [ROLES.STUDENT, ROLES.GUEST],
   },
   {
     title: "Leaderboard",
@@ -153,7 +162,7 @@ const menuItems = [
         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT", "GUEST"],
+    roles: [ROLES.CENTER_ADMIN, ROLES.TEACHER, ROLES.ASSISTANT, ROLES.STUDENT, ROLES.GUEST],
   },
   {
     title: "Profile",
@@ -162,7 +171,7 @@ const menuItems = [
         <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
-    roles: ["STUDENT", "GUEST"],
+    roles: [ROLES.STUDENT, ROLES.GUEST],
   },
   {
     title: "Settings",
@@ -171,7 +180,7 @@ const menuItems = [
           <path d="M10.325 4.317C10.751 2.561 13.249 2.561 13.675 4.317C13.7389 4.5808 13.8642 4.82578 14.0407 5.032C14.2172 5.23822 14.4399 5.39985 14.6907 5.50375C14.9414 5.60764 15.2132 5.65085 15.4838 5.62987C15.7544 5.60889 16.0162 5.5243 16.248 5.383C17.791 4.443 19.558 6.209 18.618 7.753C18.4769 7.98466 18.3924 8.24634 18.3715 8.51677C18.3506 8.78721 18.3938 9.05877 18.4975 9.30938C18.6013 9.55999 18.7627 9.78258 18.9687 9.95905C19.1747 10.1355 19.4194 10.2609 19.683 10.325C21.439 10.751 21.439 13.249 19.683 13.675C19.4192 13.7389 19.1742 13.8642 18.968 14.0407C18.7618 14.2172 18.6001 14.4399 18.4963 14.6907C18.3924 14.9414 18.3491 15.2132 18.3701 15.4838C18.3911 15.7544 18.4757 16.0162 18.617 16.248C19.557 17.791 17.791 19.558 16.247 18.618C16.0153 18.4769 15.7537 18.3924 15.4832 18.3715C15.2128 18.3506 14.9412 18.3938 14.6906 18.4975C14.44 18.6013 14.2174 18.7627 14.0409 18.9687C13.8645 19.1747 13.7391 19.4194 13.675 19.683C13.249 21.439 10.751 21.439 10.325 19.683C10.2611 19.4192 10.1358 19.1742 9.95929 18.968C9.7828 18.7618 9.56011 18.6001 9.30935 18.4963C9.05859 18.3924 8.78683 18.3491 8.51621 18.3701C8.24559 18.3911 7.98375 18.4757 7.752 18.617C6.209 19.557 4.442 17.791 5.382 16.247C5.5231 16.0153 5.60755 15.7537 5.62848 15.4832C5.64942 15.2128 5.60624 14.9412 5.50247 14.6906C5.3987 14.44 5.23726 14.2174 5.03127 14.0409C4.82529 13.8645 4.58056 13.7391 4.317 13.675C2.561 13.249 2.561 10.751 4.317 10.325C4.5808 10.2611 4.82578 10.1358 5.032 9.95929C5.23822 9.7828 5.39985 9.56011 5.50375 9.30935C5.60764 9.05859 5.65085 8.78683 5.62987 8.51621C5.60889 8.24559 5.5243 7.98375 5.383 7.752C4.443 6.209 6.209 4.442 7.753 5.382C8.753 5.99 10.049 5.452 10.325 4.317Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>`,
-    roles: ["OWNER", "CENTER_ADMIN"],
+    roles: [ROLES.OWNER, ROLES.CENTER_ADMIN],
   },
 ];
 

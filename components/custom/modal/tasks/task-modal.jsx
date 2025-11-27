@@ -253,6 +253,24 @@ export default function TaskModal({
   const taskType = watch("task_type");
   const practiceTemplate = watch("practice_template");
 
+  // Fetch Current User Info to determine Role
+  const { data: currentUser } = useSWR(
+    ["/accounts/me/", router.locale],
+    ([url, locale]) =>
+      fetcher(
+        url,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
+  const isCenterAdmin = currentUser?.role === "CENTER_ADMIN";
+
   // Fetch task details if editing
   const { data: taskData } = useSWR(
     id ? ["/tasks/", router.locale, id] : null,
@@ -400,10 +418,26 @@ export default function TaskModal({
 
   // Fetch students for assignment
   const { data: studentsData } = useSWR(
-    ["/users/", router.locale],
+    ["/users/", router.locale, "STUDENT"],
     ([url, locale]) =>
       fetcher(
         `${url}?page_size=all&role=STUDENT`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
+  // Fetch Guests only if Center Admin
+  const { data: guestsData } = useSWR(
+    isCenterAdmin ? ["/users/", router.locale, "GUEST"] : null,
+    ([url, locale]) =>
+      fetcher(
+        `${url}?page_size=all&role=GUEST`,
         {
           headers: {
             "Accept-Language": locale,
@@ -432,11 +466,20 @@ export default function TaskModal({
     ? groupsData
     : [];
 
-  const studentOptions = Array.isArray(studentsData?.results)
+  const rawStudents = Array.isArray(studentsData?.results)
     ? studentsData.results
     : Array.isArray(studentsData)
     ? studentsData
     : [];
+
+  const rawGuests = Array.isArray(guestsData?.results)
+    ? guestsData.results
+    : Array.isArray(guestsData)
+    ? guestsData
+    : [];
+
+  // Combine students and guests
+  const studentOptions = [...rawStudents, ...rawGuests];
 
   const submitFn = async (data) => {
     try {

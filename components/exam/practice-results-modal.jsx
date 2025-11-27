@@ -1,7 +1,7 @@
 import React from "react";
 import { useIntl } from "react-intl";
 import { useRouter } from "next/router";
-import { Trophy, CheckCircle, XCircle, AlertCircle, RotateCcw, X, LogOut } from "lucide-react";
+import { Trophy, CheckCircle, XCircle, AlertCircle, RotateCcw, LogOut, X } from "lucide-react";
 import { QuestionRendererReadOnly } from "./question-renderer-readonly";
 
 /**
@@ -10,7 +10,7 @@ import { QuestionRendererReadOnly } from "./question-renderer-readonly";
  * Displays instant scoring results from practice_check or self_check endpoints.
  * Shows accuracy, band score, and detailed question-by-question breakdown.
  */
-export function PracticeResultsModal({ isOpen, onClose, results, questions = [], userAnswers = {} }) {
+export function PracticeResultsModal({ isOpen, onClose, results, questions = [], userAnswers = {}, deadline = null }) {
   const intl = useIntl();
   const router = useRouter();
 
@@ -45,7 +45,11 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
     };
   });
 
+  // Check deadline logic
+  const isDeadlinePassed = deadline ? new Date() > new Date(deadline) : false;
+
   const handleTryAgain = () => {
+    if (isDeadlinePassed) return;
     onClose();
     // Reload the page to restart practice
     router.reload();
@@ -92,6 +96,12 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
           </h2>
           {message && (
             <p className="text-gray-500 mt-2">{message}</p>
+          )}
+          {isDeadlinePassed && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-700 text-sm font-medium inline-block">
+              <AlertCircle size={16} className="inline mr-2 -mt-0.5" />
+              {intl.formatMessage({ id: "Deadline has passed. Restart is disabled." })}
+            </div>
           )}
         </div>
 
@@ -207,7 +217,7 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
                         <QuestionRendererReadOnly
                           question={question}
                           userAnswer={userAnswer}
-                          correctAnswer={null} // Hiding detailed correct answers for now to focus on user performance, or backend doesn't send them
+                          correctAnswer={null}
                           showCorrectness={true}
                         />
                         
@@ -231,10 +241,15 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
           <button
             type="button"
             onClick={handleTryAgain}
-            className="order-2 sm:order-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all font-semibold flex items-center justify-center gap-2"
+            disabled={isDeadlinePassed}
+            className={`order-2 sm:order-1 px-6 py-3 rounded-xl border font-semibold flex items-center justify-center gap-2 transition-all ${
+              isDeadlinePassed 
+                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" 
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+            }`}
           >
             <RotateCcw size={18} />
-            {intl.formatMessage({ id: "Try Again" })}
+            {intl.formatMessage({ id: "Retry / Restart" })}
           </button>
           
           <button
@@ -243,7 +258,7 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
             className="order-1 sm:order-2 px-8 py-3 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition-all font-bold flex items-center justify-center gap-2 shadow-lg shadow-gray-200 transform active:scale-95"
           >
             <LogOut size={18} />
-            {intl.formatMessage({ id: "Finish Review" })}
+            {intl.formatMessage({ id: "Submit & Exit" })}
           </button>
         </div>
       </div>

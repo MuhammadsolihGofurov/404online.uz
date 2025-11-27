@@ -10,6 +10,7 @@ import { QuestionRenderer } from "./question-renderer";
 import { AudioPlayer } from "./audio-player";
 import { SplitScreenLayout } from "./SplitScreenLayout";
 import { PracticeResultsModal } from "./practice-results-modal";
+import { QuestionPalette } from "./QuestionPalette";
 import { RichText } from "@/components/ui/RichText";
 import { ZoomableImage } from "@/components/common/ZoomableImage";
 import { toast } from "react-toastify";
@@ -31,6 +32,16 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
   const [practiceResults, setPracticeResults] = useState(null);
   const [showPracticeResults, setShowPracticeResults] = useState(false);
   const [submissionId, setSubmissionId] = useState(existingDraft?.id || null);
+  const [markedForReview, setMarkedForReview] = useState(new Set());
+
+  const toggleReview = (questionId) => {
+    setMarkedForReview(prev => {
+      const next = new Set(prev);
+      if (next.has(questionId)) next.delete(questionId);
+      else next.add(questionId);
+      return next;
+    });
+  };
 
   const isPracticeMode = mode === 'practice';
   const isTemplatePractice = isPracticeMode && templateId !== null;
@@ -161,6 +172,32 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
     }
   }, [sectionTimeRemaining, isStrictMode, isActionPending, useStatusHook]);
 
+  // Real-time Deadline Enforcement
+  useEffect(() => {
+    if (!task?.deadline) return;
+    
+    const deadlineTime = new Date(task.deadline).getTime();
+    
+    const checkDeadline = () => {
+      const now = Date.now();
+      if (now >= deadlineTime) {
+        if (!isSubmitting) {
+             toast.warning(intl.formatMessage({ id: "Deadline reached. Submitting your answers..." }));
+             handleFinalSubmit(true);
+        }
+      }
+    };
+
+    const msUntilDeadline = deadlineTime - Date.now();
+    
+    if (msUntilDeadline <= 0) {
+       checkDeadline();
+    } else {
+       const timer = setTimeout(checkDeadline, msUntilDeadline);
+       return () => clearTimeout(timer);
+    }
+  }, [task?.deadline, isSubmitting]);
+
   const handleSubmitClick = async () => {
     const unansweredCount = totalQuestions - answeredCount;
     const confirmMessage = unansweredCount > 0 
@@ -268,7 +305,7 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden h-[calc(100vh-64px)]">
+      <div className="flex flex-1 overflow-hidden h-[calc(100vh-64px-72px)]">
         {/* Sidebar */}
         {sidebarOpen && (
           <aside className="w-72 overflow-y-auto bg-white border-r border-gray-200 hidden md:flex flex-col pb-20 shadow-[2px_0_8px_rgba(0,0,0,0.02)] z-20">
@@ -450,12 +487,22 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
         </main>
       </div>
 
+      <QuestionPalette
+        questions={currentSection?.questions || []}
+        answers={answers}
+        currentQuestionId={currentQuestion?.id}
+        onSelectQuestion={(idx) => goToQuestion(currentSectionIndex, idx)}
+        markedForReview={markedForReview}
+        onToggleReview={toggleReview}
+      />
+
       <PracticeResultsModal
         isOpen={showPracticeResults}
         onClose={() => setShowPracticeResults(false)}
         results={practiceResults}
         questions={normalizedData?.sections?.flatMap(s => s.questions || []) || []}
         userAnswers={answers}
+        deadline={task?.deadline}
       />
     </div>
   );

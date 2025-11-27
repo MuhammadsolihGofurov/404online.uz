@@ -11,13 +11,15 @@ export function MyTasksList({ loading, user_id }) {
   const router = useRouter();
   const intl = useIntl();
   const [activeTab, setActiveTab] = useState("todo"); // "todo" or "completed"
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   // Fetch all tasks (backend already filters for current student)
   const { data: tasksData, isLoading, mutate } = useSWR(
-    ["/tasks/", router.locale, activeTab],
-    ([url, locale]) =>
+    ["/tasks/", router.locale, activeTab, page],
+    ([url, locale, _, p]) =>
       fetcher(
-        `${url}?page_size=all`,
+        `${url}?page=${p}&page_size=${pageSize}&exclude_task_type=EXAM_MOCK`,
         {
           headers: {
             "Accept-Language": locale,
@@ -105,6 +107,9 @@ export function MyTasksList({ loading, user_id }) {
   }, [tasks, submissionsMap]);
 
   const currentTasks = activeTab === "todo" ? todoTasks : completedTasks;
+  const totalCount = tasksData?.count || 0;
+  const hasNextPage = !!tasksData?.next;
+  const hasPrevPage = !!tasksData?.previous;
 
   if (loading || isLoading) {
     return (
@@ -184,6 +189,29 @@ export function MyTasksList({ loading, user_id }) {
                     : "No completed tasks",
               })}
             </p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {(hasNextPage || hasPrevPage) && (
+          <div className="flex items-center justify-center gap-4 mt-8 pt-4 border-t border-gray-100">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={!hasPrevPage}
+              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {intl.formatMessage({ id: "Previous" })}
+            </button>
+            <span className="text-sm text-gray-600">
+              {intl.formatMessage({ id: "Page" })} {page}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasNextPage}
+              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {intl.formatMessage({ id: "Next" })}
+            </button>
           </div>
         )}
       </div>

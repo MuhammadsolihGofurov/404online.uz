@@ -83,7 +83,7 @@ export function SplitScreenLayout({
         </div>
 
         {/* Passage Content (Scrollable) */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 reading-passage">
+        <div className="flex-1 overflow-y-auto px-8 py-6 reading-passage font-[Arial,Helvetica,sans-serif] leading-[1.6] text-[16px] text-gray-800 selection:bg-yellow-200 selection:text-black">
           {passage}
         </div>
       </div>
