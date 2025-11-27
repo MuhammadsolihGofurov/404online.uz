@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useIntl } from "react-intl";
-import { X, Clock, Save, CheckCircle, AlertCircle, Lock } from "lucide-react";
+import { X, Clock, Save, CheckCircle, AlertCircle, Lock, Menu, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useModal } from "@/context/modal-context";
 import { useExamEngine } from "@/hooks/useExamEngine";
@@ -11,16 +11,17 @@ import { AudioPlayer } from "./audio-player";
 import { SplitScreenLayout } from "./SplitScreenLayout";
 import { PracticeResultsModal } from "./practice-results-modal";
 import { RichText } from "@/components/ui/RichText";
+import { ZoomableImage } from "@/components/common/ZoomableImage";
 import { toast } from "react-toastify";
 
 /**
- * ExamRoomLayout
+ * ExamRoomLayout - Optimized & Refactored
  * 
- * Full-screen layout for exam room (hides sidebar/header)
- * Provides focused exam experience
- * 
- * @param {string} mode - 'practice' for practice mode, 'exam' for normal submission
- * @param {string} templateId - Template ID for template practice mode
+ * Features:
+ * 1. Global Audio Player (Persists across sections)
+ * 2. Zoomable Images (Lightbox support)
+ * 3. Strict Mode enforcement
+ * 4. Prominent Timer
  */
 export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode = 'exam', templateId = null, onSubmissionComplete = null }) {
   const intl = useIntl();
@@ -35,7 +36,7 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
   const isTemplatePractice = isPracticeMode && templateId !== null;
   const isExamMock = task?.task_type === 'EXAM_MOCK';
   
-  // Initialize exam status hook (only for non-practice task-based exams)
+  // Initialize exam status hook
   const useStatusHook = !isPracticeMode && !isTemplatePractice && task?.id;
   const {
     examStatus,
@@ -52,10 +53,14 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
     isActionPending,
   } = useExamStatus(submissionId, useStatusHook);
   
-  // Determine strict mode from API or fallback to task type
   const isStrictMode = useStatusHook ? (apiStrictMode || false) : (isExamMock && !isPracticeMode);
 
-  // Initialize exam engine
+  const handleSubmissionCreated = (newId) => {
+    if (newId && newId !== submissionId) {
+      setSubmissionId(newId);
+    }
+  };
+
   const {
     answers,
     currentSectionIndex,
@@ -72,727 +77,379 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
     getAnsweredCount,
     handleFinalSubmit,
     formatTime,
-  } = useExamEngine(task, normalizedData, existingDraft, mode, templateId);
+  } = useExamEngine(task, normalizedData, existingDraft, mode, templateId, handleSubmissionCreated);
+
+  // Smooth Timer Logic for Strict Mode (Auditorium Mode)
+  const [displayTime, setDisplayTime] = useState(null);
+
+  // Sync with server time when it updates
+  useEffect(() => {
+    if (useStatusHook && sectionTimeRemaining !== undefined) {
+      setDisplayTime(sectionTimeRemaining);
+    }
+  }, [sectionTimeRemaining, useStatusHook]);
+
+  // Local ticker to smooth out the 5s polling interval
+  useEffect(() => {
+    if (!useStatusHook) return;
+    const interval = setInterval(() => {
+      setDisplayTime((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [useStatusHook]);
+
+  const effectiveTimeRemaining = useStatusHook 
+    ? (displayTime !== null ? displayTime : sectionTimeRemaining)
+    : timeRemaining;
 
   const currentQuestion = getCurrentQuestion();
   const currentSection = normalizedData?.sections?.[currentSectionIndex];
   const totalQuestions = normalizedData?.totalQuestions || 0;
   const answeredCount = getAnsweredCount();
 
-  // Map section index to section type for API calls
-  // IMPORTANT: Must be declared before use
   const getSectionType = (sectionIndex) => {
     const section = normalizedData?.sections?.[sectionIndex];
     if (!section) return null;
-    
-    // Check multiple properties and normalize to uppercase for case-insensitive comparison
     const mockType = (section.mock_type || section.type || section.title || '').toUpperCase();
-    
     if (mockType.includes('LISTENING')) return 'LISTENING';
     if (mockType.includes('READING')) return 'READING';
     if (mockType.includes('WRITING')) return 'WRITING';
-    
     return null;
   };
 
-  // Detect section type for UI rendering
   const currentSectionType = getSectionType(currentSectionIndex);
   const isReadingSection = currentSectionType === 'READING';
+  const isListeningSection = currentSectionType === 'LISTENING';
+  const isWritingSection = currentSectionType === 'WRITING';
 
-  // Auto-advance section when timer expires (Strict Mode only)
-  useEffect(() => {
-    if (!isStrictMode || !sectionTimeRemaining || !useStatusHook) return;
+  // Compute Global Audio URL from Mock level
+  const activeAudioUrl = useMemo(() => {
+    if (!currentSection || !task?.mocks) return null;
     
-    // When section timer hits 0, complete section automatically
+    // 1. Try to find mock by ID if section has it
+    if (currentSection.mock_id) {
+      const mock = task.mocks.find(m => m.id === currentSection.mock_id);
+      if (mock?.audio_file) return mock.audio_file;
+    }
+    
+    // 2. Fallback: Find first mock of matching type (Standard for Exams)
+    // Only applicable for LISTENING sections
+    if (currentSectionType === 'LISTENING') {
+      const mock = task.mocks.find(m => m.mock_type === 'LISTENING');
+      return mock?.audio_file || null;
+    }
+
+    return null;
+  }, [currentSection, task, currentSectionType]);
+
+  // Auto-advance section when timer expires
+  useEffect(() => {
+    if (!isStrictMode || !useStatusHook || sectionTimeRemaining === undefined || sectionTimeRemaining === null) return;
+    
     if (sectionTimeRemaining === 0 && !isActionPending) {
-      console.log('Section timer expired - auto-advancing');
       apiCompleteSection().then((result) => {
         if (result?.success && result?.nextSection) {
-          // Move UI to next section
           const nextSectionIndex = normalizedData?.sections?.findIndex(
             s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
           );
-          if (nextSectionIndex !== -1) {
-            goToSection(nextSectionIndex);
-          }
+          if (nextSectionIndex !== -1) goToSection(nextSectionIndex);
         } else if (result?.success && !result?.nextSection) {
-          // All sections completed - trigger final submit
           toast.info("All sections completed! Submitting your exam...");
-          handleFinalSubmit(true); // Auto-submit
+          handleFinalSubmit(true);
         }
       });
     }
   }, [sectionTimeRemaining, isStrictMode, isActionPending, useStatusHook]);
 
-  // Handle final submit with confirmation
   const handleSubmitClick = async () => {
-    const totalQuestions = normalizedData?.totalQuestions || 0;
-    const answeredCount = getAnsweredCount();
     const unansweredCount = totalQuestions - answeredCount;
+    const confirmMessage = unansweredCount > 0 
+      ? intl.formatMessage({ id: "You have {count} unanswered questions. Are you sure you want to submit?" }, { count: unansweredCount })
+      : null;
 
-    if (unansweredCount > 0) {
-      openModal(
-        "confirmModal",
-        {
-          title: isPracticeMode ? "Confirm Practice Check" : "Confirm Submission",
-          description: intl.formatMessage(
-            { id: "You have {count} unanswered questions. Are you sure you want to submit?" },
-            { count: unansweredCount }
-          ),
-          onConfirm: async () => {
-            const result = await handleFinalSubmit(false);
-            if (result?.isPractice && result?.results) {
-              // Training Zone: Show practice results modal
-              setPracticeResults({
-                ...result.results,
-                questions: result.questions || [],
-              });
-              setShowPracticeResults(true);
-            } else if (result?.success && !result?.shouldRedirect && onSubmissionComplete) {
-              // Non-EXAM task: Show completion modal (replay workflow)
-              onSubmissionComplete(result.submission);
-            }
-            // EXAM_MOCK: Redirect handled in useExamEngine
-          },
-        },
-        "short"
-      );
+    if (confirmMessage) {
+      openModal("confirmModal", {
+        title: isPracticeMode ? "Confirm Practice Check" : "Confirm Submission",
+        description: confirmMessage,
+        onConfirm: performSubmit,
+      }, "short");
     } else {
-      const result = await handleFinalSubmit(false);
-      if (result?.isPractice && result?.results) {
-        // Training Zone: Show practice results modal
-        setPracticeResults({
-          ...result.results,
-          questions: result.questions || [],
-        });
-        setShowPracticeResults(true);
-      } else if (result?.success && !result?.shouldRedirect && onSubmissionComplete) {
-        // Non-EXAM task: Show completion modal (replay workflow)
-        onSubmissionComplete(result.submission);
-      }
-      // EXAM_MOCK: Redirect handled in useExamEngine
+      performSubmit();
     }
   };
 
-  // Auto-save status indicator
+  const performSubmit = async () => {
+    const result = await handleFinalSubmit(false);
+    if (result?.isPractice && result?.results) {
+      setPracticeResults({ ...result.results, questions: result.questions || [] });
+      setShowPracticeResults(true);
+    } else if (result?.success && !result?.shouldRedirect && onSubmissionComplete) {
+      onSubmissionComplete(result.submission);
+    }
+  };
+
   const getAutoSaveStatusIcon = () => {
     switch (autoSaveStatus) {
-      case "saving":
-        return <Save size={16} className="text-blue-500 animate-spin" />;
-      case "saved":
-        return <CheckCircle size={16} className="text-green-500" />;
-      case "error":
-        return <AlertCircle size={16} className="text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getAutoSaveStatusText = () => {
-    switch (autoSaveStatus) {
-      case "saving":
-        return intl.formatMessage({ id: "Saving..." });
-      case "saved":
-        return intl.formatMessage({ id: "Saved" });
-      case "error":
-        return intl.formatMessage({ id: "Save failed" });
-      default:
-        return "";
+      case "saving": return <Save size={16} className="text-blue-500 animate-spin" />;
+      case "saved": return <CheckCircle size={16} className="text-green-500" />;
+      case "error": return <AlertCircle size={16} className="text-red-500" />;
+      default: return null;
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header Bar - Minimal, focused */}
-      <header className={`sticky top-0 z-50 border-b ${
-        isStrictMode 
-          ? "bg-red-50 border-red-200" 
-          : "bg-blue-50 border-blue-200"
-      }`}>
+      {/* Header Bar */}
+      <header className={`sticky top-0 z-50 border-b ${isStrictMode ? "bg-red-50 border-red-200" : "bg-white border-gray-200"} shadow-sm transition-colors duration-300`}>
         <div className="max-w-full px-4 mx-auto sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Task Title */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className={`text-lg font-semibold truncate ${
-                  isStrictMode ? "text-red-900" : "text-gray-900"
-                }`}>
-                  {task?.title}
-                </h1>
-                {isStrictMode && (
-                  <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full border border-red-300">
-                    {intl.formatMessage({ id: "OFFICIAL EXAM" })}
-                  </span>
-                )}
-                {isPracticeMode && !isStrictMode && (
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                    {intl.formatMessage({ id: "Practice Mode" })}
-                  </span>
-                )}
-                {!isPracticeMode && !isStrictMode && (
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                    {task?.task_type === 'QUIZ' 
-                      ? intl.formatMessage({ id: "QUIZ" })
-                      : intl.formatMessage({ id: "PRACTICE" })}
-                  </span>
-                )}
-              </div>
-              <p className={`text-xs ${
-                isStrictMode ? "text-red-600" : "text-gray-500"
-              }`}>
-                {task?.task_type?.replace(/_/g, " ")}
-              </p>
-            </div>
-
-            {/* Center: Progress & Auto-save */}
-            <div className="flex items-center gap-6 mx-4">
-              <div className="text-sm text-gray-600">
-                {answeredCount} / {totalQuestions}{" "}
-                {intl.formatMessage({ id: "answered" })}
-              </div>
-              {!isPracticeMode && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  {getAutoSaveStatusIcon()}
-                  <span>{getAutoSaveStatusText()}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Timer & Actions */}
-            <div className="flex items-center gap-4">
-              {/* Display section timer from API if available, otherwise fallback to task timer */}
-              {(useStatusHook ? sectionTimeRemaining !== undefined : timeRemaining !== null) && (
-                <div
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-mono text-sm ${
-                    // Determine which timer value to use for styling
-                    ((useStatusHook && sectionTimeRemaining !== undefined ? sectionTimeRemaining : timeRemaining) < 300 || isTimeUp)
-                      ? isStrictMode
-                        ? "bg-red-200 text-red-800 border-2 border-red-400"
-                        : "bg-red-100 text-red-700"
-                      : (useStatusHook && sectionTimeRemaining !== undefined ? sectionTimeRemaining : timeRemaining) < 600
-                      ? isStrictMode
-                        ? "bg-red-100 text-red-700 border border-red-300"
-                        : "bg-yellow-100 text-yellow-700"
-                      : isStrictMode
-                      ? "bg-red-50 text-red-600 border border-red-200"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  <Clock size={16} />
-                  <span>
-                    {useStatusHook && sectionTimeRemaining !== undefined
-                      ? formatTime(sectionTimeRemaining)
-                      : formatTime(timeRemaining)}
-                  </span>
-                  {/* Label for section timer in strict mode */}
-                  {useStatusHook && isStrictMode && sectionTimeRemaining !== undefined && (
-                    <span className="text-xs opacity-75 ml-1">(Section)</span>
+            <div className="flex-1 min-w-0 flex items-center gap-3">
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <Menu size={20} />
+              </button>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <h1 className={`text-lg font-bold truncate ${isStrictMode ? "text-red-900" : "text-gray-900"}`}>
+                    {task?.title}
+                  </h1>
+                  {isStrictMode && (
+                    <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full border border-red-300">
+                      OFFICIAL EXAM
+                    </span>
                   )}
                 </div>
-              )}
+                <p className={`text-xs font-medium ${isStrictMode ? "text-red-600" : "text-gray-500"}`}>
+                  {task?.task_type?.replace(/_/g, " ")}
+                </p>
+              </div>
+            </div>
 
-              {/* Exit Button */}
+            {/* Center: Prominent Timer */}
+            <div className="flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
+                {effectiveTimeRemaining !== null && effectiveTimeRemaining !== undefined && (
+                  <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-mono text-lg font-bold shadow-sm border transition-colors ${
+                    (effectiveTimeRemaining < 300 || (useStatusHook ? effectiveTimeRemaining === 0 : isTimeUp))
+                      ? "bg-red-100 text-red-700 border-red-300 animate-pulse"
+                      : isStrictMode ? "bg-white text-red-800 border-red-200" : "bg-gray-100 text-gray-800 border-gray-200"
+                  }`}>
+                    <Clock size={20} />
+                    <span>
+                      {formatTime(effectiveTimeRemaining)}
+                    </span>
+                  </div>
+                )}
+                <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider mt-0.5">Time Remaining</span>
+            </div>
+
+            {/* Right: Progress & Exit */}
+            <div className="flex items-center gap-4">
+               <div className="hidden md:flex flex-col items-end mr-4">
+                  <div className="text-sm font-semibold text-gray-700">
+                    {answeredCount} / {totalQuestions} Answered
+                  </div>
+                  {!isPracticeMode && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                      {getAutoSaveStatusIcon()}
+                      <span>{autoSaveStatus === 'saved' ? 'Progress Saved' : 'Saving...'}</span>
+                    </div>
+                  )}
+               </div>
               <Link
                 href={isPracticeMode && templateId ? "/dashboard/materials-hub?type=TRAINING_ZONE" : "/dashboard/my-tasks"}
-                className="p-2 text-gray-500 transition-colors rounded-lg hover:text-gray-700 hover:bg-gray-100"
-                title={intl.formatMessage({ id: isPracticeMode ? "Exit Practice" : "Exit Exam" })}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                title="Exit Exam"
               >
-                <X size={20} />
+                <X size={24} />
               </Link>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Navigation */}
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden h-[calc(100vh-64px)]">
+        {/* Sidebar */}
         {sidebarOpen && (
-          <aside className="w-64 overflow-y-auto bg-white border-r border-gray-200">
-            <div className="p-4">
-              <h2 className="mb-3 text-sm font-semibold text-gray-700">
-                {intl.formatMessage({ id: "Navigation" })}
+          <aside className="w-72 overflow-y-auto bg-white border-r border-gray-200 hidden md:flex flex-col pb-20 shadow-[2px_0_8px_rgba(0,0,0,0.02)] z-20">
+            <div className="p-5 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                Exam Navigation
               </h2>
-              <div className="space-y-2">
-                {normalizedData?.sections?.map((section, sectionIdx) => {
-                  // Get section status from API if available
-                  const sectionType = getSectionType(sectionIdx);
-                  const apiSection = useStatusHook && sectionType 
-                    ? apiSections?.find(s => s.type === sectionType)
-                    : null;
-                  
-                  const sectionStatus = apiSection?.status || 'AVAILABLE';
-                  const isLocked = sectionStatus === 'LOCKED';
-                  const isCompleted = sectionStatus === 'COMPLETED';
-                  const isInProgress = sectionStatus === 'IN_PROGRESS';
-                  
-                  // Determine if section is clickable
-                  const isClickable = !isLocked && (
-                    allowsSectionSwitching || // Practice mode
-                    currentSectionIndex === sectionIdx || // Current section
-                    !isStrictMode // Non-strict mode
-                  );
-                  
-                  return (
-                    <div key={section.id} className="space-y-1">
-                      <button
-                        onClick={() => {
-                          if (!isClickable) {
-                            toast.warning(
-                              isStrictMode 
-                                ? "This section is locked. Complete the current section first."
-                                : "This section is not yet available."
-                            );
-                            return;
-                          }
-                          
-                          // If switching to a different section in practice mode, call API
-                          if (useStatusHook && allowsSectionSwitching && sectionIdx !== currentSectionIndex && sectionType) {
-                            apiSwitchSection(sectionType).then((result) => {
-                              if (result?.success) {
-                                goToSection(sectionIdx);
-                              }
-                            });
-                          } else {
-                            goToSection(sectionIdx);
-                          }
-                        }}
-                        disabled={!isClickable && !isActionPending}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between ${
-                          currentSectionIndex === sectionIdx
-                            ? "bg-main text-white"
-                            : isLocked
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
-                            : isCompleted
-                            ? "bg-green-50 text-green-700 hover:bg-green-100"
-                            : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        <span>{section.title || `Section ${sectionIdx + 1}`}</span>
-                        <span className="flex items-center gap-1">
-                          {isLocked && <Lock size={14} className="text-gray-400" />}
-                          {isCompleted && <CheckCircle size={14} className="text-green-600" />}
-                          {isInProgress && currentSectionIndex === sectionIdx && (
-                            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                          )}
-                        </span>
-                      </button>
-                    {currentSectionIndex === sectionIdx && (
-                      <div className="ml-4 space-y-1">
-                        {section.questions?.map((question, questionIdx) => {
-                          const questionAnswer = getAnswer(question.id);
-                          const isGrouped = question.question_number_end && 
-                                           question.question_number_end > question.question_number_start;
-                          
-                          // Check if answered (handle both single and grouped questions)
-                          let isAnswered = false;
-                          if (questionAnswer && Object.keys(questionAnswer).length > 0) {
-                            if (isGrouped && questionAnswer.values) {
-                              // For grouped questions, check if all sub-questions are answered
-                              const questionRange = question.question_number_end - question.question_number_start + 1;
-                              const answeredCount = Object.keys(questionAnswer.values).filter(
-                                (key) => questionAnswer.values[key] && String(questionAnswer.values[key]).trim().length > 0
-                              ).length;
-                              isAnswered = answeredCount === questionRange;
-                            } else {
-                              // Single question
-                              isAnswered = true;
-                            }
-                          }
-                          
-                          const isCurrent =
-                            currentSectionIndex === sectionIdx &&
-                            currentQuestionIndex === questionIdx;
-
-                          // Display question number(s)
-                          const questionLabel = isGrouped
-                            ? `Q${question.question_number_start}-${question.question_number_end}`
-                            : `Q${question.question_number}`;
-
-                          return (
-                            <button
-                              key={question.id}
-                              onClick={() => goToQuestion(sectionIdx, questionIdx)}
-                              className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${
-                                isCurrent
-                                  ? "bg-main/20 text-main font-semibold"
-                                  : isAnswered
-                                  ? "text-green-600 hover:bg-green-50"
-                                  : "text-gray-600 hover:bg-gray-50"
-                              }`}
-                            >
-                              {questionLabel}
-                              {isAnswered && (
-                                <span className="ml-2 text-green-500">✓</span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+            </div>
+            <div className="p-3 space-y-1.5">
+              {normalizedData?.sections?.map((section, sectionIdx) => {
+                const sectionType = getSectionType(sectionIdx);
+                const apiSection = useStatusHook && sectionType 
+                  ? apiSections?.find(s => s.type === sectionType)
+                  : null;
+                
+                const sectionStatus = apiSection?.status || 'AVAILABLE';
+                const isLocked = sectionStatus === 'LOCKED';
+                const isCompleted = sectionStatus === 'COMPLETED';
+                const isClickable = !isLocked && (allowsSectionSwitching || currentSectionIndex === sectionIdx || !isStrictMode);
+                const isActive = currentSectionIndex === sectionIdx;
+                
+                return (
+                  <button
+                    key={section.id || sectionIdx}
+                    onClick={() => {
+                      if (!isClickable) return;
+                      if (useStatusHook && allowsSectionSwitching && sectionIdx !== currentSectionIndex && sectionType) {
+                        apiSwitchSection(sectionType).then((result) => {
+                          if (result?.success) goToSection(sectionIdx);
+                        });
+                      } else {
+                        goToSection(sectionIdx);
+                      }
+                    }}
+                    disabled={!isClickable && !isActionPending}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-between group ${
+                      isActive 
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-200" 
+                        : isLocked 
+                          ? "bg-gray-50 text-gray-400 cursor-not-allowed" 
+                          : "bg-white text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-200"
+                    }`}
+                  >
+                    <span className="truncate pr-2">{section.title || `Section ${sectionIdx + 1}`}</span>
+                    {isLocked ? <Lock size={14} /> : isCompleted ? <CheckCircle size={16} className={isActive ? "text-white" : "text-green-500"} /> : isActive && <ChevronRight size={16} />}
+                  </button>
+                );
+              })}
             </div>
           </aside>
         )}
 
-        {/* Main Content */}
-        <main className={`flex-1 ${isReadingSection ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-          {/* Reading Section: Split Screen Layout */}
+        {/* Main Area */}
+        <main className="flex-1 overflow-hidden flex flex-col relative bg-slate-50/50">
+          {/* 
+             GLOBAL AUDIO PLAYER
+             Rendered conditionally based on section type, but persistent across sub-section switches
+             because the layout doesn't unmount, and activeAudioUrl stays stable.
+          */}
+          {isListeningSection && activeAudioUrl && (
+            <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm p-4">
+              <div className="max-w-4xl mx-auto">
+                <AudioPlayer
+                  audioUrl={activeAudioUrl}
+                  strictMode={isStrictMode}
+                  allowPause={task?.allow_audio_pause !== false}
+                />
+              </div>
+            </div>
+          )}
+
           {isReadingSection ? (
-            <div className="h-full">
+            <div className="flex-1 h-full overflow-hidden">
               <SplitScreenLayout
                 passage={
-                  <div className="space-y-4">
-                    {/* Section Title */}
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {currentSection?.title}
-                    </h2>
-
-                    {/* Passage Instructions/Text */}
+                  <div className="space-y-8 pb-20 p-6 font-serif text-lg leading-relaxed text-gray-800">
+                    <h2 className="text-2xl font-bold text-gray-900 font-sans mb-6 border-b pb-4">{currentSection?.title}</h2>
                     {currentSection?.instructions && (
-                      <div className="text-gray-700 leading-relaxed select-text">
+                      <div className="prose max-w-none bg-blue-50 p-4 rounded-lg text-base mb-6 text-blue-800">
                         <RichText content={currentSection.instructions} />
                       </div>
                     )}
-
-                    {/* Section Images (e.g., diagrams, maps) */}
-                    {currentSection?.images && currentSection.images.length > 0 && (
-                      <div className="space-y-4">
-                        {currentSection.images.map((image, idx) => (
-                          <div key={image.id || idx} className="relative">
-                            <img
-                              src={image.image || image.image_url || image.url}
-                              alt={image.caption || `Section image ${idx + 1}`}
-                              className="w-full max-w-full border border-gray-200 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                              onClick={() => {
-                                window.open(image.image || image.image_url || image.url, '_blank');
-                              }}
-                            />
-                            {image.caption && (
-                              <p className="mt-2 text-sm text-gray-600 text-center italic">
-                                {image.caption}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    
+                    {/* Reading Images - using ZoomableImage */}
+                    {currentSection?.images?.map((image, idx) => (
+                      <ZoomableImage
+                        key={idx}
+                        src={image.image || image.image_url || image.url}
+                        alt={`Reading Passage ${idx + 1}`}
+                        className="my-6 shadow-sm"
+                      />
+                    ))}
+                    
+                    {/* Passage Text */}
+                    {currentSection?.text && <RichText content={currentSection.text} />}
                   </div>
                 }
                 questions={
-                  <div className="h-full flex flex-col">
-                    <div className="flex-1 space-y-6 mb-6">
-                      {/* Draft Resume Notice */}
-                      {existingDraft && (
-                        <div className="p-3 border border-blue-200 rounded-lg bg-blue-50">
-                          <p className="text-sm text-blue-700">
-                            {intl.formatMessage({ id: "Resuming from saved draft" })}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Current Question */}
-                      {currentQuestion ? (
-                        <div className="p-6 bg-white rounded-lg shadow-sm">
-                          <QuestionRenderer
-                            question={currentQuestion}
-                            value={getAnswer(currentQuestion.id)}
-                            onChange={(answerData) =>
-                              updateAnswer(currentQuestion.id, answerData)
-                            }
-                            disabled={isSubmitting || isTimeUp}
-                          />
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center text-gray-500 bg-white rounded-lg shadow-sm">
-                          {intl.formatMessage({ id: "No question selected" })}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Navigation and Submit Buttons */}
-                    <div className="sticky bottom-0 bg-white border-t border-gray-200 pt-4 space-y-4">
-                      {/* Navigation Buttons */}
-                      <div className="flex items-center justify-between mb-4">
+                  <div className="flex-1 h-full overflow-y-auto pb-20 px-6 py-6 bg-gray-50/50">
+                    {currentSection?.questions?.map((question, idx) => (
+                      <div key={question.id} className="mb-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                        <QuestionRenderer
+                          question={question}
+                          value={getAnswer(question.id)}
+                          onChange={(val) => updateAnswer(question.id, val)}
+                          disabled={isSubmitting || (useStatusHook ? effectiveTimeRemaining === 0 : isTimeUp)}
+                        />
+                      </div>
+                    ))}
+                    {useStatusHook && isStrictMode && apiCurrentSection && (
+                      <div className="mt-8">
                         <button
-                          onClick={() => {
-                            if (currentQuestionIndex > 0) {
-                              goToQuestion(currentSectionIndex, currentQuestionIndex - 1);
-                            } else if (currentSectionIndex > 0) {
-                              const prevSection = normalizedData.sections[currentSectionIndex - 1];
-                              const lastQuestionIdx = (prevSection?.questions?.length || 1) - 1;
-                              goToQuestion(currentSectionIndex - 1, lastQuestionIdx);
+                          onClick={() => apiCompleteSection().then(res => {
+                            if (res?.success && res?.nextSection) {
+                              const nextIdx = normalizedData?.sections?.findIndex(s => getSectionType(normalizedData.sections.indexOf(s)) === res.nextSection);
+                              if (nextIdx !== -1) goToSection(nextIdx);
                             }
-                          }}
-                          disabled={currentSectionIndex === 0 && currentQuestionIndex === 0}
-                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          })}
+                          className="w-full px-6 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5"
                         >
-                          {intl.formatMessage({ id: "Previous" })}
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            const sectionData = normalizedData.sections[currentSectionIndex];
-                            const maxQuestionIdx = (sectionData?.questions?.length || 1) - 1;
-                            
-                            if (currentQuestionIndex < maxQuestionIdx) {
-                              goToQuestion(currentSectionIndex, currentQuestionIndex + 1);
-                            } else if (currentSectionIndex < (normalizedData.sections?.length || 1) - 1) {
-                              goToQuestion(currentSectionIndex + 1, 0);
-                            }
-                          }}
-                          disabled={
-                            currentSectionIndex === (normalizedData.sections?.length || 1) - 1 &&
-                            currentQuestionIndex === ((normalizedData.sections[currentSectionIndex]?.questions?.length || 1) - 1)
-                          }
-                          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {intl.formatMessage({ id: "Next" })}
+                          Complete Reading Section
                         </button>
                       </div>
-
-                      {/* Complete Section Button (Strict Mode Only) */}
-                      {useStatusHook && isStrictMode && apiCurrentSection && (
-                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-                          <div className="mb-3">
-                            <p className="text-sm text-blue-700 font-medium">
-                              Current Section: {apiCurrentSection}
-                            </p>
-                            {sectionTimeRemaining !== undefined && (
-                              <p className="text-xs text-blue-600 mt-1">
-                                Time Remaining: {formatTime(sectionTimeRemaining)}
-                              </p>
-                            )}
-                          </div>
-                          <button
-                            onClick={async () => {
-                              const result = await apiCompleteSection();
-                              if (result?.success && result?.nextSection) {
-                                const nextSectionIndex = normalizedData?.sections?.findIndex(
-                                  s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
-                                );
-                                if (nextSectionIndex !== -1) {
-                                  goToSection(nextSectionIndex);
-                                }
-                              } else if (result?.success && !result?.nextSection) {
-                                toast.success("All sections completed! You can now submit your exam.");
-                              }
-                            }}
-                            disabled={isActionPending || isSubmitting}
-                            className="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {isActionPending ? "Processing..." : "Complete Section & Continue"}
-                          </button>
-                          <p className="text-xs text-blue-600 mt-2">
-                            ⚠️ You cannot return to this section after completing it.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Submit Button */}
-                      <div className="p-4 bg-white rounded-lg border border-gray-200">
-                        <button
-                          onClick={handleSubmitClick}
-                          disabled={isSubmitting || isTimeUp}
-                          className={`w-full px-4 py-2 font-semibold text-white transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                            isStrictMode ? "bg-red-600 hover:bg-red-700" : "bg-main hover:bg-main/90"
-                          }`}
-                        >
-                          {isSubmitting
-                            ? intl.formatMessage({ id: "Submitting..." })
-                            : isPracticeMode
-                            ? intl.formatMessage({ id: "Check Answers" })
-                            : isStrictMode
-                            ? intl.formatMessage({ id: "Submit Exam" })
-                            : intl.formatMessage({ id: "Finish Task" })}
-                        </button>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 }
-                sectionTitle={currentSection?.title}
-                onMobile="tabs"
               />
             </div>
           ) : (
-            /* Standard Layout (Listening/Writing) */
-            <div className="max-w-4xl px-4 py-6 mx-auto sm:px-6 lg:px-8">
-              {existingDraft && (
-                <div className="p-3 mb-4 border border-blue-200 rounded-lg bg-blue-50">
-                  <p className="text-sm text-blue-700">
-                    {intl.formatMessage({ id: "Resuming from saved draft" })}
-                  </p>
-                </div>
-              )}
+            // Standard Layout (Listening & Writing)
+            <div className="flex-1 overflow-y-auto pb-20 scroll-smooth">
+              <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+                {!isListeningSection && (
+                   <div className="mb-8 border-b border-gray-200 pb-6">
+                     <h2 className="text-3xl font-bold text-gray-900">{currentSection?.title}</h2>
+                     {currentSection?.instructions && (
+                        <div className="mt-4 text-gray-600 prose max-w-none">
+                          <RichText content={currentSection.instructions} />
+                        </div>
+                     )}
+                   </div>
+                )}
+                
+                {/* Images for non-reading sections */}
+                {currentSection?.images?.map((image, idx) => (
+                  <ZoomableImage
+                    key={idx}
+                    src={image.image || image.image_url || image.url}
+                    alt={`Section Image ${idx + 1}`}
+                    className="mb-8 max-w-2xl mx-auto"
+                  />
+                ))}
 
-              {currentSection && (
-                <div className="mb-6">
-                  <h2 className="mb-2 text-2xl font-bold text-gray-900">
-                    {currentSection.title}
-                  </h2>
-                  {currentSection.instructions && (
-                    <div className="mb-4 text-gray-600">
-                      <RichText content={currentSection.instructions} />
-                    </div>
-                  )}
-
-                  {/* Audio Player for Listening sections */}
-                  {currentSection.audio_file && (
-                    <div className="mb-6">
-                      <AudioPlayer
-                        audioUrl={currentSection.audio_file}
-                        strictMode={isStrictMode}
-                        allowPause={task?.allow_audio_pause !== false}
+                <div className="space-y-8">
+                  {currentSection?.questions?.map((question, idx) => (
+                    <div key={question.id} className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                      <QuestionRenderer
+                        question={question}
+                        value={getAnswer(question.id)}
+                        onChange={(val) => updateAnswer(question.id, val)}
+                        disabled={isSubmitting || (useStatusHook ? effectiveTimeRemaining === 0 : isTimeUp)}
                       />
                     </div>
-                  )}
-
-                  {/* Section Images */}
-                  {currentSection.images && currentSection.images.length > 0 && (
-                    <div className="mb-6 space-y-4">
-                      {currentSection.images.map((image, idx) => (
-                        <div key={image.id || idx} className="relative">
-                          <img
-                            src={image.image || image.image_url || image.url}
-                            alt={image.caption || `Section image ${idx + 1}`}
-                            className="w-full max-w-full border border-gray-200 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => {
-                              // Open image in modal/lightbox on click
-                            }}
-                          />
-                          {image.caption && (
-                            <p className="mt-2 text-sm text-gray-600 text-center italic">
-                              {image.caption}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
-              )}
 
-              {/* Current Question */}
-              {currentQuestion ? (
-                <div className="p-6 mb-6 bg-white rounded-lg shadow-sm">
-                  <QuestionRenderer
-                    question={currentQuestion}
-                    value={getAnswer(currentQuestion.id)}
-                    onChange={(answerData) =>
-                      updateAnswer(currentQuestion.id, answerData)
-                    }
-                    disabled={isSubmitting || isTimeUp}
-                  />
-                </div>
-              ) : (
-                <div className="p-6 text-center text-gray-500 bg-white rounded-lg shadow-sm">
-                  {intl.formatMessage({ id: "No question selected" })}
-                </div>
-              )}
-              {/* Navigation Buttons */}
-              <div className="flex items-center justify-between mb-6">
-                <button
-                  onClick={() => {
-                    if (currentQuestionIndex > 0) {
-                      goToQuestion(currentSectionIndex, currentQuestionIndex - 1);
-                    } else if (currentSectionIndex > 0) {
-                      const prevSection = normalizedData.sections[currentSectionIndex - 1];
-                      const lastQuestionIdx = (prevSection?.questions?.length || 1) - 1;
-                      goToQuestion(currentSectionIndex - 1, lastQuestionIdx);
-                    }
-                  }}
-                  disabled={currentSectionIndex === 0 && currentQuestionIndex === 0}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {intl.formatMessage({ id: "Previous" })}
-                </button>
-
-                <button
-                  onClick={() => {
-                    const sectionData = normalizedData.sections[currentSectionIndex];
-                    const maxQuestionIdx = (sectionData?.questions?.length || 1) - 1;
-                    
-                    if (currentQuestionIndex < maxQuestionIdx) {
-                      goToQuestion(currentSectionIndex, currentQuestionIndex + 1);
-                    } else if (currentSectionIndex < (normalizedData.sections?.length || 1) - 1) {
-                      goToQuestion(currentSectionIndex + 1, 0);
-                    }
-                  }}
-                  disabled={
-                    currentSectionIndex === (normalizedData.sections?.length || 1) - 1 &&
-                    currentQuestionIndex === ((normalizedData.sections[currentSectionIndex]?.questions?.length || 1) - 1)
-                  }
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {intl.formatMessage({ id: "Next" })}
-                </button>
-              </div>
-
-              {/* Complete Section Button (Strict Mode Only) */}
-              {useStatusHook && isStrictMode && apiCurrentSection && (
-                <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg mb-6">
-                  <div className="mb-3">
-                    <p className="text-sm text-blue-700 font-medium">
-                      Current Section: {apiCurrentSection}
-                    </p>
-                    {sectionTimeRemaining !== undefined && (
-                      <p className="text-xs text-blue-600 mt-1">
-                        Time Remaining: {formatTime(sectionTimeRemaining)}
-                      </p>
-                    )}
-                  </div>
+                <div className="mt-12 flex justify-end border-t pt-8">
                   <button
-                    onClick={async () => {
-                      const result = await apiCompleteSection();
-                      if (result?.success && result?.nextSection) {
-                        const nextSectionIndex = normalizedData?.sections?.findIndex(
-                          s => getSectionType(normalizedData.sections.indexOf(s)) === result.nextSection
-                        );
-                        if (nextSectionIndex !== -1) {
-                          goToSection(nextSectionIndex);
-                        }
-                      } else if (result?.success && !result?.nextSection) {
-                        toast.success("All sections completed! You can now submit your exam.");
-                      }
-                    }}
-                    disabled={isActionPending || isSubmitting}
-                    className="w-full px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    onClick={handleSubmitClick}
+                    className="px-8 py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg shadow-green-200 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
                   >
-                    {isActionPending ? "Processing..." : "Complete Section & Continue"}
+                    {isPracticeMode ? <CheckCircle size={20} /> : <Save size={20} />}
+                    {isPracticeMode ? "Check Answers" : "Submit Task"}
                   </button>
-                  <p className="text-xs text-blue-600 mt-2">
-                    ⚠️ You cannot return to this section after completing it.
-                  </p>
                 </div>
-              )}
-
-              {/* Submit Button */}
-              <div className="p-6 bg-white rounded-lg shadow-sm">
-                <button
-                  onClick={handleSubmitClick}
-                  disabled={isSubmitting || isTimeUp}
-                  className={`w-full px-6 py-3 font-semibold text-white transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isStrictMode ? "bg-red-600 hover:bg-red-700" : "bg-main hover:bg-main/90"
-                  }`}
-                >
-                  {isSubmitting
-                    ? intl.formatMessage({ id: "Submitting..." })
-                    : isPracticeMode
-                    ? intl.formatMessage({ id: "Check Answers" })
-                    : isStrictMode
-                    ? intl.formatMessage({ id: "Submit Exam" })
-                    : intl.formatMessage({ id: "Finish Task" })}
-                </button>
               </div>
             </div>
           )}
         </main>
       </div>
 
-      {/* Practice Results Modal */}
       <PracticeResultsModal
         isOpen={showPracticeResults}
         onClose={() => setShowPracticeResults(false)}
@@ -803,4 +460,3 @@ export function ExamRoomLayout({ task, normalizedData, existingDraft, user, mode
     </div>
   );
 }
-

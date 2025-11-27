@@ -175,6 +175,14 @@ const validateSummary = (state) => {
   const isDragDropSummary = state.question_type === "SUMMARY_DRAG_DROP";
   const summaryType = state.content?.summary_type || "story";
 
+  // Helper to safely extract blank ID (handles object vs string)
+  const getBlankId = (blank) => {
+    if (typeof blank === 'object' && blank !== null) {
+      return String(blank.id || blank.value || blank.text || blank.label || '');
+    }
+    return String(blank);
+  };
+
   if (summaryType === "story") {
     const text = state.content?.text || "";
     if (!text.trim()) {
@@ -187,8 +195,9 @@ const validateSummary = (state) => {
     }
 
     const answers = state.correct_answer?.values || {};
-    const unansweredBlanks = blanks.filter((id) => {
-      const value = answers[id];
+    const unansweredBlanks = blanks.filter((blank) => {
+      const blankId = getBlankId(blank);
+      const value = answers[blankId];
       if (isDragDropSummary) {
         return (
           !value ||
@@ -197,6 +206,7 @@ const validateSummary = (state) => {
       }
       return !value || String(value).trim().length === 0;
     });
+    
     if (unansweredBlanks.length > 0) {
       if (isDragDropSummary) {
         return `Select answers for all ${blanks.length} blank${blanks.length > 1 ? 's' : ''} from the word bank.`;

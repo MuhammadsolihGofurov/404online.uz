@@ -190,10 +190,10 @@ export default function TableBuilder({
   // Handlers for table cells (completion mode)
   const handleCellChange = useCallback((rowId, columnIndex, value) => {
     const newRows = rows.map((row) => {
-      if (row.id !== rowId) return row;
-      const cells = [...(row.cells || [])];
-      cells[columnIndex] = value;
-      return { ...row, cells };
+        if (row.id !== rowId) return row;
+        const cells = [...(row.cells || [])];
+        cells[columnIndex] = value;
+        return { ...row, cells };
     });
     updateContent("rows", newRows);
   }, [rows, updateContent]);
@@ -438,8 +438,8 @@ export default function TableBuilder({
             </p>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 rounded-2xl border border-slate-200 text-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200 rounded-2xl border border-slate-200 text-sm">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -480,10 +480,10 @@ export default function TableBuilder({
                         >
                           <span className="flex items-center justify-center gap-2">
                             {isSelected && (
-                              <Check
+                            <Check
                                 size={18}
                                 className="flex-shrink-0 font-bold"
-                              />
+                            />
                             )}
                             <span className={isSelected ? "font-bold" : "font-semibold"}>
                               {columnText || `Column ${columnIndex + 1}`}

@@ -137,6 +137,28 @@ function TaskDetailPage({ info, user, loading }) {
     }
   };
 
+  const handlePublishResults = async () => {
+    try {
+      setExamActionLoading(true);
+      const response = await authAxios.post(`/tasks/${id}/publish_results/`);
+      toast.success(
+        intl.formatMessage(
+          { id: "Results published! Updated {count} submissions." },
+          { count: response.data.updated_count }
+        )
+      );
+      mutate(); // Refresh task data
+    } catch (error) {
+      const errorMsg =
+        error?.response?.data?.error ||
+        error?.response?.data?.detail ||
+        intl.formatMessage({ id: "Failed to publish results" });
+      toast.error(errorMsg);
+    } finally {
+      setExamActionLoading(false);
+    }
+  };
+
   const formatType = (type) => {
     return type
       ?.replace(/_/g, " ")
@@ -386,6 +408,22 @@ function TaskDetailPage({ info, user, loading }) {
                           <Square size={18} />
                         )}
                         {intl.formatMessage({ id: "Stop Exam" })}
+                      </button>
+                    )}
+
+                    {/* Publish Results Button */}
+                    {!task.is_exam_active && (
+                      <button
+                        onClick={handlePublishResults}
+                        disabled={examActionLoading}
+                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {examActionLoading ? (
+                          <ButtonSpinner size="sm" />
+                        ) : (
+                          <CheckCircle size={18} />
+                        )}
+                        {intl.formatMessage({ id: "Publish Results" })}
                       </button>
                     )}
                   </div>

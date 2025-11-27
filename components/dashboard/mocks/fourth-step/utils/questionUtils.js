@@ -203,6 +203,17 @@ const ensureSummaryContent = (content = {}, start, end) => {
     word_limit: content.word_limit || 3,
   };
 
+  // CRITICAL FIX: If blanks array is missing/empty but text exists (legacy data),
+  // extract blanks from text immediately to prevent answer wiping.
+  if ((!nextContent.blanks || nextContent.blanks.length === 0) && nextContent.text) {
+    console.log('🔍 Legacy Data Detected: Extracting blanks from text...');
+    const extracted = extractBlanksFromText(nextContent.text);
+    if (extracted.length > 0) {
+      console.log('✅ Extracted blanks:', extracted);
+      nextContent.blanks = extracted;
+    }
+  }
+
   if (summaryType === "story") {
     // Story mode - ensure items array
     if (!nextContent.items || nextContent.items.length === 0) {
@@ -311,16 +322,33 @@ const ensureGroupedAnswerShape = (answer, start, end) => {
 const ensureSummaryAnswers = (answer, content) => {
   const blanks = content?.blanks || [];
   const nextValues = { ...(answer?.values || {}) };
-  blanks.forEach((blankId) => {
+  
+  // 🛡️ Helper: Extract string ID from blank (handles both object and primitive formats)
+  const getBlankId = (blank) => {
+    if (typeof blank === 'object' && blank !== null) {
+      return String(blank.id || blank.value || blank.text || blank.label || '');
+    }
+    return String(blank);
+  };
+  
+  // Normalize blanks to array of string IDs for comparison
+  const blankIds = blanks.map(getBlankId);
+  
+  // Add missing blanks (initialize with empty string)
+  blankIds.forEach((blankId) => {
     if (!(blankId in nextValues)) {
       nextValues[blankId] = "";
     }
   });
+  
+  // Remove answers for blanks that no longer exist
   Object.keys(nextValues).forEach((key) => {
-    if (!blanks.includes(key)) {
-      delete nextValues[key];
+    const stringKey = String(key);
+    if (!blankIds.includes(stringKey)) {
+      delete nextValues[stringKey];
     }
   });
+  
   return { values: nextValues };
 };
 
@@ -440,13 +468,16 @@ export const buildInitialState = (question, section) => {
       ? defaultAnswerByType[baseType](questionNumberStart, questionNumberEnd, section)
       : {});
 
+  // CRITICAL FIX: Ensure content first, then pass the ensured content to ensureAnswerStructure
+  const ensuredContent = ensureContentStructure(baseType, content, questionNumberStart, questionNumberEnd, section);
+
   return {
     question_type: baseType,
     question_number_start: questionNumberStart,
     question_number_end: questionNumberEnd,
     prompt: question?.prompt || "",
-    content: ensureContentStructure(baseType, content, questionNumberStart, questionNumberEnd, section),
-    correct_answer: ensureAnswerStructure(baseType, correct_answer, questionNumberStart, questionNumberEnd, content, section),
+    content: ensuredContent,
+    correct_answer: ensureAnswerStructure(baseType, correct_answer, questionNumberStart, questionNumberEnd, ensuredContent, section),
   };
 };
 

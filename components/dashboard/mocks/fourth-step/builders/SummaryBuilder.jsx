@@ -91,6 +91,29 @@ export function SummaryBuilder({
   const blanks = content?.blanks || [];
   const safeBlanks = blanks.length > MAX_SAFE_BLANKS ? blanks.slice(0, MAX_SAFE_BLANKS) : blanks;
   const hasExceededLimit = blanks.length > MAX_SAFE_BLANKS;
+
+  // 🛡️ Data normalization helpers (handle both object and primitive formats)
+  const getBlankId = useCallback((blank) => {
+    if (typeof blank === 'object' && blank !== null) {
+      // CRITICAL: Always return STRING to prevent numeric key issues
+      return String(blank.id || blank.value || blank.text || blank.label || '');
+    }
+    // CRITICAL: Convert to string (handles numbers like 33 → "33")
+    return String(blank);
+  }, []);
+
+  const getBlankLabel = useCallback((blank) => {
+    if (typeof blank === 'object' && blank !== null) {
+      // If label exists and already includes "Blank", use it as-is
+      const label = blank.label || blank.text || blank.id || '';
+      if (String(label).toLowerCase().includes('blank')) {
+        return label; // Already formatted, don't add "Blank" again
+      }
+      return blank.id || blank.value || blank.text || '';
+    }
+    // For primitives, just return the value (we'll add "Blank" prefix in rendering)
+    return String(blank);
+  }, []);
   
   // ✅ Memoize to prevent recreation on every render
   const normalizedWordBank = useMemo(
@@ -106,26 +129,30 @@ export function SummaryBuilder({
     const detectedBlanks = extractBlanksFromText(text);
     const currentBlanks = content?.blanks || [];
 
+    // Normalize current blanks for comparison (handle object format)
+    const currentBlankIds = currentBlanks.map(blank => getBlankId(blank));
+
     // Check if blanks have changed
     const blanksChanged =
-      detectedBlanks.length !== currentBlanks.length ||
-      detectedBlanks.some((id, idx) => id !== currentBlanks[idx]);
+      detectedBlanks.length !== currentBlankIds.length ||
+      detectedBlanks.some((id, idx) => id !== currentBlankIds[idx]);
 
     if (blanksChanged) {
-      // Update content with new blanks array
+      // Update content with new blanks array (always store as strings)
       onContentChange({
         ...content,
-        blanks: detectedBlanks,
+        blanks: detectedBlanks, // Array of string IDs: ["33", "34", ...]
       });
 
       // Clean up answers for removed blanks
       const newAnswers = { ...answers };
       let answersChanged = false;
 
-      // Remove answers for blanks that no longer exist
+      // CRITICAL: Normalize keys to strings before comparison
       Object.keys(newAnswers).forEach((key) => {
-        if (!detectedBlanks.includes(key)) {
-          delete newAnswers[key];
+        const stringKey = String(key);
+        if (!detectedBlanks.includes(stringKey)) {
+          delete newAnswers[stringKey];
           answersChanged = true;
         }
       });
@@ -134,15 +161,19 @@ export function SummaryBuilder({
         onAnswerChange({ values: newAnswers });
       }
     }
-  }, [text, content, answers, onContentChange, onAnswerChange]);
+  }, [text, content, answers, onContentChange, onAnswerChange, getBlankId]);
 
   const updateAnswerValue = useCallback((itemId, value) => {
     // Use ref to get latest correctAnswer without recreating callback
     const currentValues = correctAnswerRef.current?.values || {};
+    
+    // CRITICAL: Ensure itemId is ALWAYS a string (prevent numeric key issues)
+    const stringId = String(itemId);
+    
     onAnswerChange({
       values: {
         ...currentValues,
-        [itemId]: value,
+        [stringId]: value,
       },
     });
   }, [onAnswerChange]);
@@ -330,24 +361,34 @@ export function SummaryBuilder({
             </p>
           </div>
           <div className="space-y-3">
-            {safeBlanks.map((blankId) => (
-              <div
-                key={blankId}
-                className="flex items-center gap-3 p-3 bg-white border rounded-lg border-slate-200"
-              >
-                <label className="text-sm font-semibold text-slate-600 min-w-[80px]">
-                  Blank {blankId}
-                </label>
-                <AnswerInputControl
-                  blankId={blankId}
-                  placeholder={`Correct answer for blank ${blankId}`}
-                  isDragDrop={isDragDrop}
-                  currentValue={answers[blankId]}
-                  normalizedWordBank={normalizedWordBank}
-                  onUpdate={updateAnswerValue}
-                />
-              </div>
-            ))}
+            {safeBlanks.map((blank) => {
+              const blankId = getBlankId(blank);
+              const blankLabel = getBlankLabel(blank);
+              
+              // Smart label: if already has "Blank", use as-is; otherwise prepend "Blank "
+              const displayLabel = String(blankLabel).toLowerCase().includes('blank')
+                ? blankLabel
+                : `Blank ${blankLabel}`;
+              
+              return (
+                <div
+                  key={blankId}
+                  className="flex items-center gap-3 p-3 bg-white border rounded-lg border-slate-200"
+                >
+                  <label className="text-sm font-semibold text-slate-600 min-w-[80px]">
+                    {displayLabel}
+                  </label>
+                  <AnswerInputControl
+                    blankId={blankId}
+                    placeholder={`Correct answer for ${displayLabel}`}
+                    isDragDrop={isDragDrop}
+                    currentValue={answers[blankId] || ""}
+                    normalizedWordBank={normalizedWordBank}
+                    onUpdate={updateAnswerValue}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

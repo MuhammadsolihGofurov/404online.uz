@@ -1,7 +1,7 @@
 import React from "react";
 import { useIntl } from "react-intl";
 import { useRouter } from "next/router";
-import { Trophy, CheckCircle, XCircle, AlertCircle, RotateCcw, X } from "lucide-react";
+import { Trophy, CheckCircle, XCircle, AlertCircle, RotateCcw, X, LogOut } from "lucide-react";
 import { QuestionRendererReadOnly } from "./question-renderer-readonly";
 
 /**
@@ -51,133 +51,121 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
     router.reload();
   };
 
-  const handleExit = () => {
+  const handleFinishReview = () => {
     onClose();
-    // Navigate back to appropriate page
-    if (router.pathname.includes("/practice/template")) {
+    const { templateId } = router.query;
+    
+    // Logic to determine where to redirect
+    // If templateId exists or path suggests template practice -> Training Zone
+    if (templateId || router.pathname.includes("/practice/template")) {
       router.push("/dashboard/materials-hub?type=TRAINING_ZONE");
     } else {
+      // Default fallback (Task Practice) -> My Tasks
       router.push("/dashboard/my-tasks");
     }
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50 overflow-y-auto flex justify-center py-10"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto flex justify-center py-10"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl relative shadow-lg max-w-4xl w-full mx-4 p-6 sm:p-8 my-auto max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl relative shadow-2xl max-w-4xl w-full mx-4 p-6 sm:p-8 my-auto max-h-[90vh] overflow-y-auto border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
           onClick={onClose}
         >
           <X size={24} />
         </button>
 
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="w-8 h-8 text-yellow-500" />
-            <h2 className="text-2xl font-bold text-gray-900">
-              {intl.formatMessage({ id: "Practice Results" })}
-            </h2>
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-4">
+            <Trophy className="w-8 h-8 text-yellow-600" />
           </div>
+          <h2 className="text-3xl font-bold text-gray-900">
+            {intl.formatMessage({ id: "Practice Results" })}
+          </h2>
           {message && (
-            <p className="text-sm text-gray-600 mt-2">{message}</p>
+            <p className="text-gray-500 mt-2">{message}</p>
           )}
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Band Score (Highlighted) */}
+          <div className="bg-purple-50 rounded-xl p-5 border border-purple-100 flex flex-col items-center justify-center text-center md:col-span-1 col-span-2">
+            <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">
+              {intl.formatMessage({ id: "IELTS Band Score" })}
+            </p>
+            <p className="text-4xl font-extrabold text-purple-700">
+              {band_score !== null && band_score !== undefined ? band_score : "-"}
+            </p>
+          </div>
+
           {/* Accuracy */}
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-            <p className="text-xs text-gray-600 mb-1">
+          <div className="bg-blue-50 rounded-xl p-5 border border-blue-100 flex flex-col items-center justify-center text-center">
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
               {intl.formatMessage({ id: "Accuracy" })}
             </p>
             <p className="text-2xl font-bold text-blue-700">
-              {accuracy_percentage.toFixed(1)}%
+              {accuracy_percentage.toFixed(0)}%
             </p>
           </div>
 
           {/* Correct Answers */}
-          <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-            <p className="text-xs text-gray-600 mb-1">
+          <div className="bg-green-50 rounded-xl p-5 border border-green-100 flex flex-col items-center justify-center text-center">
+            <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-1">
               {intl.formatMessage({ id: "Correct" })}
             </p>
             <p className="text-2xl font-bold text-green-700">
-              {correct_answers} / {total_questions}
+              {correct_answers} <span className="text-base font-normal text-green-600">/ {total_questions}</span>
             </p>
           </div>
 
           {/* Incorrect Answers */}
-          <div className="bg-red-50 rounded-xl p-4 border border-red-200">
-            <p className="text-xs text-gray-600 mb-1">
+          <div className="bg-red-50 rounded-xl p-5 border border-red-100 flex flex-col items-center justify-center text-center">
+            <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">
               {intl.formatMessage({ id: "Incorrect" })}
             </p>
             <p className="text-2xl font-bold text-red-700">
               {incorrect_answers}
             </p>
           </div>
-
-          {/* Band Score */}
-          <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
-            <p className="text-xs text-gray-600 mb-1">
-              {intl.formatMessage({ id: "Band Score" })}
-            </p>
-            <p className="text-2xl font-bold text-purple-700">
-              {band_score !== null && band_score !== undefined
-                ? band_score
-                : "-"}
-            </p>
-          </div>
         </div>
 
-        {/* Summary */}
-        <div className="bg-gray-50 rounded-xl p-4 mb-6">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <CheckCircle size={16} className="text-green-600" />
-              <span className="text-gray-700">
-                {intl.formatMessage(
-                  { id: "{count} correct answers" },
-                  { count: correct_answers }
-                )}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <XCircle size={16} className="text-red-600" />
-              <span className="text-gray-700">
-                {intl.formatMessage(
-                  { id: "{count} incorrect answers" },
-                  { count: incorrect_answers }
-                )}
-              </span>
-            </div>
-            {requires_manual_review > 0 && (
-              <div className="flex items-center gap-2">
-                <AlertCircle size={16} className="text-yellow-600" />
-                <span className="text-gray-700">
-                  {intl.formatMessage(
-                    { id: "{count} require review" },
-                    { count: requires_manual_review }
-                  )}
-                </span>
-              </div>
-            )}
+        {/* Summary Bar */}
+        <div className="flex flex-wrap gap-4 justify-center mb-8 text-sm font-medium">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full border border-green-100">
+            <CheckCircle size={16} />
+            <span>{correct_answers} Correct</span>
           </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-700 rounded-full border border-red-100">
+            <XCircle size={16} />
+            <span>{incorrect_answers} Incorrect</span>
+          </div>
+          {requires_manual_review > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-full border border-yellow-100">
+              <AlertCircle size={16} />
+              <span>{requires_manual_review} Under Review</span>
+            </div>
+          )}
         </div>
 
         {/* Detailed Breakdown */}
         {questionsWithResults.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {intl.formatMessage({ id: "Question Breakdown" })}
+          <div className="mb-8 border-t border-gray-100 pt-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span>Question Breakdown</span>
+              <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                {questionsWithResults.length} Questions
+              </span>
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
               {questionsWithResults.map(({ question, result }) => {
                 if (!result) return null;
 
@@ -188,42 +176,47 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
                 return (
                   <div
                     key={question.id}
-                    className={`p-4 rounded-xl border ${
+                    className={`p-4 rounded-xl border transition-colors ${
                       isCorrect
-                        ? "bg-green-50 border-green-200"
+                        ? "bg-green-50/50 border-green-100 hover:border-green-200"
                         : isIncorrect
-                        ? "bg-red-50 border-red-200"
-                        : "bg-yellow-50 border-yellow-200"
+                        ? "bg-red-50/50 border-red-100 hover:border-red-200"
+                        : "bg-yellow-50/50 border-yellow-100 hover:border-yellow-200"
                     }`}
                   >
-                    <div className="flex items-start gap-3 mb-3">
-                      {isCorrect && (
-                        <CheckCircle size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
-                      )}
-                      {isIncorrect && (
-                        <XCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
-                      )}
-                      {requiresReview && (
-                        <AlertCircle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1">
+                        {isCorrect && <CheckCircle size={20} className="text-green-600" />}
+                        {isIncorrect && <XCircle size={20} className="text-red-600" />}
+                        {requiresReview && <AlertCircle size={20} className="text-yellow-600" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm font-semibold text-gray-700">
+                          <span className="text-sm font-bold text-gray-800">
                             {intl.formatMessage(
                               { id: "Question {number}" },
                               { number: question.question_number || "?" }
                             )}
                           </span>
-                          <span className="text-xs px-2 py-0.5 bg-gray-200 rounded-full text-gray-600">
+                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-white border border-gray-200 rounded text-gray-500">
                             {question.question_type?.replace(/_/g, " ")}
                           </span>
                         </div>
+                        
+                        {/* Render question context and user answer (Read Only) */}
                         <QuestionRendererReadOnly
                           question={question}
                           userAnswer={userAnswer}
-                          correctAnswer={null} // Practice results don't include correct answers in detail
+                          correctAnswer={null} // Hiding detailed correct answers for now to focus on user performance, or backend doesn't send them
                           showCorrectness={true}
                         />
+                        
+                        {/* Feedback Message from Backend (if available) */}
+                        {result.feedback && (
+                          <div className="mt-2 text-sm text-gray-600 bg-white p-2 rounded border border-gray-100">
+                            <span className="font-semibold">Feedback:</span> {result.feedback}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -234,25 +227,26 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={handleExit}
-            className="px-6 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors font-medium"
-          >
-            {intl.formatMessage({ id: "Exit" })}
-          </button>
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-100">
           <button
             type="button"
             onClick={handleTryAgain}
-            className="px-6 py-2.5 rounded-xl bg-main text-white hover:bg-main/90 transition-colors font-medium flex items-center gap-2"
+            className="order-2 sm:order-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all font-semibold flex items-center justify-center gap-2"
           >
             <RotateCcw size={18} />
             {intl.formatMessage({ id: "Try Again" })}
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleFinishReview}
+            className="order-1 sm:order-2 px-8 py-3 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition-all font-bold flex items-center justify-center gap-2 shadow-lg shadow-gray-200 transform active:scale-95"
+          >
+            <LogOut size={18} />
+            {intl.formatMessage({ id: "Finish Review" })}
           </button>
         </div>
       </div>
     </div>
   );
 }
-

@@ -9,6 +9,8 @@ import { useState, useEffect, useMemo } from "react";
 import { ExamRoomLayout } from "@/components/exam/exam-room-layout";
 import { ExamDataNormalizer } from "@/components/exam/exam-data-normalizer";
 import { TaskCompletionModal } from "@/components/exam/task-completion-modal";
+import { WaitingRoom } from "@/components/exam/WaitingRoom";
+import { QuizRunner } from "@/components/exam/QuizRunner";
 
 function ExamRoomPage({ info, user, loading }) {
   const intl = useIntl();
@@ -18,6 +20,12 @@ function ExamRoomPage({ info, user, loading }) {
   const [existingDraft, setExistingDraft] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completedSubmission, setCompletedSubmission] = useState(null);
+  
+  // New State for flow control
+  const [eligibility, setEligibility] = useState(null);
+  const [checkingEligibility, setCheckingEligibility] = useState(true);
+  const [isExamStarted, setIsExamStarted] = useState(false);
+
   const isPracticeMode = mode === 'practice';
 
   // Fetch task details
@@ -65,7 +73,7 @@ function ExamRoomPage({ info, user, loading }) {
   );
 
   // Fetch existing draft submission (skip in practice mode)
-  const { data: draftData } = useSWR(
+  const { data: draftData, mutate: mutateDraft } = useSWR(
     id && user?.id && !isPracticeMode ? ["/submissions/", router.locale, id, user.id] : null,
     async ([url, locale]) => {
       try {
@@ -79,6 +87,34 @@ function ExamRoomPage({ info, user, loading }) {
       }
     }
   );
+
+  // Check eligibility for EXAM_MOCK
+  useEffect(() => {
+    if (task && task.task_type === 'EXAM_MOCK' && !isPracticeMode) {
+      const checkEligibility = async () => {
+        try {
+          const response = await authAxios.get(`/tasks/${task.id}/check_submission_eligibility/`);
+          setEligibility(response.data);
+          
+          // If eligible, mark as started immediately
+          if (response.data?.can_submit) {
+            setIsExamStarted(true);
+          }
+        } catch (error) {
+          console.error("Error checking eligibility:", error);
+          setEligibility({ can_submit: false, reason: "Error checking status" });
+        } finally {
+          setCheckingEligibility(false);
+        }
+      };
+      
+      checkEligibility();
+    } else {
+      // For other types, logic is simple
+      setCheckingEligibility(false);
+      setIsExamStarted(true); 
+    }
+  }, [task, isPracticeMode]);
 
   // Normalize data when task is loaded
   useEffect(() => {
@@ -116,8 +152,14 @@ function ExamRoomPage({ info, user, loading }) {
     router.push("/dashboard/my-tasks");
   };
 
+  // Handle exam started from Waiting Room
+  const handleExamStarted = () => {
+    setIsExamStarted(true);
+    setCheckingEligibility(false); // Stop showing loading/waiting
+  };
+
   // Loading state
-  if (loading || taskLoading || !normalizedData) {
+  if (loading || taskLoading || (task?.task_type === 'EXAM_MOCK' && checkingEligibility)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -147,6 +189,41 @@ function ExamRoomPage({ info, user, loading }) {
     );
   }
 
+  // SCENARIO 1: EXAM_MOCK Waiting Room
+  // If it's an exam mock, logic says we need to wait if not eligible
+  // Exception: If we have a draft, we can probably resume (assuming eligibility checks pass for existing drafts or backend handles it)
+  if (task.task_type === 'EXAM_MOCK' && !isPracticeMode && !isExamStarted && !existingDraft) {
+    return (
+      <WaitingRoom 
+        taskId={task.id} 
+        onExamStarted={handleExamStarted} 
+      />
+    );
+  }
+
+  // SCENARIO 4: QUIZ
+  if (task.task_type === 'QUIZ') {
+    return (
+      <>
+        <Seo title={task.title} />
+        <QuizRunner 
+          task={task}
+          normalizedData={normalizedData}
+          existingDraft={existingDraft}
+          onSubmissionComplete={handleSubmissionComplete}
+        />
+        <TaskCompletionModal
+          isOpen={showCompletionModal}
+          onRetry={handleRetry}
+          onExit={handleExit}
+          submission={completedSubmission}
+          task={task}
+        />
+      </>
+    );
+  }
+
+  // SCENARIO 2 & 3: EXAM_MOCK (Started) or PRACTICE_MOCK
   return (
     <>
       <Seo
@@ -187,4 +264,3 @@ export async function getServerSideProps() {
 }
 
 export default withAuthGuard(ExamRoomPage, ["STUDENT", "GUEST"]);
-
