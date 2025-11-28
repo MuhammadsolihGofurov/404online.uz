@@ -58,7 +58,7 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
   const handleFinishReview = () => {
     onClose();
     const { templateId } = router.query;
-    
+
     // Logic to determine where to redirect
     // If templateId exists or path suggests template practice -> Training Zone
     if (templateId || router.pathname.includes("/practice/template")) {
@@ -148,6 +148,23 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
           </div>
         </div>
 
+        {/* Section Breakdown (New) */}
+        {results.section_scores && Object.keys(results.section_scores).length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 text-center">
+              {intl.formatMessage({ id: "Section Breakdown" })}
+            </h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              {Object.entries(results.section_scores).map(([section, score]) => (
+                <div key={section} className="bg-white border border-gray-200 rounded-xl px-6 py-3 shadow-sm flex flex-col items-center min-w-[120px]">
+                  <span className="text-xs font-bold text-gray-400 uppercase mb-1">{section}</span>
+                  <span className="text-2xl font-bold text-gray-900">{score}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Summary Bar */}
         <div className="flex flex-wrap gap-4 justify-center mb-8 text-sm font-medium">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full border border-green-100">
@@ -176,7 +193,7 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
               </span>
             </h3>
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
-              {questionsWithResults.map(({ question, result }) => {
+              {questionsWithResults.map(({ question, result, userAnswer }) => {
                 if (!result) return null;
 
                 const isCorrect = result.is_correct === true;
@@ -186,13 +203,12 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
                 return (
                   <div
                     key={question.id}
-                    className={`p-4 rounded-xl border transition-colors ${
-                      isCorrect
-                        ? "bg-green-50/50 border-green-100 hover:border-green-200"
-                        : isIncorrect
+                    className={`p-4 rounded-xl border transition-colors ${isCorrect
+                      ? "bg-green-50/50 border-green-100 hover:border-green-200"
+                      : isIncorrect
                         ? "bg-red-50/50 border-red-100 hover:border-red-200"
                         : "bg-yellow-50/50 border-yellow-100 hover:border-yellow-200"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="mt-1">
@@ -212,7 +228,7 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
                             {question.question_type?.replace(/_/g, " ")}
                           </span>
                         </div>
-                        
+
                         {/* Render question context and user answer (Read Only) */}
                         <QuestionRendererReadOnly
                           question={question}
@@ -220,7 +236,7 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
                           correctAnswer={null}
                           showCorrectness={true}
                         />
-                        
+
                         {/* Feedback Message from Backend (if available) */}
                         {result.feedback && (
                           <div className="mt-2 text-sm text-gray-600 bg-white p-2 rounded border border-gray-100">
@@ -242,16 +258,15 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
             type="button"
             onClick={handleTryAgain}
             disabled={isDeadlinePassed}
-            className={`order-2 sm:order-1 px-6 py-3 rounded-xl border font-semibold flex items-center justify-center gap-2 transition-all ${
-              isDeadlinePassed 
-                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" 
-                : "border-gray-300 text-gray-700 hover:bg-gray-50"
-            }`}
+            className={`order-2 sm:order-1 px-6 py-3 rounded-xl border font-semibold flex items-center justify-center gap-2 transition-all ${isDeadlinePassed
+              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+              : "border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
           >
             <RotateCcw size={18} />
             {intl.formatMessage({ id: "Retry / Restart" })}
           </button>
-          
+
           <button
             type="button"
             onClick={handleFinishReview}

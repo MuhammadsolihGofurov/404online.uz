@@ -18,7 +18,7 @@ export const authAxios = axios.create({
   headers: {
     Accept: "application/json",
   },
-  timeout: 20000, // 20 soniya timeout
+  timeout: 300000, // 5 daqiqa (300 soniya) timeout
 });
 
 // ✅ Token qo‘shish (request interceptor)

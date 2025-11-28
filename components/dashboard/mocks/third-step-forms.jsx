@@ -36,7 +36,6 @@ export default function ThirdStepForms() {
       part_number: i + 1, // part_number hech qachon indexga bog‘lanmaydi
       instructions: "",
       images: [],
-      audio_file: null,
       section_id: null,
     }));
   }, [MockType]);
@@ -86,7 +85,6 @@ export default function ThirdStepForms() {
             preview: img.image,
             isExisting: true,
           })) || [],
-        audio_file: null,
       }));
     reset({ parts: formattedSections });
   }, [existingMock, reset]);
@@ -199,10 +197,6 @@ export default function ThirdStepForms() {
         
         formData.append("instructions", part.instructions || "");
         formData.append("part_number", part.part_number);
-
-        if (part.audio_file instanceof File) {
-          formData.append("audio_file", part.audio_file);
-        }
 
         let persistedSectionId = sectionId;
         try {

@@ -3,7 +3,9 @@ import { McqRenderer } from "./renderers/McqRenderer";
 import { TfngRenderer } from "./renderers/TfngRenderer";
 import { ShortAnswerRenderer } from "./renderers/ShortAnswerRenderer";
 import { SummaryRenderer } from "./renderers/SummaryRenderer";
+import { SummaryDragDropRenderer } from "./renderers/SummaryDragDropRenderer";
 import { MatchingRenderer } from "./renderers/MatchingRenderer";
+import { MatchingTableRenderer } from "./renderers/MatchingTableRenderer";
 import { TableRenderer } from "./renderers/TableRenderer";
 import { EssayRenderer } from "./renderers/EssayRenderer";
 
@@ -24,7 +26,10 @@ export const QuestionRenderer = memo(({ question, value, onChange, disabled = fa
       return <ShortAnswerRenderer question={question} value={value} onChange={onChange} disabled={disabled} />;
     case "SUMMARY_FILL_BLANKS":
       return <SummaryRenderer question={question} value={value} onChange={onChange} disabled={disabled} />;
+    case "SUMMARY_DRAG_DROP":
+      return <SummaryDragDropRenderer question={question} value={value} onChange={onChange} disabled={disabled} />;
     case "MATCHING_TABLE_CLICK":
+      return <MatchingTableRenderer question={question} value={value} onChange={onChange} disabled={disabled} />;
     case "MATCHING_DRAG_DROP":
       return <MatchingRenderer question={question} value={value} onChange={onChange} disabled={disabled} />;
     case "TABLE_COMPLETION":

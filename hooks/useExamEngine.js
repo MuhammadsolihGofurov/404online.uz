@@ -266,6 +266,42 @@ export function useExamEngine(task, normalizedData, existingDraft, mode = 'exam'
           localStorage.removeItem(storageKey);
         }
 
+        // Handle Assigned Practice Mocks (PRACTICE_MOCK)
+        // Show results immediately instead of redirecting
+        if (task.task_type === 'PRACTICE_MOCK') {
+           const submission = response.data;
+           
+           // Parse feedback for section scores if available
+           // Format: "Listening: 6.5 | Reading: 7.0"
+           let section_scores = {};
+           if (submission.feedback) {
+             const parts = submission.feedback.split('|');
+             parts.forEach(part => {
+               const [key, val] = part.split(':').map(s => s.trim());
+               if (key && val) {
+                 section_scores[key.toUpperCase()] = parseFloat(val);
+               }
+             });
+           }
+
+           return {
+             success: true,
+             isPractice: true,
+             results: {
+               band_score: submission.band_score,
+               correct_answers: submission.raw_score,
+               total_questions: totalQuestions,
+               // Calculate accuracy if possible
+               accuracy_percentage: totalQuestions > 0 ? (submission.raw_score / totalQuestions) * 100 : 0,
+               section_scores: section_scores,
+               // Standard submission doesn't return detailed_results yet
+               detailed_results: [], 
+               message: intl.formatMessage({ id: "Practice task completed." })
+             },
+             questions: normalizedData?.sections?.flatMap(s => s.questions || []) || []
+           };
+        }
+
         if (task.task_type === 'EXAM_MOCK') {
           router.push("/dashboard/my-tasks");
           return { success: true, isPractice: false, shouldRedirect: true };

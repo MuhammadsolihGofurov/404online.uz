@@ -64,7 +64,7 @@ export const SummaryRenderer = memo(({ question, value, onChange, disabled }) =>
           <RichText content={prompt} />
         </div>
       </div>
-      <div className="ml-16 p-8 bg-white rounded-2xl border border-gray-200 shadow-sm leading-loose text-gray-800 text-lg font-serif">
+      <div className="ml-16 p-8 bg-white rounded-2xl border border-gray-200 shadow-sm leading-loose text-gray-800 text-lg font-serif whitespace-pre-wrap">
         {renderContent}
       </div>
     </div>

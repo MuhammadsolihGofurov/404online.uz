@@ -10,12 +10,12 @@ export const ShortAnswerRenderer = memo(({ question, value, onChange, disabled }
     <div className="space-y-4">
       <div className="flex items-start gap-4">
         <span className="font-bold text-gray-700 text-lg min-w-[3rem]">Q{question_number}</span>
-        <div className="prose max-w-none text-gray-800">
+        <div className="prose max-w-none text-gray-800 whitespace-pre-wrap">
           <RichText content={prompt} />
         </div>
       </div>
       <div className="ml-16">
-        <LocalInput 
+        <LocalInput
           value={qVal}
           onChange={(val) => onChange({ value: val })}
           disabled={disabled}

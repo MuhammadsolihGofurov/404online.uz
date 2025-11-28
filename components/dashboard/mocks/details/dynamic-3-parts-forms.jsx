@@ -83,18 +83,6 @@ export default function Dynamic3PartsForm({
               )}
             />
           )}
-
-          {/* audio_file */}
-          {config.fields.includes("audio_file") && (
-            <Input
-              type="file"
-              register={register}
-              name={`parts.${index}.audio_file`}
-              defaultValue={field.audio_file || null}
-              title={intl.formatMessage({ id: "Audio File" })}
-              error={errors?.parts?.[index]?.audio_file?.message}
-            />
-          )}
         </div>
       ))}
     </div>

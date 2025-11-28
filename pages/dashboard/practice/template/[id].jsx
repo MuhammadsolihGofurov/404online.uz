@@ -124,6 +124,7 @@ function TemplatePracticePage({ info, user, loading }) {
       />
       <ExamRoomLayout
         task={taskLikeObject}
+        template={template} // Pass full template with mocks for audio support
         normalizedData={normalizedData}
         existingDraft={null}
         user={user}

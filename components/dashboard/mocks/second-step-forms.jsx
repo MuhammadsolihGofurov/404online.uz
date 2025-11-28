@@ -69,20 +69,18 @@ export default function SecondStepForms() {
       });
       // c5a4fa1d-97b0-483d-878d-dfe2e95e9e21
 
-      setTimeout(() => {
-        router.push(
-          MOCKS_CREATE_THIRD_STEP_URL +
-            `?mock_id=${response?.data?.id}&mock_type=${data?.mock_type}&category=${category}`
-        );
-      }, 500);
+      router.push(
+        MOCKS_CREATE_THIRD_STEP_URL +
+          `?mock_id=${response?.data?.id}&mock_type=${data?.mock_type}&category=${category}`
+      );
     } catch (e) {
+      setReqLoading(false); // Only re-enable button on error
       toast.error(
         e?.response?.data?.error?.detail?.[0] ||
           intl.formatMessage({ id: "Something went wrong" })
       );
-    } finally {
-      setReqLoading(false);
     }
+    // Note: We removed finally block to keep button disabled on success (while redirecting)
   };
 
   return (
@@ -146,10 +144,16 @@ export default function SecondStepForms() {
       <div className="w-full col-span-2 flex items-center justify-end">
         <button
           type="submit"
-          className="rounded-xl bg-main flex items-center justify-center text-white p-4 hover:bg-blue-800 transition-colors duration-200"
+          disabled={reqLoading}
+          className={`rounded-xl flex items-center justify-center text-white p-4 transition-colors duration-200 ${
+            reqLoading ? "bg-gray-400 cursor-not-allowed" : "bg-main hover:bg-blue-800"
+          }`}
         >
           {reqLoading ? (
-            <ButtonSpinner />
+            <div className="flex items-center gap-2">
+              <ButtonSpinner />
+              <span>{intl.formatMessage({ id: "Uploading... Please wait" })}</span>
+            </div>
           ) : (
             intl.formatMessage({ id: "Submit" })
           )}
