@@ -273,7 +273,7 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
             className="order-1 sm:order-2 px-8 py-3 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition-all font-bold flex items-center justify-center gap-2 shadow-lg shadow-gray-200 transform active:scale-95"
           >
             <LogOut size={18} />
-            {intl.formatMessage({ id: "Submit & Exit" })}
+            {intl.formatMessage({ id: "Exit" })}
           </button>
         </div>
       </div>

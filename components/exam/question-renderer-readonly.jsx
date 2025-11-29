@@ -3,16 +3,26 @@ import { useIntl } from "react-intl";
 import { CheckCircle, XCircle } from "lucide-react";
 
 /**
+ * Helper function to safely extract text from various data types
+ */
+function safeText(item) {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object") return item.text || item.value || item.label || "";
+  return String(item);
+}
+
+/**
  * QuestionRendererReadOnly
  * 
  * Read-only version of QuestionRenderer for displaying submission results.
  * Shows student answers with correct/incorrect indicators.
  */
-export function QuestionRendererReadOnly({ 
-  question, 
-  userAnswer, 
-  correctAnswer, 
-  showCorrectness = true 
+export function QuestionRendererReadOnly({
+  question,
+  userAnswer,
+  correctAnswer,
+  showCorrectness = true
 }) {
   const intl = useIntl();
   const { question_type, prompt, content, question_number } = question;
@@ -195,7 +205,7 @@ function MCQSingleReadOnly({ question, userAnswer, correctAnswer, isCorrect, sho
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
         {showCorrectness && isCorrect !== null && (
           <div className="flex-shrink-0">
             {isCorrect ? (
@@ -227,13 +237,12 @@ function MCQSingleReadOnly({ question, userAnswer, correctAnswer, isCorrect, sho
               key={option.key}
               className={`flex items-center gap-3 p-3 rounded-lg border-2 ${borderColor} bg-white`}
             >
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                isUserAnswer ? "border-blue-500 bg-blue-50" : "border-gray-300"
-              }`}>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isUserAnswer ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                }`}>
                 {isUserAnswer && <div className="w-2 h-2 rounded-full bg-blue-500" />}
               </div>
-              <span className="font-medium text-gray-700">{option.key}</span>
-              <span className="text-gray-600 flex-1">{option.text}</span>
+              <span className="font-medium text-gray-700">{safeText(option.key)}</span>
+              <span className="text-gray-600 flex-1">{safeText(option.text)}</span>
               {showCorrect && isCorrectAnswer && (
                 <span className="text-xs font-semibold text-green-600">
                   {intl.formatMessage({ id: "Correct Answer" })}
@@ -274,7 +283,7 @@ function MCQMultipleReadOnly({ question, userAnswer, correctAnswer, isCorrect, s
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
         {showCorrectness && isCorrect !== null && (
           <div className="flex-shrink-0">
             {isCorrect ? (
@@ -306,13 +315,12 @@ function MCQMultipleReadOnly({ question, userAnswer, correctAnswer, isCorrect, s
               key={option.key}
               className={`flex items-center gap-3 p-3 rounded-lg border-2 ${borderColor} bg-white`}
             >
-              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                isUserSelected ? "border-blue-500 bg-blue-50" : "border-gray-300"
-              }`}>
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isUserSelected ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                }`}>
                 {isUserSelected && <div className="w-2 h-2 rounded bg-blue-500" />}
               </div>
-              <span className="font-medium text-gray-700">{option.key}</span>
-              <span className="text-gray-600 flex-1">{option.text}</span>
+              <span className="font-medium text-gray-700">{safeText(option.key)}</span>
+              <span className="text-gray-600 flex-1">{safeText(option.text)}</span>
               {showCorrect && isCorrectOption && (
                 <span className="text-xs font-semibold text-green-600">
                   {intl.formatMessage({ id: "Correct" })}
@@ -348,7 +356,7 @@ function TFNGReadOnly({ question, userAnswer, correctAnswer, isCorrect, showCorr
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
         {showCorrectness && isCorrect !== null && (
           <div className="flex-shrink-0">
             {isCorrect ? (
@@ -380,12 +388,11 @@ function TFNGReadOnly({ question, userAnswer, correctAnswer, isCorrect, showCorr
               key={option.key}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 ${borderColor} bg-white`}
             >
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                isUserAnswer ? "border-blue-500 bg-blue-50" : "border-gray-300"
-              }`}>
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isUserAnswer ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                }`}>
                 {isUserAnswer && <div className="w-2 h-2 rounded-full bg-blue-500" />}
               </div>
-              <span className="font-medium text-gray-700">{option.label}</span>
+              <span className="font-medium text-gray-700">{safeText(option.label)}</span>
               {showCorrect && isCorrectAnswer && (
                 <span className="text-xs font-semibold text-green-600 ml-2">
                   {intl.formatMessage({ id: "Correct" })}
@@ -422,7 +429,7 @@ function ShortAnswerReadOnly({ question, userAnswer, correctAnswer, isCorrect, s
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
         {showCorrectness && isCorrect !== null && (
           <div className="flex-shrink-0">
             {isCorrect ? (
@@ -462,10 +469,10 @@ function SummaryFillBlanksReadOnly({ question, userAnswer, correctAnswer, showCo
   const { prompt, content, question_number } = question;
   const items = content?.items || [];
   const text = content?.text || "";
-  
+
   // Legacy support: if items array doesn't exist, fall back to text-based rendering
   const hasLegacyFormat = !items.length && text;
-  
+
   const userBlanks = userAnswer?.blanks || userAnswer?.values || {};
   const correctBlanks = correctAnswer?.blanks || correctAnswer?.values || {};
 
@@ -513,17 +520,16 @@ function SummaryFillBlanksReadOnly({ question, userAnswer, correctAnswer, showCo
       } else if (item.type === "question") {
         const userValue = userBlanks[item.id] || "";
         const correctValue = showCorrectness ? (correctBlanks[item.id] || "") : null;
-        const isCorrect = showCorrectness && correctValue && 
+        const isCorrect = showCorrectness && correctValue &&
           userValue.toLowerCase().trim() === correctValue.toLowerCase().trim();
 
         const questionRow = (
           <span className="inline-flex items-center gap-1 flex-wrap">
             {item.pre && <span>{item.pre}</span>}
-            <span className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 text-center font-medium ${
-              isCorrect === true ? "border-green-500 bg-green-50" :
-              isCorrect === false ? "border-red-500 bg-red-50" :
-              "border-blue-500 bg-blue-50"
-            }`}>
+            <span className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 text-center font-medium ${isCorrect === true ? "border-green-500 bg-green-50" :
+                isCorrect === false ? "border-red-500 bg-red-50" :
+                  "border-blue-500 bg-blue-50"
+              }`}>
               {userValue || "___"}
             </span>
             {showCorrectness && correctValue && (
@@ -599,11 +605,10 @@ function SummaryFillBlanksReadOnly({ question, userAnswer, correctAnswer, showCo
 
         return (
           <span key={idx} className="inline-block">
-            <span className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 ${
-              isCorrect === true ? "border-green-500 bg-green-50" :
-              isCorrect === false ? "border-red-500 bg-red-50" :
-              "border-blue-500 bg-blue-50"
-            } text-center font-medium`}>
+            <span className={`inline-block min-w-[120px] px-2 py-1 mx-1 border-b-2 ${isCorrect === true ? "border-green-500 bg-green-50" :
+                isCorrect === false ? "border-red-500 bg-red-50" :
+                  "border-blue-500 bg-blue-50"
+              } text-center font-medium`}>
               {userValue || "___"}
             </span>
             {showCorrectness && correctValue && (
@@ -624,7 +629,7 @@ function SummaryFillBlanksReadOnly({ question, userAnswer, correctAnswer, showCo
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
       </div>
 
       <div className="ml-[52px] p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -654,13 +659,13 @@ function MatchingReadOnly({ question, userAnswer, correctAnswer, showCorrectness
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
       </div>
 
       <div className="ml-[52px] space-y-3">
         {listA.map((itemA) => {
-          const itemAId = itemA.id || itemA.key || String(itemA);
-          const itemAText = itemA.text || itemA.label || String(itemA);
+          const itemAId = safeText(itemA.id || itemA.key || itemA);
+          const itemAText = safeText(itemA.text || itemA.label || itemA);
           const userMatch = userMatches.find((m) => m.from === itemAId);
           const correctMatch = showCorrectness ? correctMatches.find((m) => m.from === itemAId) : null;
           const isCorrect = showCorrectness && userMatch && correctMatch && userMatch.to === correctMatch.to;
@@ -670,11 +675,10 @@ function MatchingReadOnly({ question, userAnswer, correctAnswer, showCorrectness
           return (
             <div
               key={itemAId}
-              className={`p-3 rounded-lg border-2 ${
-                isCorrect === true ? "border-green-500 bg-green-50" :
-                isCorrect === false ? "border-red-500 bg-red-50" :
-                "border-gray-200 bg-gray-50"
-              }`}
+              className={`p-3 rounded-lg border-2 ${isCorrect === true ? "border-green-500 bg-green-50" :
+                  isCorrect === false ? "border-red-500 bg-red-50" :
+                    "border-gray-200 bg-gray-50"
+                }`}
             >
               <div className="flex items-center gap-4">
                 <span className="font-medium text-gray-700 min-w-[100px]">
@@ -682,7 +686,7 @@ function MatchingReadOnly({ question, userAnswer, correctAnswer, showCorrectness
                 </span>
                 <span className="text-gray-800 flex-1">{itemAText}</span>
                 <span className="px-3 py-1 bg-white rounded border border-gray-300 min-w-[150px]">
-                  {matchedItemB ? `${matchedItemB.id || matchedItemB.key}: ${matchedItemB.text || matchedItemB.label}` : intl.formatMessage({ id: "No match" })}
+                  {matchedItemB ? `${safeText(matchedItemB.id || matchedItemB.key)}: ${safeText(matchedItemB.text || matchedItemB.label)}` : intl.formatMessage({ id: "No match" })}
                 </span>
                 {showCorrectness && correctMatch && (
                   <span className="text-xs text-green-600">
@@ -716,7 +720,7 @@ function TableCompletionReadOnly({ question, userAnswer, correctAnswer, showCorr
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
       </div>
 
       <div className="ml-[52px] overflow-x-auto">
@@ -750,19 +754,17 @@ function TableCompletionReadOnly({ question, userAnswer, correctAnswer, showCorr
                     return (
                       <td
                         key={colIdx}
-                        className={`border border-gray-300 px-4 py-2 ${
-                          isBlank && isCorrect === true ? "bg-green-50" :
-                          isBlank && isCorrect === false ? "bg-red-50" :
-                          ""
-                        }`}
+                        className={`border border-gray-300 px-4 py-2 ${isBlank && isCorrect === true ? "bg-green-50" :
+                            isBlank && isCorrect === false ? "bg-red-50" :
+                              ""
+                          }`}
                       >
                         {isBlank ? (
                           <div>
-                            <p className={`font-medium ${
-                              isCorrect === true ? "text-green-700" :
-                              isCorrect === false ? "text-red-700" :
-                              "text-blue-700"
-                            }`}>
+                            <p className={`font-medium ${isCorrect === true ? "text-green-700" :
+                                isCorrect === false ? "text-red-700" :
+                                  "text-blue-700"
+                              }`}>
                               {userValue || "___"}
                             </p>
                             {showCorrectness && correctValue && (
@@ -804,7 +806,7 @@ function FlowchartCompletionReadOnly({ question, userAnswer, correctAnswer, show
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
       </div>
 
       <div className="ml-[52px] space-y-3">
@@ -819,11 +821,10 @@ function FlowchartCompletionReadOnly({ question, userAnswer, correctAnswer, show
           return (
             <div
               key={stepId}
-              className={`flex items-center gap-3 p-3 rounded-lg border-2 ${
-                isBlank && isCorrect === true ? "border-green-500 bg-green-50" :
-                isBlank && isCorrect === false ? "border-red-500 bg-red-50" :
-                "border-gray-200 bg-gray-50"
-              }`}
+              className={`flex items-center gap-3 p-3 rounded-lg border-2 ${isBlank && isCorrect === true ? "border-green-500 bg-green-50" :
+                  isBlank && isCorrect === false ? "border-red-500 bg-red-50" :
+                    "border-gray-200 bg-gray-50"
+                }`}
             >
               <span className="font-medium text-gray-600 min-w-[30px]">
                 {idx + 1}
@@ -832,11 +833,10 @@ function FlowchartCompletionReadOnly({ question, userAnswer, correctAnswer, show
                 <div className="flex-1">
                   <p className="text-gray-700">
                     {stepText.split("___")[0]}
-                    <span className={`font-medium mx-1 ${
-                      isCorrect === true ? "text-green-700" :
-                      isCorrect === false ? "text-red-700" :
-                      "text-blue-700"
-                    }`}>
+                    <span className={`font-medium mx-1 ${isCorrect === true ? "text-green-700" :
+                        isCorrect === false ? "text-red-700" :
+                          "text-blue-700"
+                      }`}>
                       {userValue || "___"}
                     </span>
                     {stepText.split("___")[1]}
@@ -876,7 +876,7 @@ function MapLabellingReadOnly({ question, userAnswer, correctAnswer, showCorrect
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="text-gray-900 flex-1">{prompt}</p>
+        <div className="text-gray-900 flex-1 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
       </div>
 
       {mapImageUrl && (
@@ -900,20 +900,18 @@ function MapLabellingReadOnly({ question, userAnswer, correctAnswer, showCorrect
           return (
             <div
               key={regionId}
-              className={`flex items-center gap-4 p-3 rounded-lg border-2 ${
-                isCorrect === true ? "border-green-500 bg-green-50" :
-                isCorrect === false ? "border-red-500 bg-red-50" :
-                "border-gray-200 bg-gray-50"
-              }`}
+              className={`flex items-center gap-4 p-3 rounded-lg border-2 ${isCorrect === true ? "border-green-500 bg-green-50" :
+                  isCorrect === false ? "border-red-500 bg-red-50" :
+                    "border-gray-200 bg-gray-50"
+                }`}
             >
               <span className="font-medium text-gray-700 min-w-[150px]">
                 {regionLabel}
               </span>
-              <span className={`px-3 py-2 border rounded-lg font-medium ${
-                isCorrect === true ? "border-green-500 text-green-700 bg-white" :
-                isCorrect === false ? "border-red-500 text-red-700 bg-white" :
-                "border-blue-500 text-blue-700 bg-white"
-              } min-w-[100px]`}>
+              <span className={`px-3 py-2 border rounded-lg font-medium ${isCorrect === true ? "border-green-500 text-green-700 bg-white" :
+                  isCorrect === false ? "border-red-500 text-red-700 bg-white" :
+                    "border-blue-500 text-blue-700 bg-white"
+                } min-w-[100px]`}>
                 {userValue || "___"}
               </span>
               {showCorrectness && correctValue && (
@@ -944,7 +942,7 @@ function EssayReadOnly({ question, userAnswer, correctAnswer, showCorrectness })
         <span className="font-semibold text-gray-700 min-w-[40px]">
           Q{question_number}
         </span>
-        <p className="flex-1 text-gray-900">{prompt}</p>
+        <div className="flex-1 text-gray-900 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeText(prompt) }} />
         {showCorrectness && (
           <span className="px-3 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700">
             Manual review required
@@ -959,9 +957,8 @@ function EssayReadOnly({ question, userAnswer, correctAnswer, showCorrectness })
           {text || "No response submitted."}
         </div>
         <div
-          className={`text-sm font-semibold ${
-            meetsMin ? "text-emerald-600" : "text-red-600"
-          }`}
+          className={`text-sm font-semibold ${meetsMin ? "text-emerald-600" : "text-red-600"
+            }`}
         >
           Words: {wordCount}
           {minWords ? ` / Min: ${minWords}` : ""}
