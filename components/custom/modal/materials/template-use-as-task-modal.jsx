@@ -72,8 +72,10 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
         payload = {
           ...basePayload,
           start_time: data.start_time ? data.start_time.toISOString() : null,
-          end_time: data.end_time ? data.end_time.toISOString() : null,
-          duration_minutes: parseInt(data.duration_minutes) || 0,
+          end_time: null, // Backend calculates this
+          duration_minutes: null, // Backend calculates this
+          assigned_students: [], // Exams are group-only
+          is_visible: true, // Always visible
           allow_audio_pause: false, // Exam uchun static
           hide_results_from_student: true, // Exam uchun static
           max_attempts: 1, // Exam uchun static
@@ -112,8 +114,8 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
           id: isExam
             ? "Exam created successfully!"
             : isPractice
-            ? "Practice created successfully!"
-            : "Task created successfully!",
+              ? "Practice created successfully!"
+              : "Task created successfully!",
         })
       );
 
@@ -196,8 +198,8 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
             id: isExam
               ? "Create Exam"
               : isPractice
-              ? "Create Practice"
-              : "Use as Task",
+                ? "Create Practice"
+                : "Use as Task",
           })}
         </h1>
         {isExam && (
@@ -210,7 +212,7 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
         )}
         {isPractice && (
           <p className="text-sm text-gray-600">
-            📚 {intl.formatMessage({id: "Exercise: With a deadline, unlimited attempts, the result is visible"})}
+            📚 {intl.formatMessage({ id: "Exercise: With a deadline, unlimited attempts, the result is visible" })}
           </p>
         )}
       </div>
@@ -260,71 +262,26 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
                 )}
               />
 
-              {/* End Time */}
-              <Controller
-                name="end_time"
-                control={control}
-                rules={{
-                  required: intl.formatMessage({ id: "End time is required" }),
-                }}
-                render={({ field }) => (
-                  <DateTimePickerField
-                    {...field}
-                    title={intl.formatMessage({
-                      id: "End time (Exam closes)",
-                    })}
-                    placeholder={intl.formatMessage({ id: "Select end time" })}
-                    error={errors.end_time?.message}
-                    minDate={watch("start_time") || new Date()}
-                    required
-                  />
-                )}
-              />
-
-              {/* Duration Minutes */}
-              <div className="sm:col-span-2 col-span-1">
-                <Input
-                  type="number"
-                  register={register}
-                  name="duration_minutes"
-                  title={intl.formatMessage({
-                    id: "Duration (minutes) - Timer",
-                  })}
-                  placeholder="180"
-                  required
-                  validation={{
-                    required: intl.formatMessage({
-                      id: "Duration is required",
-                    }),
-                    min: {
-                      value: 1,
-                      message: intl.formatMessage({ id: "Minimum 1 minute" }),
-                    },
-                  }}
-                  error={errors?.duration_minutes?.message}
-                />
-              </div>
-
               {/* Exam Settings Info */}
-              {/* <div className="sm:col-span-2 col-span-1 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="sm:col-span-2 col-span-1 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-gray-700">
-                  <strong>⚙️ Imtihon sozlamalari:</strong>
+                  <strong>⚙️ {intl.formatMessage({ id: "Exam Settings" })}:</strong>
                 </p>
                 <ul className="text-xs text-gray-600 mt-2 space-y-1">
                   <li>
-                    • Audio pauza: <strong>Yo'q</strong> (allow_audio_pause:
-                    false)
+                    • {intl.formatMessage({ id: "Duration" })}: <strong>{intl.formatMessage({ id: "Auto-calculated from Mock" })}</strong>
                   </li>
                   <li>
-                    • Natijani ko'rsatish: <strong>Yashirin</strong>{" "}
-                    (hide_results_from_student: true)
+                    • {intl.formatMessage({ id: "End Time" })}: <strong>{intl.formatMessage({ id: "Auto-calculated" })}</strong>
                   </li>
                   <li>
-                    • Urinishlar soni: <strong>1 marta</strong> (max_attempts:
-                    1)
+                    • {intl.formatMessage({ id: "Audio Pause" })}: <strong>{intl.formatMessage({ id: "Disabled" })}</strong>
+                  </li>
+                  <li>
+                    • {intl.formatMessage({ id: "Results" })}: <strong>{intl.formatMessage({ id: "Hidden from students" })}</strong>
                   </li>
                 </ul>
-              </div> */}
+              </div>
             </>
           )}
 
@@ -355,26 +312,6 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
                   />
                 )}
               />
-
-              {/* Practice Settings Info */}
-              {/* <div className="sm:col-span-2 col-span-1 p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-gray-700">
-                  <strong>⚙️ Mashq sozlamalari:</strong>
-                </p>
-                <ul className="text-xs text-gray-600 mt-2 space-y-1">
-                  <li>
-                    • Audio pauza: <strong>Ha</strong> (allow_audio_pause: true)
-                  </li>
-                  <li>
-                    • Natijani ko'rsatish: <strong>Darhol</strong>{" "}
-                    (hide_results_from_student: false)
-                  </li>
-                  <li>
-                    • Urinishlar soni: <strong>Cheksiz</strong> (max_attempts:
-                    0)
-                  </li>
-                </ul>
-              </div> */}
             </>
           )}
 
@@ -518,35 +455,39 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
             />
           </div>
 
-          {/* Assigned Students */}
-          <div className="sm:col-span-2 col-span-1">
-            <Controller
-              name="assigned_students"
-              control={control}
-              render={({ field }) => (
-                <MultiSelect
-                  {...field}
-                  title={intl.formatMessage({
-                    id: "Assign students (optional)",
-                  })}
-                  placeholder={intl.formatMessage({ id: "Select students" })}
-                  options={students || []}
-                  error={errors.assigned_students?.message}
-                  value={field.value || []}
-                  onChange={(val) => field.onChange(val)}
-                />
-              )}
-            />
-          </div>
+          {/* Assigned Students - Hide for Exams */}
+          {!isExam && (
+            <div className="sm:col-span-2 col-span-1">
+              <Controller
+                name="assigned_students"
+                control={control}
+                render={({ field }) => (
+                  <MultiSelect
+                    {...field}
+                    title={intl.formatMessage({
+                      id: "Assign students (optional)",
+                    })}
+                    placeholder={intl.formatMessage({ id: "Select students" })}
+                    options={students || []}
+                    error={errors.assigned_students?.message}
+                    value={field.value || []}
+                    onChange={(val) => field.onChange(val)}
+                  />
+                )}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center">
-            <ToggleSwitch
-              control={control}
-              name="is_visible"
-              label={intl.formatMessage({ id: "Is visible" })}
-            />
+            {!isExam && (
+              <ToggleSwitch
+                control={control}
+                name="is_visible"
+                label={intl.formatMessage({ id: "Is visible" })}
+              />
+            )}
           </div>
           <div className="flex gap-3">
             <button
@@ -568,8 +509,8 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
                   id: isExam
                     ? "Create Exam"
                     : isPractice
-                    ? "Create Practice"
-                    : "Create Task",
+                      ? "Create Practice"
+                      : "Create Task",
                 })
               )}
             </button>

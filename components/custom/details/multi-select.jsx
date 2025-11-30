@@ -8,8 +8,9 @@ const MultiSelect = forwardRef(function MultiSelect(
     placeholder = "Select...",
     options = [],
     value = [],
-    onChange = () => {},
+    onChange = () => { },
     error,
+    disabled = false,
   },
   ref
 ) {
@@ -51,10 +52,9 @@ const MultiSelect = forwardRef(function MultiSelect(
 
       <div
         ref={ref}
-        className={`rounded-xl p-4 w-full border border-buttonGrey cursor-pointer flex justify-between items-center ${
-          error ? "border-red-500" : "focus:border-main"
-        }`}
-        onClick={() => setOpen((prev) => !prev)}
+        className={`rounded-xl p-4 w-full border border-buttonGrey flex justify-between items-center ${error ? "border-red-500" : "focus:border-main"
+          } ${disabled ? "bg-gray-100 cursor-not-allowed" : "cursor-pointer"}`}
+        onClick={() => !disabled && setOpen((prev) => !prev)}
       >
         <span className="text-sm text-inputPlaceholder flex-1">
           {value.length > 0
@@ -81,9 +81,8 @@ const MultiSelect = forwardRef(function MultiSelect(
                     e.preventDefault();
                     handleSelect(opt);
                   }}
-                  className={`p-3 cursor-pointer text-start w-full hover:bg-gray-100 transition text-sm flex justify-between items-center ${
-                    isSelected ? "font-medium" : ""
-                  }`}
+                  className={`p-3 cursor-pointer text-start w-full hover:bg-gray-100 transition text-sm flex justify-between items-center ${isSelected ? "font-medium" : ""
+                    }`}
                 >
                   <span className="flex-1">
                     {opt.full_name || opt?.name || opt?.title}

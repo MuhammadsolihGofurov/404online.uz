@@ -380,8 +380,8 @@ export default function TaskModal({
     taskType === "EXAM_MOCK"
       ? "EXAM_TEMPLATE"
       : taskType === "CUSTOM_MOCK"
-      ? "CUSTOM"
-      : null;
+        ? "CUSTOM"
+        : null;
 
   const { data: mocksData } = useSWR(
     (taskType === "EXAM_MOCK" || taskType === "CUSTOM_MOCK") && mockCategory
@@ -451,32 +451,32 @@ export default function TaskModal({
   const practiceTemplateOptions = Array.isArray(practiceTemplatesData?.results)
     ? practiceTemplatesData.results
     : Array.isArray(practiceTemplatesData)
-    ? practiceTemplatesData
-    : [];
+      ? practiceTemplatesData
+      : [];
 
   const mockOptions = Array.isArray(mocksData?.results)
     ? mocksData.results
     : Array.isArray(mocksData)
-    ? mocksData
-    : [];
+      ? mocksData
+      : [];
 
   const groupOptions = Array.isArray(groupsData?.results)
     ? groupsData.results
     : Array.isArray(groupsData)
-    ? groupsData
-    : [];
+      ? groupsData
+      : [];
 
   const rawStudents = Array.isArray(studentsData?.results)
     ? studentsData.results
     : Array.isArray(studentsData)
-    ? studentsData
-    : [];
+      ? studentsData
+      : [];
 
   const rawGuests = Array.isArray(guestsData?.results)
     ? guestsData.results
     : Array.isArray(guestsData)
-    ? guestsData
-    : [];
+      ? guestsData
+      : [];
 
   // Combine students and guests
   const studentOptions = [...rawStudents, ...rawGuests];
@@ -666,26 +666,40 @@ export default function TaskModal({
           {taskType === "EXAM_MOCK" && (
             <>
               <div className="sm:col-span-2 col-span-1">
-                <Controller
-                  name="mocks"
-                  control={control}
-                  rules={{
-                    required: intl.formatMessage({
-                      id: "At least one mock is required",
-                    }),
-                  }}
-                  render={({ field }) => (
-                    <MultiSelect
-                      {...field}
-                      title={intl.formatMessage({ id: "Mocks" })}
-                      placeholder={intl.formatMessage({ id: "Select mocks" })}
-                      options={mockOptions}
-                      error={errors.mocks?.message}
-                      value={field.value || []}
-                      onChange={(val) => field.onChange(val)}
-                    />
-                  )}
-                />
+                {old_source_template ? (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-left">
+                    <span className="text-sm text-gray-500 font-medium">
+                      {intl.formatMessage({ id: "Mocks" })}
+                    </span>
+                    <p className="text-sm text-gray-700 mt-1">
+                      {intl.formatMessage({
+                        id: "Mocks are managed by the Exam Template.",
+                      })}
+                    </p>
+                  </div>
+                ) : (
+                  <Controller
+                    name="mocks"
+                    control={control}
+                    rules={{
+                      required: intl.formatMessage({
+                        id: "At least one mock is required",
+                      }),
+                    }}
+                    render={({ field }) => (
+                      <MultiSelect
+                        {...field}
+                        title={intl.formatMessage({ id: "Mocks" })}
+                        placeholder={intl.formatMessage({ id: "Select mocks" })}
+                        options={mockOptions}
+                        error={errors.mocks?.message}
+                        value={field.value || []}
+                        onChange={(val) => field.onChange(val)}
+                        disabled={!!id && !!old_source_template}
+                      />
+                    )}
+                  />
+                )}
               </div>
               <div className="sm:col-span-2 col-span-1 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800 text-left">
@@ -869,48 +883,55 @@ export default function TaskModal({
                   />
                 )}
               />
-              <Controller
-                name="end_time"
-                control={control}
-                render={({ field }) => (
-                  <DateTimePickerField
-                    title={intl.formatMessage({ id: "End Time (Optional)" })}
-                    placeholder={intl.formatMessage({ id: "Select end time" })}
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={errors.end_time?.message}
-                    minDate={watch("start_time") || new Date()}
-                  />
-                )}
-              />
+              {!(!!id) && (
+                <Controller
+                  name="end_time"
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePickerField
+                      title={intl.formatMessage({ id: "End Time (Optional)" })}
+                      placeholder={intl.formatMessage({ id: "Select end time" })}
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.end_time?.message}
+                      minDate={watch("start_time") || new Date()}
+                    />
+                  )}
+                />
+              )}
             </>
           )}
 
-          {/* Deadline - Available for all task types */}
-          <Controller
-            name="deadline"
-            control={control}
-            render={({ field }) => (
-              <DateTimePickerField
-                title={intl.formatMessage({ id: "Deadline (Optional)" })}
-                placeholder={intl.formatMessage({ id: "Select deadline" })}
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.deadline?.message}
-                minDate={new Date()}
-              />
-            )}
-          />
+          {/* Deadline - Available for all task types EXCEPT EXAM_MOCK */}
+          {taskType !== "EXAM_MOCK" && (
+            <Controller
+              name="deadline"
+              control={control}
+              render={({ field }) => (
+                <DateTimePickerField
+                  title={intl.formatMessage({ id: "Deadline (Optional)" })}
+                  placeholder={intl.formatMessage({ id: "Select deadline" })}
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.deadline?.message}
+                  minDate={new Date()}
+                />
+              )}
+            />
+          )}
 
           {/* Duration Minutes */}
-          <Input
-            type="number"
-            register={register}
-            name="duration_minutes"
-            title={intl.formatMessage({ id: "Duration (Minutes)" })}
-            placeholder="e.g., 120"
-            error={errors?.duration_minutes?.message}
-          />
+          {/* Duration Minutes */}
+          {!(!!id && taskType === "EXAM_MOCK") && (
+            <Input
+              type="number"
+              register={register}
+              name="duration_minutes"
+              title={intl.formatMessage({ id: "Duration (Minutes)" })}
+              placeholder="e.g., 120"
+              error={errors?.duration_minutes?.message}
+            />
+          )}
 
           {/* Max Attempts */}
           <Input
@@ -940,41 +961,53 @@ export default function TaskModal({
                   error={errors.assigned_groups?.message}
                   value={field.value || []}
                   onChange={(val) => field.onChange(val)}
+                  disabled={!!id && taskType === "EXAM_MOCK"}
                 />
               )}
             />
+            {!!id && taskType === "EXAM_MOCK" && (
+              <p className="text-xs text-red-500 mt-1 text-left">
+                {intl.formatMessage({
+                  id: "To change the group, please delete this task and create a new one.",
+                })}
+              </p>
+            )}
           </div>
 
           {/* Assignment: Students */}
-          <div className="sm:col-span-2 col-span-1">
-            <Controller
-              name="assigned_students"
-              control={control}
-              render={({ field }) => (
-                <MultiSelect
-                  {...field}
-                  title={intl.formatMessage({
-                    id: "Assign to Students (Optional)",
-                  })}
-                  placeholder={intl.formatMessage({ id: "Select students" })}
-                  options={studentOptions}
-                  error={errors.assigned_students?.message}
-                  value={field.value || []}
-                  onChange={(val) => field.onChange(val)}
-                />
-              )}
-            />
-          </div>
+          {!(!!id && taskType === "EXAM_MOCK") && (
+            <div className="sm:col-span-2 col-span-1">
+              <Controller
+                name="assigned_students"
+                control={control}
+                render={({ field }) => (
+                  <MultiSelect
+                    {...field}
+                    title={intl.formatMessage({
+                      id: "Assign to Students (Optional)",
+                    })}
+                    placeholder={intl.formatMessage({ id: "Select students" })}
+                    options={studentOptions}
+                    error={errors.assigned_students?.message}
+                    value={field.value || []}
+                    onChange={(val) => field.onChange(val)}
+                  />
+                )}
+              />
+            </div>
+          )}
         </div>
 
         {/* Settings Toggles */}
         <div className="flex flex-col gap-4 border-t pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <ToggleSwitch
-              control={control}
-              name="is_visible"
-              label={intl.formatMessage({ id: "Visible to students" })}
-            />
+            {!(!!id && taskType === "EXAM_MOCK") && (
+              <ToggleSwitch
+                control={control}
+                name="is_visible"
+                label={intl.formatMessage({ id: "Visible to students" })}
+              />
+            )}
             <ToggleSwitch
               control={control}
               name="allow_audio_pause"
