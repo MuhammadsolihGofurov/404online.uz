@@ -23,6 +23,7 @@ import {
 import { formatDate } from "@/utils/funcs";
 import { ButtonSpinner } from "@/components/custom/loading";
 import { useState, useEffect } from "react";
+import { ExamMonitor } from "@/components/dashboard/admin/ExamMonitor";
 
 function TaskDetailPage({ info, user, loading }) {
   const intl = useIntl();
@@ -56,7 +57,7 @@ function TaskDetailPage({ info, user, loading }) {
     }
     try {
       setActiveStudentsLoading(true);
-      const response = await authAxios.get(`/tasks/${id}/active_students/`);
+      const response = await authAxios.get(`/tasks/${id}/active-students/`);
       setActiveStudents(response.data.active_students || []);
     } catch (error) {
       console.error("Error fetching active students:", error);
@@ -105,7 +106,7 @@ function TaskDetailPage({ info, user, loading }) {
   const handleStartExam = async () => {
     try {
       setExamActionLoading(true);
-      await authAxios.post(`/tasks/${id}/start_exam/`);
+      await authAxios.post(`/tasks/${id}/start-exam/`);
       toast.success(intl.formatMessage({ id: "Exam started successfully!" }));
       mutate(); // Refresh task data
       fetchActiveStudents();
@@ -123,7 +124,7 @@ function TaskDetailPage({ info, user, loading }) {
   const handleStopExam = async () => {
     try {
       setExamActionLoading(true);
-      await authAxios.post(`/tasks/${id}/stop_exam/`);
+      await authAxios.post(`/tasks/${id}/stop-exam/`);
       toast.success(intl.formatMessage({ id: "Exam stopped successfully!" }));
       mutate(); // Refresh task data
     } catch (error) {
@@ -138,9 +139,19 @@ function TaskDetailPage({ info, user, loading }) {
   };
 
   const handlePublishResults = async () => {
+    // Double-check on client side
+    if (task?.is_exam_active) {
+      toast.warning(
+        intl.formatMessage({ 
+          id: "Cannot publish results while exam is active. Please stop the exam first." 
+        })
+      );
+      return;
+    }
+    
     try {
       setExamActionLoading(true);
-      const response = await authAxios.post(`/tasks/${id}/publish_results/`);
+      const response = await authAxios.post(`/tasks/${id}/publish-results/`);
       toast.success(
         intl.formatMessage(
           { id: "Results published! Updated {count} submissions." },
@@ -149,11 +160,24 @@ function TaskDetailPage({ info, user, loading }) {
       );
       mutate(); // Refresh task data
     } catch (error) {
-      const errorMsg =
-        error?.response?.data?.error ||
-        error?.response?.data?.detail ||
-        intl.formatMessage({ id: "Failed to publish results" });
-      toast.error(errorMsg);
+      // Handle specific error from backend
+      if (error?.response?.status === 400 && error?.response?.data?.is_exam_active) {
+        const activeCount = error?.response?.data?.active_student_count || 0;
+        toast.error(
+          intl.formatMessage(
+            { id: "Cannot publish results. {count} student(s) are still taking the exam." },
+            { count: activeCount }
+          ),
+          { autoClose: 5000 }
+        );
+      } else {
+        const errorMsg =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.response?.data?.detail ||
+          intl.formatMessage({ id: "Failed to publish results" });
+        toast.error(errorMsg);
+      }
     } finally {
       setExamActionLoading(false);
     }
@@ -184,9 +208,9 @@ function TaskDetailPage({ info, user, loading }) {
   const canEdit =
     user?.role === "CENTER_ADMIN" ||
     (user?.role !== "STUDENT" && (task?.created_by?.id || task?.created_by) === user?.id);
-  
-  // Exam Controls Permission: Center Admin OR Task Owner
-  const canControlExam = canEdit; 
+
+  // Exam Controls Permission: Center Admin OR Task Owner (excluding Assistants)
+  const canControlExam = canEdit && user?.role !== "ASSISTANT";
 
   if (loading || isLoading) {
     return (
@@ -379,6 +403,28 @@ function TaskDetailPage({ info, user, loading }) {
                   </div>
                 </div>
               )}
+
+              {/* Assigned Groups */}
+              {task.assigned_groups && task.assigned_groups.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <Users className="text-gray-400 mt-1" size={20} />
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      {intl.formatMessage({ id: "Assigned Groups" })}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {task.assigned_groups.map((group) => (
+                        <span
+                          key={group.id}
+                          className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium border border-blue-200"
+                        >
+                          {group.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Exam Controls (for Teachers/Admins) */}
@@ -433,112 +479,59 @@ function TaskDetailPage({ info, user, loading }) {
                 </div>
               )}
 
-            {/* Active Students List (for Teachers/Admins when exam is active) */}
-            {task.is_exam_active &&
-              ["CENTER_ADMIN", "TEACHER", "ASSISTANT"].includes(user?.role) &&
-              activeStudents.length > 0 && (
-                <div className="pt-6 border-t">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">
-                    {intl.formatMessage({ id: "Active Students" })}
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-2 px-4 text-sm font-semibold text-gray-700">
-                            {intl.formatMessage({ id: "Student" })}
-                          </th>
-                          <th className="text-left py-2 px-4 text-sm font-semibold text-gray-700">
-                            {intl.formatMessage({ id: "Joined At" })}
-                          </th>
-                          <th className="text-left py-2 px-4 text-sm font-semibold text-gray-700">
-                            {intl.formatMessage({ id: "Time Spent" })}
-                          </th>
-                          <th className="text-left py-2 px-4 text-sm font-semibold text-gray-700">
-                            {intl.formatMessage({ id: "Current Section" })}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeStudents.map((student) => (
-                          <tr key={student.student_id} className="border-b">
-                            <td className="py-2 px-4">
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {student.student_name}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {student.student_email}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="py-2 px-4 text-sm text-gray-600">
-                              {intl.formatDate(student.joined_at, {
-                                hour: "numeric",
-                                minute: "numeric",
-                              })}
-                            </td>
-                            <td className="py-2 px-4 text-sm text-gray-600">
-                              {student.time_spent}
-                            </td>
-                            <td className="py-2 px-4">
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                                {student.current_section || "N/A"}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+            {/* Exam Monitor (for EXAM_MOCK tasks - Teachers/Admins only) */}
+            {task.task_type === "EXAM_MOCK" &&
+              ["CENTER_ADMIN", "TEACHER"].includes(user?.role) && (
+                <div className="mt-6">
+                  <ExamMonitor taskId={task.id} task={task} onTaskUpdate={mutate} />
                 </div>
               )}
 
             {/* Assigned Groups/Students */}
             {(task.assigned_groups?.length > 0 ||
               task.assigned_students?.length > 0) && (
-              <div className="pt-6 border-t">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  {intl.formatMessage({ id: "Assignments" })}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {task.assigned_groups?.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-2">
-                        {intl.formatMessage({ id: "Assigned Groups" })}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {task.assigned_groups.map((group) => (
-                          <span
-                            key={group.id}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm"
-                          >
-                            {group.name || group.id}
-                          </span>
-                        ))}
+                <div className="pt-6 border-t">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">
+                    {intl.formatMessage({ id: "Assignments" })}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {task.assigned_groups?.length > 0 && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-2">
+                          {intl.formatMessage({ id: "Assigned Groups" })}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {task.assigned_groups.map((group) => (
+                            <span
+                              key={group.id}
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm"
+                            >
+                              {group.name || group.id}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {task.assigned_students?.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-2">
-                        {intl.formatMessage({ id: "Assigned Students" })}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {task.assigned_students.map((student) => (
-                          <span
-                            key={student.id}
-                            className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm"
-                          >
-                            {student.full_name || student.email || student.id}
-                          </span>
-                        ))}
+                    )}
+                    {task.assigned_students?.length > 0 && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-2">
+                          {intl.formatMessage({ id: "Assigned Students" })}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {task.assigned_students.map((student) => (
+                            <span
+                              key={student.id}
+                              className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm"
+                            >
+                              {student.full_name || student.email || student.id}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Created Info */}
             <div className="pt-6 border-t text-sm text-gray-500">

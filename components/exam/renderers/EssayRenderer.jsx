@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
 import { useIntl } from "react-intl";
 import { RichText } from "@/components/ui/RichText";
 
@@ -9,14 +9,53 @@ export const EssayRenderer = memo(({ question, value, onChange, disabled }) => {
   
   // Local state for performance
   const [text, setText] = useState(value?.text || "");
+  const isFocusedRef = useRef(false);
+  const isDirtyRef = useRef(false);
+  const initialValueRef = useRef(value?.text);
 
+  // CRITICAL FIX: BLOCK server updates if user has touched the textarea
   useEffect(() => {
-    setText(value?.text || "");
-  }, [value]);
+    // ONLY sync on initial mount
+    if (initialValueRef.current === undefined && value?.text !== undefined) {
+      initialValueRef.current = value?.text;
+      setText(value?.text || "");
+      return;
+    }
+
+    // NEVER sync if focused or dirty - user is actively editing
+    if (isFocusedRef.current || isDirtyRef.current) {
+      return; // ← KILL THE SYNC
+    }
+
+    // Only sync if value actually changed from server
+    const serverText = value?.text || "";
+    if (serverText !== text) {
+      setText(serverText);
+    }
+  }, [value?.text, text]);
+
+  const handleFocus = () => {
+    isFocusedRef.current = true;
+  };
+
+  const handleChange = (e) => {
+    setText(e.target.value);
+    isDirtyRef.current = true; // Mark as dirty - BLOCKS server updates
+  };
 
   const handleBlur = () => {
-    if (text !== (value?.text || "")) {
-      onChange({ text });
+    isFocusedRef.current = false;
+    const currentText = text || "";
+    const serverText = value?.text || "";
+    
+    if (currentText !== serverText) {
+      onChange({ text: currentText });
+      // Keep dirty flag for 2 seconds to prevent race condition
+      setTimeout(() => {
+        isDirtyRef.current = false;
+      }, 2000);
+    } else {
+      isDirtyRef.current = false;
     }
   };
 
@@ -38,7 +77,8 @@ export const EssayRenderer = memo(({ question, value, onChange, disabled }) => {
         <textarea
           rows={15}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={handleChange}
+          onFocus={handleFocus}
           onBlur={handleBlur}
           disabled={disabled}
           placeholder={intl.formatMessage({ id: "Write your essay response here..." })}

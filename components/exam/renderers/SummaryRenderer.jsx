@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, memo } from "react";
+import React, { useMemo, useCallback, useRef, memo } from "react";
 import { RichText } from "@/components/ui/RichText";
 import { BLANK_REGEX } from "@/components/dashboard/mocks/fourth-step/utils/questionUtils";
 import { LocalInput } from "./LocalInput";
@@ -8,10 +8,14 @@ export const SummaryRenderer = memo(({ question, value, onChange, disabled }) =>
   const text = content?.text || "";
   const currentBlanks = value?.blanks || value?.values || {};
 
+  // PERFORMANCE FIX: Use ref to avoid recreating callback on every blank change
+  const blanksRef = useRef(currentBlanks);
+  blanksRef.current = currentBlanks;
+
   const handleBlankChange = useCallback((blankId, val) => {
-    const newBlanks = { ...currentBlanks, [blankId]: val };
+    const newBlanks = { ...blanksRef.current, [blankId]: val };
     onChange({ values: newBlanks });
-  }, [currentBlanks, onChange]);
+  }, [onChange]);
 
   // Render parts
   const renderContent = useMemo(() => {

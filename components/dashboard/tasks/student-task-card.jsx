@@ -44,7 +44,7 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
   const checkEligibility = async () => {
     try {
       setCheckingEligibility(true);
-      const response = await authAxios.get(`/tasks/${id}/check_submission_eligibility/`);
+      const response = await authAxios.get(`/tasks/${id}/check-submission-eligibility/`);
       setEligibility(response.data);
     } catch (error) {
       console.error("Error checking eligibility:", error);
@@ -52,7 +52,7 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
         can_submit: false,
         reason: error?.response?.data?.reason || "Unable to check eligibility",
       });
-    } finally {
+    } finally{
       setCheckingEligibility(false);
     }
   };
@@ -335,17 +335,28 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
         <div className="space-y-2.5">
           {/* Deadline */}
           <div
-            className={`flex items-center gap-2 text-sm ${
-              isExpired
-                ? "text-red-500"
-                : isDeadlineSoon
+            className={`flex items-center gap-2 text-sm ${isExpired
+              ? "text-red-500"
+              : isDeadlineSoon
                 ? "text-orange-500"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             <Calendar size={16} className="shrink-0" />
             <span>
-              {deadline ? (
+              {task_type === "EXAM_MOCK" && start_time ? (
+                <>
+                  <span className="font-semibold text-gray-700">
+                    {intl.formatMessage({ id: "Starts" })}:
+                  </span>{" "}
+                  {intl.formatDate(start_time, {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                  })}
+                </>
+              ) : deadline ? (
                 <>
                   {intl.formatDate(deadline, {
                     month: "short",
@@ -372,9 +383,8 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
             <Clock size={16} className="shrink-0" />
             <span>
               {duration_minutes > 0
-                ? `${Math.floor(duration_minutes / 60)}h ${
-                    duration_minutes % 60
-                  }m`
+                ? `${Math.floor(duration_minutes / 60)}h ${duration_minutes % 60
+                }m`
                 : intl.formatMessage({ id: "No time limit" })}
             </span>
           </div>
@@ -388,7 +398,7 @@ export function StudentTaskCard({ task, submission, onRefresh }) {
 
       {/* Decoration Gradient on Hover */}
       <div className="absolute top-0 left-0 w-full h-1 transition-opacity opacity-0 bg-gradient-to-r from-transparent via-primary to-transparent hover:opacity-100 rounded-t-xl" />
-    </div>
+    </div >
   );
 }
 

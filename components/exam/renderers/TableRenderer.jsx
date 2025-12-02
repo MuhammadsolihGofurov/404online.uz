@@ -1,4 +1,4 @@
-import React, { useCallback, memo } from "react";
+import React, { useCallback, useRef, memo } from "react";
 import { RichText } from "@/components/ui/RichText";
 import { LocalInput } from "./LocalInput";
 import { safeText } from "./utils";
@@ -9,9 +9,13 @@ export const TableRenderer = memo(({ question, value, onChange, disabled }) => {
   const rows = content?.rows || [];
   const currentValues = value?.values || {};
 
+  // PERFORMANCE FIX: Use ref to avoid recreating callback on every cell change
+  const valuesRef = useRef(currentValues);
+  valuesRef.current = currentValues;
+
   const handleCellChange = useCallback((key, val) => {
-    onChange({ values: { ...currentValues, [key]: val } });
-  }, [currentValues, onChange]);
+    onChange({ values: { ...valuesRef.current, [key]: val } });
+  }, [onChange]);
 
   return (
     <div className="space-y-6">

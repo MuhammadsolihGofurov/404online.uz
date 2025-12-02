@@ -93,7 +93,7 @@ function ExamRoomPage({ info, user, loading }) {
     if (task && task.task_type === 'EXAM_MOCK' && !isPracticeMode) {
       const checkEligibility = async () => {
         try {
-          const response = await authAxios.get(`/tasks/${task.id}/check_submission_eligibility/`);
+          const response = await authAxios.get(`/tasks/${task.id}/check-submission-eligibility/`);
           setEligibility(response.data);
           
           // If eligible, mark as started immediately
@@ -157,6 +157,69 @@ function ExamRoomPage({ info, user, loading }) {
     setIsExamStarted(true);
     setCheckingEligibility(false); // Stop showing loading/waiting
   };
+
+  // Mark student as left when they close/leave the exam page
+  useEffect(() => {
+    // Only for non-practice mode and when we have a submission
+    if (isPracticeMode || !existingDraft?.id) return;
+
+    const markAsLeft = async () => {
+      try {
+        await authAxios.post(`/submissions/${existingDraft.id}/mark-left/`);
+      } catch (error) {
+        console.error("Error marking as left:", error);
+        // Silent fail - not critical
+      }
+    };
+
+    // Handle page unload (close tab, refresh, navigate away)
+    const handleBeforeUnload = (e) => {
+      // Use sendBeacon for reliable delivery even when page is closing
+      // Fallback to synchronous XHR if sendBeacon not available
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/submissions/${existingDraft.id}/mark-left/`;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      if (navigator.sendBeacon) {
+        // Modern approach - more reliable
+        const blob = new Blob([JSON.stringify({})], { type: 'application/json' });
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        // sendBeacon doesn't support custom headers directly, so we encode in URL
+        navigator.sendBeacon(url, blob);
+      } else {
+        // Fallback to synchronous XHR (blocks page unload until complete)
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url, false); // false = synchronous
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+        try {
+          xhr.send(JSON.stringify({}));
+        } catch (err) {
+          console.error("Failed to mark as left:", err);
+        }
+      }
+    };
+
+    // Handle navigation away from exam (using Next.js router)
+    const handleRouteChange = () => {
+      markAsLeft();
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    router.events.on('routeChangeStart', handleRouteChange);
+
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      router.events.off('routeChangeStart', handleRouteChange);
+      
+      // Also mark as left on component unmount
+      markAsLeft();
+    };
+  }, [existingDraft?.id, isPracticeMode, router]);
 
   // Loading state
   if (loading || taskLoading || (task?.task_type === 'EXAM_MOCK' && checkingEligibility)) {

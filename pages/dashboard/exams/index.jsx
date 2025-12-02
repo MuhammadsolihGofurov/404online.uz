@@ -9,9 +9,11 @@ import { Clock, Calendar, ArrowRight, AlertCircle, Play, CheckCircle } from "luc
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { formatDate } from "@/utils/funcs";
+import { useRouter } from "next/router";
 
 function StudentExamsPage({ info, user, loading }) {
   const intl = useIntl();
+  const router = useRouter();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -34,17 +36,23 @@ function StudentExamsPage({ info, user, loading }) {
     const isLive = task.is_exam_active;
 
     if (isLive) return "LIVE";
-    
+
     // If finished/past deadline
     if (endTime && now > endTime) return "FINISHED";
-    
+
     // If scheduled in future
     if (now < startTime) return "SCHEDULED";
-    
+
     // If window started but not live (and not finished)
     if (now >= startTime) return "WAITING";
 
     return "UNKNOWN";
+  };
+
+  const handleJoinExam = async (taskId) => {
+    // Simply redirect to exam room
+    // The exam-room page will handle creating a draft submission when needed
+    router.push(`/dashboard/exam-room/${taskId}`);
   };
 
   const getStatusCard = (task) => {
@@ -59,13 +67,13 @@ function StudentExamsPage({ info, user, loading }) {
               <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
               {intl.formatMessage({ id: "EXAM LIVE" })}
             </span>
-            <Link
-              href={`/dashboard/tasks/${task.id}`}
+            <button
+              onClick={() => handleJoinExam(task.id)}
               className="w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               <Play size={20} />
               {intl.formatMessage({ id: "Join Exam" })}
-            </Link>
+            </button>
             <p className="text-xs text-gray-500">
               {intl.formatMessage({ id: "Strict Mode Enabled" })}
             </p>

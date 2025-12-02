@@ -16,8 +16,6 @@ import { Plus, X, Trash2 } from "lucide-react";
 
 // Task type options
 const TASK_TYPES = [
-  { value: "EXAM_MOCK", name: "Exam Mock" },
-  { value: "PRACTICE_MOCK", name: "Practice Mock" },
   { value: "CUSTOM_MOCK", name: "Custom Mock" },
   { value: "QUIZ", name: "Quiz" },
 ];
@@ -614,21 +612,30 @@ export default function TaskModal({
           />
 
           {/* Task Type */}
-          <Controller
-            name="task_type"
-            control={control}
-            rules={{ required: intl.formatMessage({ id: "Required" }) }}
-            render={({ field }) => (
-              <Select
-                {...field}
-                title={intl.formatMessage({ id: "Task Type" })}
-                placeholder={intl.formatMessage({ id: "Select task type" })}
-                options={TASK_TYPES}
-                error={errors.task_type?.message}
-                disabled={!!id} // Disable task_type when editing (immutability)
-              />
+          <div className="flex flex-col gap-1">
+            <Controller
+              name="task_type"
+              control={control}
+              rules={{ required: intl.formatMessage({ id: "Required" }) }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  title={intl.formatMessage({ id: "Task Type" })}
+                  placeholder={intl.formatMessage({ id: "Select task type" })}
+                  options={TASK_TYPES}
+                  error={errors.task_type?.message}
+                  disabled={!!id} // Disable task_type when editing (immutability)
+                />
+              )}
+            />
+            {!id && (
+              <p className="text-xs text-gray-500 text-left">
+                {intl.formatMessage({
+                  id: "To assign an Exam or Practice Mock, please go to Materials Hub and use the 'Use as Task' feature on a template.",
+                })}
+              </p>
             )}
-          />
+          </div>
 
           {/* PRACTICE_MOCK: Select Practice Template */}
           {taskType === "PRACTICE_MOCK" && (

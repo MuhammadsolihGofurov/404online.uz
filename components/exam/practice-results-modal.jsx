@@ -112,9 +112,20 @@ export function PracticeResultsModal({ isOpen, onClose, results, questions = [],
             <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">
               {intl.formatMessage({ id: "IELTS Band Score" })}
             </p>
-            <p className="text-4xl font-extrabold text-purple-700">
-              {band_score !== null && band_score !== undefined ? band_score : "-"}
-            </p>
+            {band_score !== null && band_score !== undefined ? (
+              <p className="text-4xl font-extrabold text-purple-700">
+                {band_score}
+              </p>
+            ) : (
+              <div className="flex flex-col items-center">
+                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full border border-yellow-200 mb-1">
+                  {intl.formatMessage({ id: "Pending" })}
+                </span>
+                <p className="text-xs text-gray-400">
+                  {intl.formatMessage({ id: "Awaiting Grading" })}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Accuracy */}

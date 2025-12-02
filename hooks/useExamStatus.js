@@ -1,26 +1,35 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { authAxios } from "@/utils/axios";
-import { toast } from "react-toastify";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { authAxios } from '@/utils/axios';
+import { toast } from 'react-toastify';
 
 /**
  * useExamStatus
- * 
+ *
  * Custom hook to manage section-based exam status with real-time polling.
  * Integrates with backend endpoints for section locking, timer tracking, and progression.
- * 
+ *
+ * CRITICAL FIX: Reduced polling from 5s to 30s to prevent race conditions
+ * Timer runs locally (client-side countdown), only syncs with server every 30s
+ *
  * @param {string} submissionId - The submission ID to track
  * @param {boolean} enabled - Whether to enable polling (default: true)
- * @param {number} pollInterval - Polling interval in milliseconds (default: 5000)
+ * @param {number} pollInterval - Polling interval in milliseconds (default: 30000 - 30 seconds)
  * @returns {Object} Exam status state and control methods
  */
-export function useExamStatus(submissionId, enabled = true, pollInterval = 5000) {
+export function useExamStatus(
+  submissionId,
+  enabled = true,
+  pollInterval = 30000, // ← CRITICAL: Changed from 5000ms (5s) to 30000ms (30s)
+) {
   const [examStatus, setExamStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isActionPending, setIsActionPending] = useState(false);
-  
+
   const pollingIntervalRef = useRef(null);
   const isMountedRef = useRef(true);
+  const prevStatusRef = useRef(null); // Track previous status to avoid unnecessary updates
+  const sectionsRef = useRef([]); // Stable reference for sections array
 
   /**
    * Fetch exam status from backend
@@ -32,23 +41,39 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
     }
 
     try {
-      const response = await authAxios.get(`/submissions/${submissionId}/exam-status/`);
-      
+      const response = await authAxios.get(
+        `/submissions/${submissionId}/exam-status/`,
+      );
+
       // Only update if component is still mounted
       if (isMountedRef.current) {
-        setExamStatus(response.data);
+        const newData = response.data;
+
+        // PERFORMANCE FIX: Only update state if data actually changed
+        // This prevents re-renders every 5 seconds when polling
+        const newDataStr = JSON.stringify(newData);
+        const prevDataStr = prevStatusRef.current
+          ? JSON.stringify(prevStatusRef.current)
+          : null;
+
+        if (newDataStr !== prevDataStr) {
+          setExamStatus(newData);
+          prevStatusRef.current = newData;
+        }
+
         setError(null);
       }
     } catch (err) {
-      console.error("Error fetching exam status:", err);
-      
+      console.error('Error fetching exam status:', err);
+
       if (isMountedRef.current) {
         setError(err);
-        
+
         // Only show error toast for non-404 errors (404 might mean exam not started yet)
         if (err.response?.status !== 404) {
-          const errorMsg = err.response?.data?.detail || "Failed to fetch exam status";
-          toast.error(errorMsg, { toastId: "exam-status-error" });
+          const errorMsg =
+            err.response?.data?.detail || 'Failed to fetch exam status';
+          toast.error(errorMsg, { toastId: 'exam-status-error' });
         }
       }
     } finally {
@@ -63,33 +88,33 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
    */
   const completeSection = useCallback(async () => {
     if (!submissionId) {
-      console.warn("Cannot complete section: No submission ID");
-      return { success: false, error: "No submission ID" };
+      console.warn('Cannot complete section: No submission ID');
+      return { success: false, error: 'No submission ID' };
     }
 
     if (isActionPending) {
-      console.warn("Action already in progress");
-      return { success: false, error: "Action already in progress" };
+      console.warn('Action already in progress');
+      return { success: false, error: 'Action already in progress' };
     }
 
     setIsActionPending(true);
 
     try {
       const response = await authAxios.post(
-        `/submissions/${submissionId}/complete-section/`
+        `/submissions/${submissionId}/complete-section/`,
       );
 
       if (isMountedRef.current) {
         // Optimistically update local state
         setExamStatus(response.data.exam_status);
-        
+
         const nextSection = response.data.next_section;
-        const message = nextSection 
+        const message = nextSection
           ? `Section completed! Moving to ${nextSection}...`
-          : "All sections completed!";
-        
-        toast.success(message, { toastId: "section-complete" });
-        
+          : 'All sections completed!';
+
+        toast.success(message, { toastId: 'section-complete' });
+
         return {
           success: true,
           nextSection: nextSection,
@@ -97,15 +122,15 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
         };
       }
     } catch (err) {
-      console.error("Error completing section:", err);
-      
-      const errorMsg = 
-        err.response?.data?.detail || 
+      console.error('Error completing section:', err);
+
+      const errorMsg =
+        err.response?.data?.detail ||
         err.response?.data?.message ||
-        "Failed to complete section. Please try again.";
-      
-      toast.error(errorMsg, { toastId: "section-complete-error" });
-      
+        'Failed to complete section. Please try again.';
+
+      toast.error(errorMsg, { toastId: 'section-complete-error' });
+
       return {
         success: false,
         error: errorMsg,
@@ -119,83 +144,88 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
 
   /**
    * Switch to a different section (PRACTICE_MOCK only)
-   * 
+   *
    * @param {string} sectionType - Target section (LISTENING, READING, WRITING)
    */
-  const switchSection = useCallback(async (sectionType) => {
-    if (!submissionId) {
-      console.warn("Cannot switch section: No submission ID");
-      return { success: false, error: "No submission ID" };
-    }
+  const switchSection = useCallback(
+    async (sectionType) => {
+      if (!submissionId) {
+        console.warn('Cannot switch section: No submission ID');
+        return { success: false, error: 'No submission ID' };
+      }
 
-    if (!sectionType) {
-      console.warn("Cannot switch section: No section type provided");
-      return { success: false, error: "Section type is required" };
-    }
+      if (!sectionType) {
+        console.warn('Cannot switch section: No section type provided');
+        return { success: false, error: 'Section type is required' };
+      }
 
-    if (isActionPending) {
-      console.warn("Action already in progress");
-      return { success: false, error: "Action already in progress" };
-    }
+      if (isActionPending) {
+        console.warn('Action already in progress');
+        return { success: false, error: 'Action already in progress' };
+      }
 
-    // Check if switching is allowed
-    if (examStatus && !examStatus.allows_section_switching) {
-      const errorMsg = "Section switching is not allowed in exam mode. You must follow the sequential order.";
-      toast.error(errorMsg, { toastId: "section-switch-blocked" });
-      return { success: false, error: errorMsg };
-    }
+      // Check if switching is allowed
+      if (examStatus && !examStatus.allows_section_switching) {
+        const errorMsg =
+          'Section switching is not allowed in exam mode. You must follow the sequential order.';
+        toast.error(errorMsg, { toastId: 'section-switch-blocked' });
+        return { success: false, error: errorMsg };
+      }
 
-    setIsActionPending(true);
+      setIsActionPending(true);
 
-    try {
-      const response = await authAxios.post(
-        `/submissions/${submissionId}/switch-section/`,
-        { section: sectionType }
-      );
+      try {
+        const response = await authAxios.post(
+          `/submissions/${submissionId}/switch-section/`,
+          { section: sectionType },
+        );
 
-      if (isMountedRef.current) {
-        // Optimistically update local state
-        setExamStatus(response.data.exam_status);
-        
-        toast.success(`Switched to ${sectionType}`, { 
-          toastId: "section-switch",
-          autoClose: 2000 
-        });
-        
+        if (isMountedRef.current) {
+          // Optimistically update local state
+          setExamStatus(response.data.exam_status);
+
+          toast.success(`Switched to ${sectionType}`, {
+            toastId: 'section-switch',
+            autoClose: 2000,
+          });
+
+          return {
+            success: true,
+            currentSection: response.data.current_section,
+            examStatus: response.data.exam_status,
+          };
+        }
+      } catch (err) {
+        console.error('Error switching section:', err);
+
+        // Handle 403 (forbidden) specifically
+        if (err.response?.status === 403) {
+          const errorMsg =
+            err.response?.data?.detail ||
+            'You cannot switch sections in exam mode.';
+          toast.error(errorMsg, { toastId: 'section-switch-forbidden' });
+          return { success: false, error: errorMsg, forbidden: true };
+        }
+
+        const errorMsg =
+          err.response?.data?.detail ||
+          err.response?.data?.message ||
+          'Failed to switch section. Please try again.';
+
+        toast.error(errorMsg, { toastId: 'section-switch-error' });
+
         return {
-          success: true,
-          currentSection: response.data.current_section,
-          examStatus: response.data.exam_status,
+          success: false,
+          error: errorMsg,
         };
+      } finally {
+        if (isMountedRef.current) {
+          setIsActionPending(false);
+        }
       }
-    } catch (err) {
-      console.error("Error switching section:", err);
-      
-      // Handle 403 (forbidden) specifically
-      if (err.response?.status === 403) {
-        const errorMsg = err.response?.data?.detail || 
-          "You cannot switch sections in exam mode.";
-        toast.error(errorMsg, { toastId: "section-switch-forbidden" });
-        return { success: false, error: errorMsg, forbidden: true };
-      }
-      
-      const errorMsg = 
-        err.response?.data?.detail || 
-        err.response?.data?.message ||
-        "Failed to switch section. Please try again.";
-      
-      toast.error(errorMsg, { toastId: "section-switch-error" });
-      
-      return {
-        success: false,
-        error: errorMsg,
-      };
-    } finally {
-      if (isMountedRef.current) {
-        setIsActionPending(false);
-      }
-    }
-  }, [submissionId, examStatus, isActionPending]);
+    },
+    [submissionId, examStatus, isActionPending],
+  );
 
   /**
    * Manually refresh exam status (useful after external actions)
@@ -207,19 +237,25 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
   /**
    * Get section status by type (helper method)
    */
-  const getSectionStatus = useCallback((sectionType) => {
-    if (!examStatus || !examStatus.sections) return null;
-    return examStatus.sections.find(s => s.type === sectionType);
-  }, [examStatus]);
+  const getSectionStatus = useCallback(
+    (sectionType) => {
+      if (!examStatus || !examStatus.sections) return null;
+      return examStatus.sections.find((s) => s.type === sectionType);
+    },
+    [examStatus],
+  );
 
   /**
    * Check if a section is accessible (not LOCKED)
    */
-  const isSectionAccessible = useCallback((sectionType) => {
-    const section = getSectionStatus(sectionType);
-    if (!section) return false;
-    return section.status !== "LOCKED";
-  }, [getSectionStatus]);
+  const isSectionAccessible = useCallback(
+    (sectionType) => {
+      const section = getSectionStatus(sectionType);
+      if (!section) return false;
+      return section.status !== 'LOCKED';
+    },
+    [getSectionStatus],
+  );
 
   // Initial fetch on mount
   useEffect(() => {
@@ -265,13 +301,25 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
     };
   }, []);
 
+  // PERFORMANCE FIX: Memoize sections array to prevent reference changes
+  // Only update sectionsRef when sections content actually changes
+  useEffect(() => {
+    const newSections = examStatus?.sections || [];
+    const newSectionsStr = JSON.stringify(newSections);
+    const prevSectionsStr = JSON.stringify(sectionsRef.current);
+
+    if (newSectionsStr !== prevSectionsStr) {
+      sectionsRef.current = newSections;
+    }
+  }, [examStatus?.sections]);
+
   return {
     // State
     examStatus,
     isLoading,
     error,
     isActionPending,
-    
+
     // Computed properties (for convenience)
     currentSection: examStatus?.current_section || null,
     sectionTimeRemaining: examStatus?.section_time_remaining,
@@ -279,8 +327,8 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
     isStrictMode: examStatus?.is_strict_mode || false,
     allowsSectionSwitching: examStatus?.allows_section_switching || false,
     taskType: examStatus?.task_type || null,
-    sections: examStatus?.sections || [],
-    
+    sections: sectionsRef.current, // Use stable reference instead of creating new array
+
     // Methods
     completeSection,
     switchSection,
@@ -289,4 +337,3 @@ export function useExamStatus(submissionId, enabled = true, pollInterval = 5000)
     isSectionAccessible,
   };
 }
-
