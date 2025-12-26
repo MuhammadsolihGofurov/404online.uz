@@ -204,5 +204,11 @@
   "Exam: Time limited, 1 attempt, result hidden": "Exam: Time limited, 1 attempt, result hidden",
   "Task": "Task",
   "Tasks": "Tasks",
-  "Create task": "Create task"
+  "Create task": "Create task",
+  "Active Exams":"Active Exams",
+  "Pending Approvals":"Pending Approvals",
+  "How many codes?": "How many codes?",
+  "Count is required": "Count is required",
+  "Finish":"Finish",
+  "Copy All" : "Copy All"
 }

@@ -298,14 +298,14 @@ export const CenterAdminAnalytics = ({
               <path d="M9 7H15M9 11H15M9 15H13M7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3Z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
                 `,
-      title: "Total tasks",
+      title: "Active Exams",
     },
     total_submissions: {
       icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 6H7C6.46957 6 5.96086 6.21071 5.58579 6.58579C5.21071 6.96086 5 7.46957 5 8V17C5 17.5304 5.21071 18.0391 5.58579 18.4142C5.96086 18.7893 6.46957 19 7 19H16C16.5304 19 17.0391 18.7893 17.4142 18.4142C17.7893 18.0391 18 17.5304 18 17V14M20 7C20 8.65685 18.6569 10 17 10C15.3431 10 14 8.65685 14 7C14 5.34315 15.3431 4 17 4C18.6569 4 20 5.34315 20 7Z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
             `,
-      title: "Total submissions",
+      title: "Pending Approvals",
     },
     total_users: {
       icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -367,7 +367,7 @@ export const CenterAdminAnalytics = ({
               {intl.formatMessage({ id: staticData?.total_users?.title })}
             </h2>
             <h3 className="text-textPrimary font-semibold text-xl">
-              {data?.total_users}
+              {data?.total_students + data?.total_teachers}
             </h3>
           </div>
         </div>
@@ -384,7 +384,7 @@ export const CenterAdminAnalytics = ({
               {intl.formatMessage({ id: staticData?.total_tasks?.title })}
             </h2>
             <h3 className="text-textPrimary font-semibold text-xl">
-              {data?.total_tasks}
+              {data?.active_exams}
             </h3>
           </div>
         </div>
@@ -401,7 +401,7 @@ export const CenterAdminAnalytics = ({
               {intl.formatMessage({ id: staticData?.total_submissions?.title })}
             </h2>
             <h3 className="text-textPrimary font-semibold text-xl">
-              {data?.total_submissions}
+              {data?.pending_approvals}
             </h3>
           </div>
         </div>
