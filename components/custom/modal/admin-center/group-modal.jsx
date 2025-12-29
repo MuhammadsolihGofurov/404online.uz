@@ -33,6 +33,7 @@ export default function GroupModal({ id, initialData }) {
       is_active: initialData?.is_active || false,
       is_approved: initialData?.is_approved || false,
       group: initialData?.group || "",
+      teacher_id: initialData?.teacher_id || initialData?.teacher || "",
     },
   });
 
@@ -120,7 +121,7 @@ export default function GroupModal({ id, initialData }) {
             }}
           />
           <Controller
-            name="teacher"
+            name="teacher_id"
             control={control}
             rules={{ required: intl.formatMessage({ id: "Required" }) }}
             render={({ field }) => (
@@ -129,7 +130,7 @@ export default function GroupModal({ id, initialData }) {
                 title={intl.formatMessage({ id: "Teacher" })}
                 placeholder={intl.formatMessage({ id: "Select" })}
                 options={teachers}
-                error={errors.teacher?.message}
+                error={errors.teacher_id?.message}
               />
             )}
           />

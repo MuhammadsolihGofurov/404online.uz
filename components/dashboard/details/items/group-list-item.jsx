@@ -83,11 +83,14 @@ export default function GroupListItem({ item, role }) {
               <DropdownBtn
                 title="Members"
                 icon={<Users className="text-gray-500" />}
-                onClick={() =>
-                  router.push(`${GROUPSMEMBERS_URL}?group_id=${item?.id}`)
-                }
+                onClick={() => {
+                  console.log("🔍 [GroupListItem] Navigating to members page");
+                  console.log("🔍 [GroupListItem] item?.id:", item?.id);
+                  console.log("🔍 [GroupListItem] Full URL:", `${GROUPSMEMBERS_URL}?group_id=${item?.id}`);
+                  router.push(`${GROUPSMEMBERS_URL}?group_id=${item?.id}`);
+                }}
               />
-              
+
               <DropdownBtn
                 title="Chats"
                 icon={<Users className="text-gray-500" />}
