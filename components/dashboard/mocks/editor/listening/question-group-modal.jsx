@@ -1,7 +1,7 @@
 import React, { useState, Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { X, Plus, Trash2 } from "lucide-react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { authAxios } from "@/utils/axios";
 import { getEditorEndpoints } from "@/utils/mock-api";
 import { toast } from "react-toastify";
@@ -139,7 +139,7 @@ export default function QuestionGroupModal({ isOpen, closeModal, group, partId, 
                 </Transition.Child>
 
                 <div className="fixed inset-0 overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center">
+                    <div className="flex items-center justify-center min-h-full p-4 text-center">
                         <Transition.Child
                             as={Fragment}
                             enter="ease-out duration-300"
@@ -149,8 +149,8 @@ export default function QuestionGroupModal({ isOpen, closeModal, group, partId, 
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                <div className="flex justify-between items-center mb-6">
+                            <Dialog.Panel className="w-full max-w-2xl p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+                                <div className="flex items-center justify-between mb-6">
                                     <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900">
                                         {group ? "Edit Question Group" : "New Question Group"}
                                     </Dialog.Title>
@@ -162,15 +162,19 @@ export default function QuestionGroupModal({ isOpen, closeModal, group, partId, 
                                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="col-span-2 sm:col-span-1">
-                                            <Select
-                                                {...register("question_type", { required: "Required" })}
-                                                title="Question Type"
-                                                options={LISTENING_QUESTION_TYPES}
-                                                error={errors.question_type?.message}
-                                            // Need to handle Select properly with react-hook-form Controller usually
-                                            // But assuming native select or compatible comp for now
+                                            <Controller
+                                                name="question_type"
+                                                control={control}
+                                                rules={{ required: "Required" }}
+                                                render={({ field }) => (
+                                                    <Select
+                                                        {...field}
+                                                        title="Question Type"
+                                                        options={LISTENING_QUESTION_TYPES}
+                                                        error={errors.question_type?.message}
+                                                    />
+                                                )}
                                             />
-                                            {/* If Select is custom, need Controller, fixing in next iteration if broken */}
                                         </div>
                                         <div className="col-span-2 sm:col-span-1">
                                             <Input
@@ -206,23 +210,23 @@ export default function QuestionGroupModal({ isOpen, closeModal, group, partId, 
                                         Let's stick to Header info first, then let user add questions in main view or separate modal?
                                         Actually, users expect to add questions here.
                                     */}
-                                    {/* <div className="border-t border-gray-100 pt-4">
-                                        <div className="flex justify-between items-center mb-4">
+                                    {/* <div className="pt-4 border-t border-gray-100">
+                                        <div className="flex items-center justify-between mb-4">
                                             <h4 className="font-semibold text-gray-900">Questions</h4>
-                                            <button type="button" onClick={() => append({ question_number: "", text: "" })} className="text-xs flex items-center gap-1 text-indigo-600 font-medium">
+                                            <button type="button" onClick={() => append({ question_number: "", text: "" })} className="flex items-center gap-1 text-xs font-medium text-indigo-600">
                                                 <Plus size={14} /> Add Question
                                             </button>
                                         </div>
                                         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                                             {fields.map((field, index) => (
-                                                <div key={field.id} className="flex gap-2 items-start">
+                                                <div key={field.id} className="flex items-start gap-2">
                                                     <div className="w-16">
                                                         <input {...register(`questions.${index}.question_number`)} placeholder="#" className="w-full text-sm border-gray-300 rounded-lg" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <input {...register(`questions.${index}.text`)} placeholder="Question text..." className="w-full text-sm border-gray-300 rounded-lg" />
                                                     </div>
-                                                    <button type="button" onClick={() => remove(index)} className="p-2 text-red-500 hover:bg-red-50 rounded">
+                                                    <button type="button" onClick={() => remove(index)} className="p-2 text-red-500 rounded hover:bg-red-50">
                                                         <Trash2 size={14} />
                                                     </button>
                                                 </div>
@@ -230,7 +234,7 @@ export default function QuestionGroupModal({ isOpen, closeModal, group, partId, 
                                         </div>
                                     </div> */}
 
-                                    <div className="bg-yellow-50 text-yellow-700 text-sm p-3 rounded-lg">
+                                    <div className="p-3 text-sm text-yellow-700 rounded-lg bg-yellow-50">
                                         Note: Managing questions inside this modal is disabled for now. Please create the group first, then add questions in the main editor.
                                     </div>
 
@@ -238,7 +242,7 @@ export default function QuestionGroupModal({ isOpen, closeModal, group, partId, 
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                                            className="flex items-center gap-2 px-6 py-2 font-semibold text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700"
                                         >
                                             {loading && <ButtonSpinner />}
                                             Save Group

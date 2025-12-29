@@ -51,9 +51,9 @@ const Select = forwardRef(function Select(
         }`}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="text-sm text-inputPlaceholder">
+        <span className={`text-sm ${selectedOption ? 'text-gray-900' : 'text-inputPlaceholder'}`}>
           {selectedOption
-            ? selectedOption.full_name || selectedOption.name || value
+            ? selectedOption.label || selectedOption.full_name || selectedOption.name || value
             : placeholder}
         </span>
         <ChevronDown
@@ -73,11 +73,11 @@ const Select = forwardRef(function Select(
                 <li
                   key={optValue}
                   onClick={() => handleSelect(optValue)}
-                  className={`p-3 cursor-pointer hover:bg-gray-100 transition text-sm flex items-center justify-between ${
-                    isSelected ? "font-medium" : ""
+                  className={`p-3 cursor-pointer hover:bg-gray-100 transition text-sm flex items-center justify-between text-gray-900 ${
+                    isSelected ? "font-medium bg-gray-50" : ""
                   }`}
                 >
-                  {opt?.full_name || opt?.name}
+                  {opt?.label || opt?.full_name || opt?.name}
                   {isSelected && <Check className="h-4 w-4 text-green-500" />}
                 </li>
               );

@@ -86,7 +86,7 @@ export default function ListeningPartEditor({ part, refresh }) {
 
                             {/* Group Content Preview */}
                             <div className="p-4">
-                                <p className="text-sm text-gray-600 font-medium mb-3 italic">"{group.instruction}"</p>
+                                <p className="text-sm text-gray-600 font-medium mb-3 italic">&quot;{group.instruction}&quot;</p>
                                 <div className="space-y-2 pl-4 border-l-2 border-gray-100">
                                     {group.questions?.map((q) => (
                                         <div key={q.id} className="text-sm text-gray-700 flex items-start gap-2">
