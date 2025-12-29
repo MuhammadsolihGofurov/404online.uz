@@ -34,7 +34,7 @@ function Step2Details({ user, loading }) {
 
     useEffect(() => {
         if (!mock_type && router.isReady) {
-            router.push("/dashboard/mocks/create/index");
+            router.push("/dashboard/mocks/create");
         } else {
             setValue("mock_type", mock_type);
         }

@@ -38,7 +38,7 @@ function MocksPage({ user, loading: userLoading }) {
                             <p className="text-gray-500">Manage your listening, reading, and writing assessments.</p>
                         </div>
                         <Link
-                            href="/dashboard/mocks/create/index"
+                            href="/dashboard/mocks/create"
                             className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95"
                         >
                             <Plus size={20} />
@@ -54,8 +54,8 @@ function MocksPage({ user, loading: userLoading }) {
                                     key={type}
                                     onClick={() => router.push({ pathname: router.pathname, query: { ...router.query, mock_type: type, page: 1 } })}
                                     className={`pb-4 text-sm font-medium transition-colors relative ${mockType === type
-                                            ? "text-indigo-600"
-                                            : "text-gray-500 hover:text-gray-700"
+                                        ? "text-indigo-600"
+                                        : "text-gray-500 hover:text-gray-700"
                                         }`}
                                 >
                                     {type || "All Mocks"}
