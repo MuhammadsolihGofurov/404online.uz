@@ -1,12 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // swcMinify: true,
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'ru', 'uz'],
   },
-  eslint:{
+  eslint: {
     ignoreDuringBuilds: true,
   },
   compiler: {
@@ -15,12 +14,10 @@ const nextConfig = {
     },
   },
   images: {
-    // like ['domen.uz']
-    domains: [],
+    remotePatterns: [], 
   },
   env: {
-    // like base url
-    API: '',
+    API: process.env.NEXT_PUBLIC_API_BASE_URL || '', 
   },
 }
 
