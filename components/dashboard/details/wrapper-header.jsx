@@ -1,8 +1,10 @@
+import { Dropdown } from "@/components/custom/details";
 import { useModal } from "@/context/modal-context";
 import { DASHBOARD_URL } from "@/mock/router";
 import { Check, CheckCheck } from "lucide-react";
 import Link from "next/link";
 import { useIntl } from "react-intl";
+import { FilterButtonItem } from "./filters";
 
 export default function WrapperHeader({
   title,
@@ -15,13 +17,16 @@ export default function WrapperHeader({
   buttonFunc,
   modalType,
   isIcon = false,
+  isDropdown = false,
+  dropdownList = [],
 }) {
   const intl = useIntl();
   const { openModal } = useModal();
+
   return (
     <div
       className={`w-full flex items-end ${
-        isButton ? "justify-between" : "justify-start"
+        isButton || isDropdown ? "justify-between" : "justify-start"
       }`}
     >
       <div className="flex flex-col sm:gap-1">
@@ -40,7 +45,7 @@ export default function WrapperHeader({
           onClick={() =>
             modalType ? openModal(buttonFunc, {}, modalType) : buttonFunc()
           }
-          className="flex items-center gap-1 border border-[#E5E7EB] py-2 px-4 rounded-md bg-white text-sm text-textPrimary font-normal"
+          className="flex items-center gap-1 border border-[#E5E7EB] py-2 px-4 rounded-md bg-white text-xs sm:text-sm text-textPrimary font-normal"
         >
           {!isIcon ? (
             <svg
@@ -65,6 +70,38 @@ export default function WrapperHeader({
         </button>
       ) : (
         <></>
+      )}
+
+      {isDropdown && (
+        <Dropdown
+          buttonContent={
+            <div className="flex items-center gap-1 border border-[#E5E7EB] py-2 px-4 rounded-md bg-white text-xs sm:text-sm text-textPrimary font-normal">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M7.99992 3.33301V12.6663M3.33325 7.99967H12.6666"
+                  stroke="#364749"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span>{intl.formatMessage({ id: buttonText })}</span>
+            </div>
+          }
+        >
+          {dropdownList?.map((item) => {
+            return (
+              <Link href={item?.url} key={item?.id} className="w-full p-3 text-sm">
+                {item?.title}
+              </Link>
+            );
+          })}
+        </Dropdown>
       )}
     </div>
   );

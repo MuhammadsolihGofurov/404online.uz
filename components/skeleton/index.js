@@ -9,3 +9,4 @@ export { default as MockViewSkeleton } from "./mocks/mock-view-skeleton";
 export { default as DocumentItemSkeleton } from "./materials/document-item-skeleton";
 export { default as TemplateItemSkeleton } from "./materials/template-item-skeleton";
 export { default as TaskItemSkeleton } from "./tasks/task-item-skeleton";
+export { default as SectionSkeleton } from "./section/section-skeleton";

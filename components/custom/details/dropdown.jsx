@@ -59,7 +59,7 @@ export default function Dropdown({
 
       {open && (
         <div
-          className={`fixed z-[11] bg-white shadow-lg border border-gray-100 rounded-xl py-2 ${width}`}
+          className={`fixed z-[11] bg-white shadow-lg border border-gray-100 rounded-xl py-2 flex flex-col ${width}`}
           style={{
             top: menuRef.current?.getBoundingClientRect().bottom + 4,
             left: menuRef.current?.getBoundingClientRect().right - 128,

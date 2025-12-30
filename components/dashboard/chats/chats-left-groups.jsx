@@ -73,7 +73,7 @@ export default function ChatsLeftGroups({ onSelectGroup, loading }) {
               >
                 {g?.name?.slice(0, 1)}
               </span>
-              <span className="text-sm text-textPrimary">{g?.name}</span>
+              <span className="text-xs text-textPrimary flex-1 text-start">{g?.name}</span>
             </button>
           );
         })}

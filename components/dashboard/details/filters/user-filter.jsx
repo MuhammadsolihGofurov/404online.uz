@@ -27,7 +27,7 @@ export default function UserFilter() {
   ];
 
   return (
-    <div className="bg-white w-full rounded-2xl p-5 flex flex-row items-center gap-5">
+    <div className="bg-white w-full rounded-2xl p-5 flex flex-row flex-wrap items-center gap-5">
       <p className="text-textPrimary text-sm font-semibold">
         {intl.formatMessage({ id: "Filters" })}:
       </p>

@@ -14,6 +14,8 @@ export default function Wrapper({
   modalType,
   isWrapperClose = false,
   isIcon,
+  isDropdown,
+  dropdownList
 }) {
   return (
     <div className="flex flex-col gap-8 items-start">
@@ -29,6 +31,8 @@ export default function Wrapper({
           buttonFunc={buttonFunc}
           modalType={modalType}
           isIcon={isIcon}
+          dropdownList={dropdownList}
+          isDropdown={isDropdown}
         />
       )}
       <div className="flex flex-col gap-5 w-full">{children}</div>
