@@ -25,7 +25,7 @@ export default function FileInput({
             type="file"
             accept={accept}
             onChange={(e) => field.onChange(e.target.files[0])}
-            className="border border-gray-300 rounded-lg px-2 py-4 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 h-[57.6px]"
+            className="border  bg-white border-gray-300 rounded-lg px-2 py-4 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 h-[57.6px]"
           />
           {errors?.[name] && (
             <span className="text-red-500 mt-1 text-sm">

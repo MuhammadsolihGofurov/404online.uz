@@ -47,7 +47,7 @@ export default function Alerts({ type, messageId }) {
   return (
     <div
       className={`
-                    flex items-center p-4 rounded-lg shadow-sm text-left
+                    flex items-center px-4 py-2 rounded-lg shadow-sm text-left
                     ${classes}
                 `}
     >
@@ -56,7 +56,7 @@ export default function Alerts({ type, messageId }) {
 
       {/* Matn */}
       <div>
-        <p className="font-medium text-sm leading-relaxed">{message}</p>
+        <p className="font-medium text-xs sm:text-sm leading-relaxed">{message}</p>
       </div>
     </div>
   );

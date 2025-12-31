@@ -112,3 +112,18 @@ export const handleDownload = async (file, name) => {
   window.URL.revokeObjectURL(url);
   return "success";
 };
+
+export const formatMinutesToTime = (minutes) => {
+  if (!minutes) return "00:40:00";
+  const h = Math.floor(minutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const m = (minutes % 60).toString().padStart(2, "0");
+  return `${h}:${m}:00`;
+};
+
+export const parseDurationToMinutes = (timeStr) => {
+  if (!timeStr) return "";
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return hours * 60 + minutes;
+};

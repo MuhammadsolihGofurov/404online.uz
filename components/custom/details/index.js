@@ -6,3 +6,4 @@ export { default as DropdownBtn } from "./dropdown-btn";
 export { default as Alerts } from "./alerts";
 export { default as FileInput } from "./file-input";
 export { default as ImageUploadBox } from "./image-upload-box";
+export { default as Select } from "./select";

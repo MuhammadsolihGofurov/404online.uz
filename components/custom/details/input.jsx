@@ -20,7 +20,7 @@ export default function Input({
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
   return (
-    <label className="flex flex-col items-start w-full gap-2 sm:bg-transparent bg-white rounded-xl relative">
+    <label className="flex flex-col items-start w-full gap-2 sm:bg-transparent rounded-xl relative">
       {title && (
         <span className="text-textSecondary font-semibold text-sm">
           {title}

@@ -15,13 +15,13 @@ export default function SectionFilter() {
   }, [router.query.search]);
 
   const queries = [
-    { id: 1, title: "Listening", key: "listening" },
-    { id: 2, title: "Reading", key: "reading" },
-    { id: 3, title: "Writing", key: "writing" },
+    { id: 1, title: "Listening", section: "listening" },
+    { id: 2, title: "Reading", section: "reading" },
+    { id: 3, title: "Writing", section: "writing" },
   ];
 
   const handleTabChange = (type) => {
-    updateParams("key", type);
+    updateParams("section", type);
   };
 
   const onSearchChange = (e) => {
@@ -39,14 +39,14 @@ export default function SectionFilter() {
         </p>
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
           {queries.map((item) => {
-            const currentQueryType = router.query.key;
-            const isActive = currentQueryType == item.key;
+            const currentQueryType = router.query.section;
+            const isActive = currentQueryType == item.section;
 
             return (
               <button
-                key={item.key}
+                key={item.section}
                 type="button"
-                onClick={() => handleTabChange(item.key)}
+                onClick={() => handleTabChange(item.section)}
                 className={`px-2 sm:px-4 py-1 sm:py-2 rounded-xl border text-xs sm:text-sm transition-colors duration-150 ${
                   isActive
                     ? "bg-main text-white border-main"

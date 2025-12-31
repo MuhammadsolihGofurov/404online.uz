@@ -1,7 +1,11 @@
 import React from "react";
-import { Clock, BookOpen, Calendar, ChevronRight } from "lucide-react";
+import { Clock, BookOpen, Calendar, ChevronRight, Edit2 } from "lucide-react";
+import Link from "next/link";
+import { SECTIONS_CREATE_URL } from "@/mock/router";
+import { useParams } from "@/hooks/useParams";
 
 const SectionItem = ({ data }) => {
+  const { findParams } = useParams();
 
   const statusStyles = {
     DRAFT: "bg-slate-100 text-slate-600 border-slate-200",
@@ -17,6 +21,8 @@ const SectionItem = ({ data }) => {
       year: "numeric",
     });
   };
+
+  const currentSectionType = findParams("section") || null;
 
   return (
     <div className="group relative bg-white rounded-3xl border border-gray-100 p-5 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1">
@@ -48,9 +54,7 @@ const SectionItem = ({ data }) => {
         </div>
         <div className="flex items-center text-gray-500 bg-gray-50 rounded-xl p-2">
           <BookOpen size={15} className="mr-2 text-emerald-500" />
-          <span className="text-xs font-medium">
-            Q: {data.questions_count}
-          </span>
+          <span className="text-xs font-medium">Q: {data.questions_count}</span>
         </div>
       </div>
 
@@ -60,7 +64,12 @@ const SectionItem = ({ data }) => {
           <Calendar size={13} className="mr-1" />
           {formatDate(data.created_at)}
         </div>
-        <button className="text-xs font-medium text-textSecondary">View</button>
+        <Link
+          href={`${SECTIONS_CREATE_URL}?section=${currentSectionType}&id=${data?.id}`}
+          className="font-medium text-textSecondary"
+        >
+          <Edit2 size={13} />
+        </Link>
       </div>
     </div>
   );

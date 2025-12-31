@@ -10,3 +10,4 @@ export { default as DocumentItemSkeleton } from "./materials/document-item-skele
 export { default as TemplateItemSkeleton } from "./materials/template-item-skeleton";
 export { default as TaskItemSkeleton } from "./tasks/task-item-skeleton";
 export { default as SectionSkeleton } from "./section/section-skeleton";
+export { default as PartQuestionGroupItemSkeleton } from "./section/part-question-group-item-skeleton";

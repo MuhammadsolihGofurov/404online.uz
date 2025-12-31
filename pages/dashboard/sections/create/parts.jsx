@@ -1,20 +1,24 @@
 // pages/dashboard/index.js
 import { Wrapper } from "@/components/dashboard/details";
-import { SectionCreator } from "@/components/dashboard/sections/steps";
+import {
+  PartsWrapper,
+  SectionCreator,
+} from "@/components/dashboard/sections/steps";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
 import { useParams } from "@/hooks/useParams";
-import { SECTIONS_URL } from "@/mock/router";
+import { SECTIONS_CREATE_URL, SECTIONS_URL } from "@/mock/router";
 import { useRouter } from "next/router";
 
-function SectionCreatePage({ info, user, loading }) {
+function SectionPartsPage({ info, user, loading }) {
   const router = useRouter();
   const { findParams } = useParams();
 
   const sectionType = findParams("section") || "";
+  const sectionId = findParams("sectionId") || "";
 
-  if (!sectionType) {
+  if (!sectionType && !sectionId) {
     router.push(SECTIONS_URL);
   }
 
@@ -27,12 +31,12 @@ function SectionCreatePage({ info, user, loading }) {
       />
       <DashboardLayout user={user} loading={loading}>
         <Wrapper
-          title={`Create ${sectionType}`}
+          title={`Customize ${sectionType} parts`}
           isLink
           body={"Sections"}
-          url={SECTIONS_URL + `?section=${sectionType}`}
+          url={SECTIONS_CREATE_URL + `?section=${sectionType}`}
         >
-          <SectionCreator />
+          <PartsWrapper />
         </Wrapper>
       </DashboardLayout>
     </>
@@ -41,14 +45,14 @@ function SectionCreatePage({ info, user, loading }) {
 
 export async function getServerSideProps() {
   const info = {
-    seo_home_title: "Section Create | Welcome",
+    seo_home_title: "Section Parts | Welcome",
     seo_home_keywords: "",
     seo_home_description: "",
   };
   return { props: { info } };
 }
 
-export default withAuthGuard(SectionCreatePage, [
+export default withAuthGuard(SectionPartsPage, [
   "CENTER_ADMIN",
   "TEACHER",
   "ASSISTANT",

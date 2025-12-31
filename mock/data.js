@@ -106,3 +106,104 @@ export const MOCK_CONFIG = {
   WRITING: { parts: 2, fields: ["instructions", "images"] },
   LISTENING: { parts: 4, fields: ["instructions", "images", "audio_file"] },
 };
+
+export const QUESTION_TYPES = [
+  {
+    name: "Multiple Choice",
+    value: "MCQ",
+    forSections: ["listening", "reading"],
+  },
+  {
+    name: "Matching",
+    value: "MATCHING",
+    forSections: ["listening"],
+  },
+  {
+    name: "Map/Plan diagram",
+    value: "MAP_DIAGRAM",
+    forSections: ["listening"],
+  },
+  {
+    name: "Form/Note/Table/Flow-chart",
+    value: "COMPLETION",
+    forSections: ["listening"],
+  },
+  {
+    name: "Sentence Completion",
+    value: "SENTENCE",
+    forSections: ["listening", "reading"],
+  },
+  {
+    name: "Short Answer",
+    value: "SHORT_ANSWER",
+    forSections: ["listening", "reading"],
+  },
+  {
+    name: "Matching Headings",
+    value: "MATCH_HEADINGS",
+    forSections: ["reading"],
+  },
+  {
+    name: "Matching info",
+    value: "MATCH_INFO",
+    forSections: ["reading"],
+  },
+  {
+    name: "Matching Features",
+    value: "MATCH_FEATURES",
+    forSections: ["reading"],
+  },
+  {
+    name: "Matching endings",
+    value: "MATCH_ENDINGS",
+    forSections: ["reading"],
+  },
+  {
+    name: "True / False / Not Given",
+    value: "TFNG",
+    forSections: ["reading"],
+  },
+  {
+    name: "Yes / No / Not Given",
+    value: "YNNG",
+    forSections: ["reading"],
+  },
+  {
+    name: "Summary Completion",
+    value: "SUMMARY",
+    forSections: ["reading"],
+  },
+  {
+    name: "Note/Table/Flow-chart Completion",
+    value: "TABLE_FLOWCHART",
+    forSections: ["reading"],
+  },
+  {
+    name: "Diagram Labeling",
+    value: "DIAGRAM",
+    forSections: ["reading"],
+  },
+];
+
+export const QUESTION_TYPES_WITH_IMAGE = [
+  "DIAGRAM",
+  "TABLE_FLOWCHART",
+  "MAP_DIAGRAM",
+];
+
+// function for question types filter
+export function filterQuestionTypes(sectionType) {
+  if (!sectionType) return [];
+
+  return QUESTION_TYPES.filter((item) =>
+    item.forSections.includes(sectionType.toLowerCase())
+  );
+}
+
+export function getQuestionTypeName(questionType) {
+  if (!questionType) return "";
+
+  const foundType = QUESTION_TYPES.find((item) => item.value === questionType);
+
+  return foundType ? foundType.name : questionType;
+}

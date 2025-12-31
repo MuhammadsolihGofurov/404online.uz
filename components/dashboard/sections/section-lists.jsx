@@ -15,7 +15,7 @@ export default function SectionLists({ role, loading }) {
   const { findParams } = useParams();
 
   const currentPage = findParams("page") || 1;
-  const currentMockType = findParams("key") || "listening";
+  const currentMockType = findParams("section") || "listening";
   const searchTerms = findParams("search") || "";
 
   const { data: datas, isLoading } = useSWR(
