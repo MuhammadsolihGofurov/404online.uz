@@ -45,6 +45,7 @@ export const MOCKS_CREATE_FOURTH_STEP_URL = "/dashboard/mocks/create/4-step";
 
 // === TASKS ===
 export const TASKS_URL = "/dashboard/tasks";
+export const STUDENT_TASKS_URL = "/dashboard/student-tasks";
 
 // === SECTIONS ===
 export const SECTIONS_URL = "/dashboard/sections";
