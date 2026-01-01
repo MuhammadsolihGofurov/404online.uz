@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { useIntl } from "react-intl";
 import { Calendar, Clock, CheckCircle, Circle, PlayCircle } from "lucide-react";
-import { formatDate } from "@/utils/funcs";
+import { formatDate, formatDuration } from "@/utils/funcs";
 
 export default function StudentTaskItem({ item, user }) {
   const intl = useIntl();
@@ -136,13 +136,7 @@ export default function StudentTaskItem({ item, user }) {
           {/* Duration */}
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Clock size={16} className="shrink-0" />
-            <span>
-              {duration_minutes > 0
-                ? `${Math.floor(duration_minutes / 60)}h ${
-                    duration_minutes % 60
-                  }m`
-                : "No time limit"}
-            </span>
+            <span>{formatDuration(duration_minutes)}</span>
           </div>
         </div>
       </div>

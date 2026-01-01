@@ -262,5 +262,7 @@
   "of": "of",
   "Type your answer here...": "Type your answer here...",
   "Task started successfully!": "Task started successfully!",
-  "Failed to start task": "Failed to start task"
+  "Failed to start task": "Failed to start task",
+  "True": "True",
+  "False": "False"
 }

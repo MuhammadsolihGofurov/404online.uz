@@ -44,7 +44,7 @@ function StudentTaskDetailPage({ info, user, loading }) {
         );
         if (!confirmLeave) {
           router.events.emit("routeChangeError");
-          throw "Route change aborted by user";
+          throw new Error("Route change aborted by user");
         }
       }
     };

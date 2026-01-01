@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
+import { formatDuration } from "@/utils/funcs";
 import ExamTimer from "./exam-timer";
 import QuestionDisplay from "./question-display";
 
@@ -13,12 +14,12 @@ export default function ExamInterface({ task, user }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
 
+  const hasStarted = task?.submission_status === "IN_PROGRESS";
+
   useEffect(() => {
-    if (task?.submission_status === "IN_PROGRESS") {
-      setHasStarted(true);
+    if (hasStarted) {
       // Set remaining time if available
       if (task?.time_remaining) {
         setTimeRemaining(task.time_remaining * 60); // Convert minutes to seconds
@@ -26,12 +27,11 @@ export default function ExamInterface({ task, user }) {
         setTimeRemaining(task.duration_minutes * 60);
       }
     }
-  }, [task]);
+  }, [task, hasStarted]);
 
   const handleStartTask = async () => {
     try {
       await authAxios.post(`/students/tasks/${task.id}/start/`);
-      setHasStarted(true);
       if (task?.duration_minutes) {
         setTimeRemaining(task.duration_minutes * 60);
       }
@@ -133,7 +133,7 @@ export default function ExamInterface({ task, user }) {
                 </span>
                 <span className="text-gray-900 font-semibold flex items-center gap-2">
                   <Clock size={18} />
-                  {Math.floor(task.duration_minutes / 60)}h {task.duration_minutes % 60}m
+                  {formatDuration(task.duration_minutes)}
                 </span>
               </div>
             )}

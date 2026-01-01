@@ -127,3 +127,10 @@ export const parseDurationToMinutes = (timeStr) => {
   const [hours, minutes] = timeStr.split(":").map(Number);
   return hours * 60 + minutes;
 };
+
+export const formatDuration = (durationMinutes) => {
+  if (!durationMinutes || durationMinutes <= 0) return "No time limit";
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+  return `${hours}h ${minutes}m`;
+};

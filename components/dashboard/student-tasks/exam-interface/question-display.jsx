@@ -43,7 +43,10 @@ export default function QuestionDisplay({ question, answer, onAnswerChange }) {
       case "TRUE_FALSE":
         return (
           <div className="space-y-3">
-            {["True", "False"].map((option) => (
+            {[
+              intl.formatMessage({ id: "True" }),
+              intl.formatMessage({ id: "False" }),
+            ].map((option) => (
               <label
                 key={option}
                 className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
