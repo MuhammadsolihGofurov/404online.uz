@@ -39,7 +39,7 @@ export default function PartQuestionItem({ group }) {
         <div>
           <div className="flex items-center gap-2 pb-2">
             <span className="bg-blue-50 text-main text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-              {getQuestionTypeName(group?.question_type)}
+              {getQuestionTypeName(group?.question_type || group?.group_type)}
             </span>
             <span className="text-gray-300">|</span>
             <h4 className="font-bold sm:text-base text-xs text-gray-800">
@@ -78,12 +78,12 @@ export default function PartQuestionItem({ group }) {
         <div className="flex -space-x-2">
           {/* Savollar sonini ko'rsatuvchi kichik indikator */}
           <div className="text-[11px] font-medium text-gray-400">
-            {group.questions?.length || 0} questions added
+            {group.question_count || 0} questions added
           </div>
         </div>
 
         <Link
-          href={`${SECTIONS_QUESTIONS_URL}?section=${sectionType}&sectionId=${sectionId}&partId=${partId}&partNumber=${partNumber}&groupId=${group?.id}&questionType=${group?.question_type}`}
+          href={`${SECTIONS_QUESTIONS_URL}?section=${sectionType}&sectionId=${sectionId}&partId=${partId}&partNumber=${partNumber}&groupId=${group?.id}&questionType=${group?.question_type || group?.group_type}`}
           className="flex items-center gap-1.5 text-xs font-bold text-main hover:bg-main hover:text-white border border-main px-3 py-1.5 rounded-lg transition-all"
         >
           <Plus size={10} /> Add Question

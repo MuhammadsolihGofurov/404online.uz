@@ -48,7 +48,7 @@ const QuestionItem = ({ question }) => {
             {question.question_number}
           </div>
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-            Listening Question
+            {sectionType} Question
           </span>
         </div>
 

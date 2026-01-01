@@ -98,7 +98,7 @@ export default function PartsContent({ sectionType }) {
               <PartQuestionItem key={group.id} group={group} />
             ))}
           </div>
-          <Pagination count={groups?.results?.count} pageSize={8} />
+          <Pagination count={groups?.count} pageSize={8} />
         </>
       ) : (
         <div className="animate-fadeIn p-10 rounded-2xl border-gray-200 border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400">

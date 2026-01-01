@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { Controller, useForm } from "react-hook-form";
-import { FileInput, Input, Select } from "../../details";
+import { FileInput, Input, Select, Textarea } from "../../details"; // Textarea import qilindi
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
-import { ForCenterAdmin } from "@/mock/roles";
 import { filterQuestionTypes, QUESTION_TYPES_WITH_IMAGE } from "@/mock/data";
 import { useParams } from "@/hooks/useParams";
 
@@ -15,15 +14,23 @@ export default function QuestionGroupModal({ id, initialData }) {
   const { closeModal } = useModal();
   const { findParams } = useParams();
   const [reqLoading, setReqLoading] = useState(false);
+
   const sectionType = findParams("section") || "";
   const partId = findParams("partId") || "";
-  const passageId = findParams("partId") || "";
+  const passageId = findParams("partId") || ""; // Reading uchun passageId
   const partNumber = findParams("partNumber") || "";
+
+  // Common options kerak bo'ladigan turlar ro'yxati
+  const TYPES_WITH_COMMON_OPTIONS = [
+    "MATCH_HEADINGS",
+    "MATCH_INFO",
+    "MATCH_FEATURES",
+  ];
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty, isValid },
+    formState: { errors },
     reset,
     control,
     watch,
@@ -35,26 +42,31 @@ export default function QuestionGroupModal({ id, initialData }) {
         initialData?.question_type || initialData?.group_type || "",
       image: initialData?.image || "",
       order: initialData?.order || 1,
+      // Yangi maydonlar
+      common_options: initialData?.common_options?.join("\n") || "",
+      text_content: initialData?.text_content || "",
     },
   });
 
   const currentQuestionType = watch("question_type");
 
   useEffect(() => {
-    if (initialData) reset(initialData);
+    if (initialData) {
+      reset({
+        ...initialData,
+        common_options: initialData?.common_options?.join("\n") || "",
+      });
+    }
   }, [initialData, reset]);
 
   const submitFn = async (values) => {
     try {
       setReqLoading(true);
-
-      // 1. Dinamik URL yaratish (listening-groups yoki reading-groups)
       const baseUrl = `/editor/${sectionType}-groups/`;
       const url = id ? `${baseUrl}${id}/` : baseUrl;
       const method = id ? "patch" : "post";
 
       const formData = new FormData();
-
       formData.append("instruction", values.instruction);
       formData.append("order", values.order);
 
@@ -64,6 +76,16 @@ export default function QuestionGroupModal({ id, initialData }) {
       } else if (sectionType === "reading") {
         formData.append("group_type", values.question_type);
         formData.append("passage", passageId);
+        formData.append("text_content", values.text_content || "");
+
+        const optionsArray = values.common_options
+          ? values.common_options
+              .split("\n")
+              .map((opt) => opt.trim())
+              .filter(Boolean)
+          : [];
+
+        formData.append("common_options", JSON.stringify(optionsArray));
       }
 
       if (values.file && values.file instanceof File) {
@@ -74,31 +96,19 @@ export default function QuestionGroupModal({ id, initialData }) {
         method: method,
         url: url,
         data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      toast.success(
-        intl.formatMessage({
-          id: id
-            ? "Question group updated successfully!"
-            : "Question group created successfully!",
-        })
-      );
-
-      console.error(response);
-
-      setTimeout(() => {
-        closeModal("questionGroupModal", response?.data);
-      }, 500);
+      toast.success("Question group saved successfully!");
+      closeModal("questionGroupModal", response?.data);
     } catch (e) {
       console.error("Group Submit Error:", e);
-      const errorMsg =
-        e?.response?.data?.detail ||
-        e?.response?.data?.message ||
-        "An error occurred";
-      toast.error(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
+      const errorData = e?.response?.data;
+      const errorMsg = errorData?.common_options
+        ? `Common Options Error: ${errorData.common_options[0]}`
+        : errorData?.detail || "An error occurred";
+
+      toast.error(errorMsg);
     } finally {
       setReqLoading(false);
     }
@@ -106,82 +116,101 @@ export default function QuestionGroupModal({ id, initialData }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-textPrimary text-center font-bold text-xl">
-        {id
-          ? intl.formatMessage({ id: "Edit group" })
-          : intl.formatMessage({ id: "Add group" })}
+      <h1 className="text-textPrimary text-center font-bold text-xl uppercase">
+        {sectionType} - {id ? "Edit Group" : "Add Group"}
       </h1>
+
       <form
         onSubmit={handleSubmit(submitFn)}
-        className="w-full flex flex-col gap-8 text-center font-poppins"
+        className="w-full flex flex-col gap-6"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Instruction */}
           <div className="col-span-1 md:col-span-2">
             <Input
-              type="text"
               register={register}
               name="instruction"
-              title={intl.formatMessage({ id: "Instruction" })}
-              placeholder="Questions 1-5: Complete the notes below"
+              title="Instruction"
+              placeholder="e.g. Choose the correct heading for paragraphs A-E"
               required
-              validation={{
-                required: intl.formatMessage({ id: "Instruction is required" }),
-              }}
             />
           </div>
+
+          {/* Question Type */}
           <Controller
             name="question_type"
             control={control}
-            rules={{ required: intl.formatMessage({ id: "Required" }) }}
             render={({ field }) => (
               <Select
                 {...field}
-                title={intl.formatMessage({ id: "Question type" })}
+                title="Question Type"
                 options={filterQuestionTypes(sectionType, partNumber)}
-                error={errors.question_type?.message}
               />
             )}
           />
-          <Input
-            type="text"
-            register={register}
-            name="order"
-            title={intl.formatMessage({ id: "Order" })}
-            placeholder="1"
-            required
-            validation={{
-              required: intl.formatMessage({ id: "Order is required" }),
-            }}
-          />
 
-          {/* image field */}
+          {/* Order */}
+          <Input type="number" register={register} name="order" title="Order" />
+
+          {/* COMMON OPTIONS (Only for Reading & Specific Types) */}
+          {sectionType === "reading" &&
+            TYPES_WITH_COMMON_OPTIONS.includes(currentQuestionType) && (
+              <div className="col-span-1 md:col-span-2">
+                <Textarea
+                  register={register}
+                  name="common_options"
+                  title="List of Options (One per line)"
+                  placeholder={
+                    "i. Heading one\nii. Heading two\niii. Heading three"
+                  }
+                  rows={6}
+                />
+                <p className="text-[10px] text-left text-gray-400 mt-1">
+                  * These options will be displayed in a box above the
+                  questions.
+                </p>
+              </div>
+            )}
+
+          {/* TEXT CONTENT (Only for Reading) */}
+          {sectionType === "reading" && (
+            <div className="col-span-1 md:col-span-2">
+              <Textarea
+                register={register}
+                name="text_content"
+                title="Group Text Content (Optional)"
+                placeholder="Enter additional text or passage fragment here..."
+                rows={4}
+              />
+            </div>
+          )}
+
+          {/* Image Field */}
           {QUESTION_TYPES_WITH_IMAGE.includes(currentQuestionType) && (
             <div className="col-span-1 md:col-span-2">
               <FileInput
-                label={intl.formatMessage({ id: "Upload File" })}
+                label="Upload Image/Diagram"
                 name="file"
                 control={control}
-                errors={errors?.file?.message}
                 accept="image/*"
               />
             </div>
           )}
         </div>
 
-        <div className="flex flex-col gap-4">
-          <button
-            type="submit"
-            className="rounded-xl bg-main flex items-center justify-center text-white w-full p-4 hover:bg-blue-800 transition-colors duration-200"
-          >
-            {reqLoading ? (
-              <ButtonSpinner />
-            ) : id ? (
-              intl.formatMessage({ id: "Update" })
-            ) : (
-              intl.formatMessage({ id: "Submit" })
-            )}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={reqLoading}
+          className="rounded-xl bg-main text-white w-full p-4 font-bold hover:bg-opacity-90 transition-all"
+        >
+          {reqLoading ? (
+            <ButtonSpinner />
+          ) : id ? (
+            "Update Group"
+          ) : (
+            "Create Group"
+          )}
+        </button>
       </form>
     </div>
   );

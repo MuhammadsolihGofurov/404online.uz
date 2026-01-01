@@ -87,7 +87,7 @@ export default function QuestionsWrapper() {
           {questions.results.map((q) => (
             <QuestionItem key={q.id} question={q} />
           ))}
-          <Pagination count={questions?.results?.count} pageSize={8} />
+          <Pagination count={questions?.count} pageSize={8} />
         </div>
       ) : (
         <p className="text-gray-400 text-xs">

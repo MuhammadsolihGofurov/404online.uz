@@ -1,8 +1,15 @@
 import { Input, Select } from "@/components/custom/details";
+import { getDisplayQuestionNumber } from "@/utils/question-helpers";
 import React from "react";
 import { Controller } from "react-hook-form";
 
-export default function FormCompletionForm({ register, control, watch }) {
+export default function FormCompletionForm({
+  register,
+  control,
+  watch,
+  questionType,
+}) {
+  const watchText = watch("text") || "";
   const tokens = watch("tokens") || [];
 
   return (
@@ -22,9 +29,10 @@ export default function FormCompletionForm({ register, control, watch }) {
           key={token.id}
           className="bg-white p-4 rounded-lg border flex flex-col gap-3 shadow-sm"
         >
-          <div className="flex justify-between items-center border-b pb-2">
-            <span className="font-bold text-main">Token: {token.id}</span>
-          </div>
+          <span key={token.id}>
+            Question №
+            {getDisplayQuestionNumber(questionType, token, index, watchText)}
+          </span>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input

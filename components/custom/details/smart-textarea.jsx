@@ -1,26 +1,45 @@
 import React, { useRef } from "react";
 import { PlusCircle } from "lucide-react";
 
-export default function SmartTextarea({ name, title, register, watch, setValue, questionType }) {
+export default function SmartTextarea({
+  name,
+  title,
+  register,
+  watch,
+  setValue,
+  questionType,
+}) {
   const textareaRef = useRef(null);
   const textValue = watch(name) || "";
+
+  const prefixMap = {
+    MAP_DIAGRAM: "zone_",
+    MATCHING: "match_",
+    MCQ: "gap_",
+  };
 
   const addGap = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    // Mavjud gaplarni sanaymiz (masalan: 1, 2, 3...)
-    const matches = textValue.match(/{{(gap_|zone_)\d+}}/g) || [];
-    const nextNumber = matches.length + 1;
-    
-    // Savol turiga qarab prefiks tanlaymiz
-    const prefix = questionType === "MAP_DIAGRAM" ? "zone_" : "gap_";
+    // Matndagi barcha gap/zone/match raqamlarini topamiz
+    const matches = textValue.match(/{{(?:gap_|zone_|match_)(\d+)}}/g) || [];
+
+    let nextNumber = 1;
+    if (matches.length > 0) {
+      // Eng oxirgi qo'shilgan gapning raqamini olamiz va 1 qo'shamiz
+      const lastMatch = matches[matches.length - 1];
+      const lastNumber = parseInt(lastMatch.match(/\d+/)[0]);
+      nextNumber = lastNumber + 1;
+    }
+
+    const prefix = prefixMap[questionType] || "gap_";
     const gapTag = `{{${prefix}${nextNumber}}}`;
 
-    // Kursorni turgan joyiga gapni joylashtirish
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const newText = textValue.substring(0, start) + gapTag + textValue.substring(end);
+    const newText =
+      textValue.substring(0, start) + gapTag + textValue.substring(end);
 
     setValue(name, newText, { shouldValidate: true });
 
@@ -44,7 +63,7 @@ export default function SmartTextarea({ name, title, register, watch, setValue, 
           Insert Gap (Slot)
         </button>
       </div>
-      
+
       <textarea
         {...register(name)}
         ref={(e) => {
@@ -56,7 +75,8 @@ export default function SmartTextarea({ name, title, register, watch, setValue, 
         placeholder="Type your text here..."
       />
       <p className="text-[10px] text-gray-400 italic">
-        Tip: Click "Insert Gap" to add a placeholder where the student will select an answer.
+        Tip: Click "Insert Gap" to add a placeholder where the student will
+        select an answer.
       </p>
     </div>
   );

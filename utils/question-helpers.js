@@ -18,9 +18,14 @@ export const parseInitialTokens = (data) => {
       max_words: meta.max_words || 2,
       placeholder: meta.placeholder || "",
 
+      // MAP uchun
       available_zones: Array.isArray(meta.available_zones)
         ? meta.available_zones.join(", ")
         : meta.available_zones || "",
+
+      // MATCHING uchun
+      options: meta.options ? meta.options.join(", ") : "A, B, C, D, E",
+      allow_reuse: meta.allow_reuse || false,
     };
   });
 };
@@ -66,7 +71,8 @@ export const generateQuestionPayload = (type, values, groupId) => {
       break;
     }
     case "COMPLETION":
-    case "SENTENCE_COMPLETION":
+    case "SHORT_ANSWER":
+    case "SENTENCE":
       values.tokens.forEach((t) => {
         payload.correct_answer[t.id] = t.answers
           .split(",")
@@ -91,6 +97,84 @@ export const generateQuestionPayload = (type, values, groupId) => {
       });
       break;
     }
+    case "MATCHING": {
+      values.tokens.forEach((t) => {
+        payload.correct_answer[t.id] = [t.answers.trim().toUpperCase()];
+        payload.metadata[t.id] = {
+          type: "dropdown",
+          options: t.options
+            ? t.options.split(",").map((o) => o.trim().toUpperCase())
+            : ["A", "B", "C", "D", "E"],
+          allow_reuse: t.allow_reuse || false,
+        };
+      });
+      break;
+    }
+    case "MATCH_HEADINGS":
+    case "MATCH_INFO":
+    case "MATCH_FEATURES": {
+      if (values.tokens && Array.isArray(values.tokens)) {
+        values.tokens.forEach((token) => {
+          const tokenId = token.id;
+
+          payload.correct_answer[tokenId] = [token.answers?.trim() || ""];
+
+          payload.metadata[tokenId] = {
+            type: "dropdown",
+            options: values.group_options || [],
+            allow_reuse: false,
+          };
+        });
+      }
+      break;
+    }
+    case "TFNG":
+    case "YNNG": {
+      const isYNNG = type === "YNNG";
+      const defaultOptions = isYNNG
+        ? ["YES", "NO", "NOT GIVEN"]
+        : ["TRUE", "FALSE", "NOT GIVEN"];
+
+      values.tokens.forEach((t) => {
+        payload.correct_answer[t.id] = [t.answers.trim().toUpperCase()];
+
+        payload.metadata[t.id] = {
+          type: "dropdown",
+          options: defaultOptions,
+          display: t.type || "dropdown",
+        };
+      });
+      break;
+    }
   }
   return payload;
+};
+
+// utils/question-helpers.js
+export const getDisplayQuestionNumber = (
+  type,
+  field,
+  index,
+  watchText = ""
+) => {
+  if (!field) return index + 1;
+  const tokenId = String(field.id || "");
+
+  // 1. Agar Matching guruhi bo'lsa (q_1 formatida)
+  const idMatch = tokenId.match(/q_(\d+)/);
+  if (idMatch) return idMatch[1];
+
+  // 2. Agar Completion bo'lsa ({{gap_1}} formatida)
+  if (watchText) {
+    const lines = watchText.split("\n");
+    // Aynan o'sha token bor qatorni topamiz
+    for (let line of lines) {
+      if (line.includes(`{{${tokenId}}}`)) {
+        const numMatch = line.match(/^(\d+)/); // Qator boshidagi raqamni olamiz
+        if (numMatch) return numMatch[1];
+      }
+    }
+  }
+
+  return index + 1; // Topilmasa tartib raqami
 };
