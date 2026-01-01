@@ -1,7 +1,9 @@
 import { SidebarLinksSkeleton } from "@/components/skeleton";
 import {
   DASHBOARD_URL,
+  EXAMS_URL,
   GROUPS_URL,
+  HOMEWORKS_URL,
   INVITECODE_URL,
   MATERIALSHUB_URL,
   MEMBERSHIPS_URL,
@@ -105,6 +107,24 @@ const menuItems = [
         `,
     roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
     query: `?type=DOCUMENTS`,
+  },
+  {
+    title: "Exams",
+    href: EXAMS_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12L11 14L15 10M20.618 5.984C20.853 6.444 21 6.964 21 7.516V16.485C21 17.037 20.853 17.556 20.618 18.016M20.618 5.984C20.155 5.048 19.181 4.418 18.063 4.418H5.937C4.819 4.418 3.845 5.048 3.382 5.984M20.618 5.984L16.5 9M3.382 5.984C3.147 6.444 3 6.964 3 7.516V16.485C3 17.037 3.147 17.556 3.382 18.016M3.382 5.984L7.5 9M3.382 18.016C3.845 18.952 4.819 19.582 5.937 19.582H18.063C19.181 19.582 20.155 18.952 20.618 18.016M3.382 18.016L9 14M20.618 18.016L15 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["STUDENT"],
+  },
+  {
+    title: "Homeworks",
+    href: HOMEWORKS_URL,
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        `,
+    roles: ["STUDENT"],
   },
   {
     title: "Settings",

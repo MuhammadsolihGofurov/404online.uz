@@ -5,19 +5,16 @@ const nextConfig = {
     defaultLocale: 'en',
     locales: ['en', 'ru', 'uz'],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   compiler: {
     removeConsole: {
       exclude: ['error'],
     },
   },
   images: {
-    remotePatterns: [], 
+    remotePatterns: [],
   },
   env: {
-    API: process.env.NEXT_PUBLIC_API_BASE_URL || '', 
+    API: process.env.NEXT_PUBLIC_API_BASE_URL || '',
   },
 }
 
