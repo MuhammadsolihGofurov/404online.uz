@@ -15,7 +15,7 @@ export default function PartsWrapper() {
   const activePartId = findParams("partId") || null;
 
   const { data: sectionData, isLoading: isFetching } = useSWR(
-    sectionId ? [`/mocks/${sectionType}/${sectionId}/`, router.locale] : null,
+    sectionId ? [`/mocks/${sectionType}/${sectionId}/`, router.locale, sectionType] : null,
     ([url, locale]) =>
       fetcher(url, { headers: { "Accept-Language": locale } }, {}, {}, true)
   );

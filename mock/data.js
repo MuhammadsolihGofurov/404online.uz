@@ -111,77 +111,164 @@ export const QUESTION_TYPES = [
   {
     name: "Multiple Choice",
     value: "MCQ",
-    forSections: ["listening", "reading"],
+    forSections: [
+      {
+        title: "listening",
+        part_number: [2, 3],
+      },
+      {
+        title: "reading",
+        part_number: [1, 2, 3],
+      },
+    ],
   },
   {
     name: "Matching",
     value: "MATCHING",
-    forSections: ["listening"],
+    forSections: [
+      {
+        title: "listening",
+        part_number: [2, 3],
+      },
+    ],
   },
   {
     name: "Map/Plan diagram",
     value: "MAP_DIAGRAM",
-    forSections: ["listening"],
+    forSections: [
+      {
+        title: "listening",
+        part_number: [2],
+      },
+    ],
   },
   {
     name: "Form/Note/Table/Flow-chart",
     value: "COMPLETION",
-    forSections: ["listening"],
+    forSections: [
+      {
+        title: "listening",
+        part_number: [1, 2, 3, 4],
+      },
+    ],
   },
   {
     name: "Sentence Completion",
     value: "SENTENCE",
-    forSections: ["listening", "reading"],
+    forSections: [
+      {
+        title: "listening",
+        part_number: [1, 2, 3, 4],
+      },
+      {
+        title: "reading",
+        part_number: [1, 2, 3],
+      },
+    ],
   },
   {
     name: "Short Answer",
     value: "SHORT_ANSWER",
-    forSections: ["listening", "reading"],
+    forSections: [
+      {
+        title: "listening",
+        part_number: [1, 2, 3, 4],
+      },
+      {
+        title: "reading",
+        part_number: [1],
+      },
+    ],
   },
   {
     name: "Matching Headings",
     value: "MATCH_HEADINGS",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1, 2, 3],
+      },
+    ],
   },
   {
     name: "Matching info",
     value: "MATCH_INFO",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1],
+      },
+    ],
   },
   {
     name: "Matching Features",
     value: "MATCH_FEATURES",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1],
+      },
+    ],
   },
   {
     name: "Matching endings",
     value: "MATCH_ENDINGS",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1, 2, 3],
+      },
+    ],
   },
   {
     name: "True / False / Not Given",
     value: "TFNG",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1, 2],
+      },
+    ],
   },
   {
     name: "Yes / No / Not Given",
     value: "YNNG",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [3],
+      },
+    ],
   },
   {
     name: "Summary Completion",
     value: "SUMMARY",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1, 2, 3],
+      },
+    ],
   },
   {
     name: "Note/Table/Flow-chart Completion",
     value: "TABLE_FLOWCHART",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1, 2, 3],
+      },
+    ],
   },
   {
     name: "Diagram Labeling",
     value: "DIAGRAM",
-    forSections: ["reading"],
+    forSections: [
+      {
+        title: "reading",
+        part_number: [1, 2, 3],
+      },
+    ],
   },
 ];
 
@@ -192,12 +279,25 @@ export const QUESTION_TYPES_WITH_IMAGE = [
 ];
 
 // function for question types filter
-export function filterQuestionTypes(sectionType) {
+export function filterQuestionTypes(sectionType, partNumber) {
   if (!sectionType) return [];
 
-  return QUESTION_TYPES.filter((item) =>
-    item.forSections.includes(sectionType.toLowerCase())
-  );
+  const normalizedSection = sectionType.toLowerCase();
+  const targetPart = parseInt(partNumber);
+
+  return QUESTION_TYPES.filter((item) => {
+    const sectionConfig = item.forSections.find(
+      (s) => s.title.toLowerCase() === normalizedSection
+    );
+
+    if (!sectionConfig) return false;
+
+    if (targetPart) {
+      return sectionConfig.part_number.includes(targetPart);
+    }
+
+    return true;
+  });
 }
 
 export function getQuestionTypeName(questionType) {

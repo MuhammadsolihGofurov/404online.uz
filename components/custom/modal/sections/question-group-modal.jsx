@@ -18,6 +18,7 @@ export default function QuestionGroupModal({ id, initialData }) {
   const sectionType = findParams("section") || "";
   const partId = findParams("partId") || "";
   const passageId = findParams("partId") || "";
+  const partNumber = findParams("partNumber") || "";
 
   const {
     register,
@@ -30,7 +31,8 @@ export default function QuestionGroupModal({ id, initialData }) {
     mode: "onChange",
     defaultValues: {
       instruction: initialData?.instruction || "",
-      question_type: initialData?.question_type || "",
+      question_type:
+        initialData?.question_type || initialData?.group_type || "",
       image: initialData?.image || "",
       order: initialData?.order || 1,
     },
@@ -54,12 +56,13 @@ export default function QuestionGroupModal({ id, initialData }) {
       const formData = new FormData();
 
       formData.append("instruction", values.instruction);
-      formData.append("question_type", values.question_type);
       formData.append("order", values.order);
 
       if (sectionType === "listening") {
         formData.append("part", partId);
+        formData.append("question_type", values.question_type);
       } else if (sectionType === "reading") {
+        formData.append("group_type", values.question_type);
         formData.append("passage", passageId);
       }
 
@@ -83,6 +86,8 @@ export default function QuestionGroupModal({ id, initialData }) {
             : "Question group created successfully!",
         })
       );
+
+      console.error(response);
 
       setTimeout(() => {
         closeModal("questionGroupModal", response?.data);
@@ -132,7 +137,7 @@ export default function QuestionGroupModal({ id, initialData }) {
               <Select
                 {...field}
                 title={intl.formatMessage({ id: "Question type" })}
-                options={filterQuestionTypes(sectionType)}
+                options={filterQuestionTypes(sectionType, partNumber)}
                 error={errors.question_type?.message}
               />
             )}

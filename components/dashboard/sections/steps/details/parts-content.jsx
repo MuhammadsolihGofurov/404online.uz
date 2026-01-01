@@ -1,5 +1,6 @@
 import { Alerts } from "@/components/custom/details";
 import { ButtonSpinner } from "@/components/custom/loading";
+import Pagination from "@/components/custom/pagination";
 import { PartQuestionItem } from "@/components/dashboard/details/items";
 import { PartQuestionGroupItemSkeleton } from "@/components/skeleton";
 import { useModal } from "@/context/modal-context";
@@ -17,20 +18,22 @@ export default function PartsContent({ sectionType }) {
   const activePartId = findParams("partId") || null;
   const page = findParams("page") || 1;
   const intl = useIntl();
-  const { openModal, closeModal } = useModal();
+  const { openModal, modalClosed } = useModal();
 
   // Question guruhlarini olish
   // Endpoint: /editor/listening-groups/?part=id yoki /editor/reading-groups/?passage=id
   const groupKey = sectionType === "listening" ? "part_id" : "passage_id";
 
   const { data: groups, isLoading } = useSWR(
-    [
-      `/editor/${sectionType}-groups/`,
-      router.locale,
-      activePartId,
-      page,
-      closeModal,
-    ],
+    activePartId
+      ? [
+          `/editor/${sectionType}-groups/`,
+          router.locale,
+          activePartId,
+          page,
+          modalClosed,
+        ]
+      : null,
     ([url, locale, id, p]) =>
       fetcher(
         `${url}?${groupKey}=${id}&page=${p}&page_size=8`,
@@ -89,11 +92,14 @@ export default function PartsContent({ sectionType }) {
           <PartQuestionGroupItemSkeleton />
         </div>
       ) : groups?.results.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
-          {groups?.results?.map((group) => (
-            <PartQuestionItem key={group.id} group={group} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4">
+            {groups?.results?.map((group) => (
+              <PartQuestionItem key={group.id} group={group} />
+            ))}
+          </div>
+          <Pagination count={groups?.results?.count} pageSize={8} />
+        </>
       ) : (
         <div className="animate-fadeIn p-10 rounded-2xl border-gray-200 border-2 border-dashed flex flex-col items-center justify-center gap-2 text-gray-400">
           <p className="text-sm">

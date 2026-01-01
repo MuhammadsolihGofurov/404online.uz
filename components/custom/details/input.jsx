@@ -11,7 +11,7 @@ export default function Input({
   register = () => {},
   validation,
   noSelected = false,
-  error
+  error,
 }) {
   const intl = useIntl();
   const [showPassword, setShowPassword] = useState(false);
@@ -36,9 +36,9 @@ export default function Input({
           required={required}
           autoComplete="off"
           disabled={noSelected}
-          className={`rounded-xl p-4 flex-1 w-full border border-buttonGrey outline-none placeholder:font-normal placeholder:text-inputPlaceholder pr-12 ${
-            error ? "border-red-500" : "focus:border-main"
-          }`}
+          className={`rounded-xl p-4 flex-1 w-full border border-buttonGrey outline-none placeholder:font-normal placeholder:text-inputPlaceholder ${
+            isPassword ? "pr-12" : ""
+          } ${error ? "border-red-500" : "focus:border-main"}`}
           {...register(name, validation)}
         />
 
