@@ -1,11 +1,12 @@
 import { Wrapper } from "@/components/dashboard/details";
-import { ExamList } from "@/components/dashboard/exams";
+import { ExamDetail } from "@/components/dashboard/exams";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
+import { EXAMS_URL } from "@/mock/router";
 import React from "react";
 
-function ExamsPage({ info, user, loading }) {
+function ExamDetailPage({ info, user, loading }) {
   return (
     <>
       <Seo
@@ -14,8 +15,14 @@ function ExamsPage({ info, user, loading }) {
         keywords={info?.data?.seo_home_keywords}
       />
       <DashboardLayout user={user}>
-        <Wrapper title="Exams" body="Dashboard" isLink={true} isButton={false}>
-          <ExamList loading={loading} role={user?.role} />
+        <Wrapper
+          title="Exam Details"
+          body="Exams"
+          isLink={true}
+          url={EXAMS_URL}
+          isButton={false}
+        >
+          <ExamDetail loading={loading} role={user?.role} />
         </Wrapper>
       </DashboardLayout>
     </>
@@ -24,16 +31,16 @@ function ExamsPage({ info, user, loading }) {
 
 export async function getServerSideProps() {
   const info = {
-    seo_home_title: "Exams",
-    seo_home_keywords: "exams, exam results, student exams",
-    seo_home_description: "View your exam results and scores",
+    seo_home_title: "Exam Details",
+    seo_home_keywords: "exam details, mock test, ielts exam",
+    seo_home_description: "View detailed information about the exam task",
   };
   return { props: { info } };
 }
 
-export default withAuthGuard(ExamsPage, [
-  "STUDENT",
+export default withAuthGuard(ExamDetailPage, [
   "CENTER_ADMIN",
   "TEACHER",
   "ASSISTANT",
+  "STUDENT",
 ]);

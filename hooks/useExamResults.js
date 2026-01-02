@@ -30,7 +30,7 @@ export const useExamResults = (filters = {}) => {
 };
 
 export const useExamResultDetail = (id) => {
-    const url = id ? `/api/v1/tasks/exams/${id}/` : null;
+    const url = id ? `/tasks/exams/${id}/` : null;
 
     const { data, error, mutate } = useSWR(url, (url) => fetcher(url, {}, {}, true), {
         revalidateOnFocus: false,
@@ -46,7 +46,7 @@ export const useExamResultDetail = (id) => {
 
 export const useExamLeaderboard = (examTaskId) => {
     const url = examTaskId
-        ? `/api/v1/exam-results/leaderboard?exam_task_id=${examTaskId}`
+        ? `/exam-results/leaderboard?exam_task_id=${examTaskId}`
         : null;
 
     const { data, error, mutate } = useSWR(url, (url) => fetcher(url, {}, {}, true), {

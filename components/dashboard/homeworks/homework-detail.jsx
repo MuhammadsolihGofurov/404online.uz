@@ -1,0 +1,334 @@
+import React from "react";
+import { useIntl } from "react-intl";
+import { useRouter } from "next/router";
+import useSWR from "swr";
+import fetcher from "@/utils/fetcher";
+import { formatDate } from "@/utils/funcs";
+import {
+  FileText,
+  Clock,
+  Users,
+  User,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  List,
+} from "lucide-react";
+
+export default function HomeworkDetail({ role, loading }) {
+  const router = useRouter();
+  const intl = useIntl();
+  const { id } = router.query;
+
+  const {
+    data: homework,
+    isLoading,
+    error,
+  } = useSWR(
+    id ? [`/tasks/homeworks/${id}/`, router.locale] : null,
+    ([url, locale]) =>
+      fetcher(
+        url,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
+  if (loading || isLoading) {
+    return (
+      <div className="bg-white rounded-2xl p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl p-6">
+        <p className="text-red-500 text-center">
+          {intl.formatMessage({
+            id: "Error loading homework",
+            defaultMessage: "Error loading homework",
+          })}
+        </p>
+      </div>
+    );
+  }
+
+  if (!homework) return null;
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "PENDING":
+        return {
+          label: intl.formatMessage({
+            id: "Pending",
+            defaultMessage: "Pending",
+          }),
+          class: "bg-yellow-100 text-yellow-800",
+          icon: Clock,
+        };
+      case "GRADED":
+        return {
+          label: intl.formatMessage({ id: "Graded", defaultMessage: "Graded" }),
+          class: "bg-blue-100 text-blue-800",
+          icon: CheckCircle,
+        };
+      case "PUBLISHED":
+        return {
+          label: intl.formatMessage({
+            id: "Published",
+            defaultMessage: "Published",
+          }),
+          class: "bg-green-100 text-green-800",
+          icon: CheckCircle,
+        };
+      default:
+        return {
+          label: status,
+          class: "bg-gray-100 text-gray-800",
+          icon: FileText,
+        };
+    }
+  };
+
+  const statusInfo = getStatusBadge(homework.status);
+  const StatusIcon = statusInfo.icon;
+
+  return (
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {homework.title}
+            </h1>
+            {homework.description && (
+              <p className="text-gray-600">{homework.description}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 ml-4">
+            <StatusIcon size={20} className={statusInfo.class.split(" ")[1]} />
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.class}`}
+            >
+              {statusInfo.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Meta Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <User size={20} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">
+                {intl.formatMessage({
+                  id: "Created by",
+                  defaultMessage: "Created by",
+                })}
+              </p>
+              <p className="text-sm font-medium text-gray-900">
+                {homework.created_by_name}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+              <Users size={20} className="text-purple-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">
+                {intl.formatMessage({
+                  id: "Assigned Groups",
+                  defaultMessage: "Assigned Groups",
+                })}
+              </p>
+              <p className="text-sm font-medium text-gray-900">
+                {homework.assigned_groups_count || 0}{" "}
+                {intl.formatMessage({ id: "groups", defaultMessage: "groups" })}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+              <Calendar size={20} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">
+                {intl.formatMessage({
+                  id: "Created Date",
+                  defaultMessage: "Created",
+                })}
+              </p>
+              <p className="text-sm font-medium text-gray-900">
+                {formatDate(homework.created_at)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {homework.due_date && (
+          <div className="mt-4 p-3 bg-orange-50 rounded-lg flex items-center gap-2">
+            <Clock size={18} className="text-orange-600" />
+            <span className="text-sm text-orange-900">
+              {intl.formatMessage({
+                id: "Due Date",
+                defaultMessage: "Due Date",
+              })}
+              : {formatDate(homework.due_date)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Homework Items Section */}
+      {homework.homework_items && homework.homework_items.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <List size={20} />
+            {intl.formatMessage({
+              id: "Homework Items",
+              defaultMessage: "Homework Items",
+            })}
+          </h2>
+
+          <div className="space-y-3">
+            {homework.homework_items.map((item, index) => (
+              <div
+                key={item.id}
+                className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                  <span className="text-blue-600 font-bold">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {item.title}
+                  </p>
+                  {item.description && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      {item.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                    {item.max_score && (
+                      <span className="flex items-center gap-1">
+                        <FileText size={14} />
+                        {intl.formatMessage({
+                          id: "Max Score",
+                          defaultMessage: "Max Score",
+                        })}
+                        : {item.max_score}
+                      </span>
+                    )}
+                    {item.order && (
+                      <span className="flex items-center gap-1">
+                        {intl.formatMessage({
+                          id: "Order",
+                          defaultMessage: "Order",
+                        })}
+                        : {item.order}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Assigned Users Section */}
+      {homework.assigned_users && homework.assigned_users.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Users size={20} />
+            {intl.formatMessage({
+              id: "Individually Assigned",
+              defaultMessage: "Individually Assigned",
+            })}
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {homework.assigned_users.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"
+              >
+                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                  <User size={16} className="text-purple-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.full_name || user.username}
+                  </p>
+                  {user.email && (
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Publishing Status */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-12 h-12 rounded-lg ${
+              homework.is_published ? "bg-green-50" : "bg-gray-50"
+            } flex items-center justify-center`}
+          >
+            {homework.is_published ? (
+              <CheckCircle size={24} className="text-green-600" />
+            ) : (
+              <XCircle size={24} className="text-gray-400" />
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              {homework.is_published
+                ? intl.formatMessage({
+                    id: "Published",
+                    defaultMessage: "Published",
+                  })
+                : intl.formatMessage({
+                    id: "Not Published",
+                    defaultMessage: "Not Published",
+                  })}
+            </p>
+            <p className="text-xs text-gray-500">
+              {homework.is_published
+                ? intl.formatMessage({
+                    id: "Scores are visible to students",
+                    defaultMessage: "Scores are visible to students",
+                  })
+                : intl.formatMessage({
+                    id: "Scores are hidden from students",
+                    defaultMessage: "Scores are hidden from students",
+                  })}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
