@@ -72,6 +72,8 @@ export const generateQuestionPayload = (type, values, groupId) => {
     }
     case "COMPLETION":
     case "SHORT_ANSWER":
+    case "SUMMARY":
+    case "TABLE_FLOWCHART":
     case "SENTENCE":
       values.tokens.forEach((t) => {
         payload.correct_answer[t.id] = t.answers
@@ -160,21 +162,34 @@ export const getDisplayQuestionNumber = (
   if (!field) return index + 1;
   const tokenId = String(field.id || "");
 
-  // 1. Agar Matching guruhi bo'lsa (q_1 formatida)
+  // 1. Agar Token ID o'zi raqam bo'lsa (masalan: {{41}}), ID-ni qaytaramiz.
+  // Bu TABLE_FLOWCHART va SUMMARY uchun eng xavfsiz yo'l.
+  if (tokenId.match(/^\d+$/)) {
+    return parseInt(tokenId);
+  }
+
+  // 2. MATCHING format (q_14)
   const idMatch = tokenId.match(/q_(\d+)/);
   if (idMatch) return idMatch[1];
 
-  // 2. Agar Completion bo'lsa ({{gap_1}} formatida)
-  if (watchText) {
-    const lines = watchText.split("\n");
-    // Aynan o'sha token bor qatorni topamiz
-    for (let line of lines) {
-      if (line.includes(`{{${tokenId}}}`)) {
-        const numMatch = line.match(/^(\d+)/); // Qator boshidagi raqamni olamiz
-        if (numMatch) return numMatch[1];
+  // 3. Agar Token ID harf bo'lsa (masalan: {{gap_1}}), matndan raqam qidiramiz
+  if (watchText && tokenId) {
+    const tokenStr = `{{${tokenId}}}`;
+    const tokenPos = watchText.indexOf(tokenStr);
+
+    if (tokenPos !== -1) {
+      const textBefore = watchText.substring(0, tokenPos);
+      
+      // Faqat nuqta yoki qavs bilan kelgan raqamlarni qidiramiz (masalan: "14." yoki "14)")
+      // Shunda "8 Million" dagi 8 ni tashlab ketadi.
+      const allNumbers = [...textBefore.matchAll(/(\d+)(?:\.|\s|\))/g)];
+
+      if (allNumbers.length > 0) {
+        return allNumbers[allNumbers.length - 1][1];
       }
     }
   }
 
-  return index + 1; // Topilmasa tartib raqami
+  // 4. Hech narsa topilmasa, index bo'yicha (default)
+  return index + 1;
 };

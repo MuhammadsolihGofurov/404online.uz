@@ -14,6 +14,7 @@ import {
   MatchingQuestionForm,
   MatchingHeadingForm,
   TFNGFORM,
+  SummaryQuestionForm,
 } from "./types";
 import {
   generateQuestionPayload,
@@ -111,17 +112,30 @@ export default function QuestionOffcanvas({ id, initialData }) {
       });
     } else {
       // COMPLETION turlari uchun: Faqat {{}} belgisini qidiramiz
-      const matches = [...watchText.matchAll(/{{(.*?)}}/g)].map((m) => m[1]);
-      updatedTokens = matches.map((tName) => {
-        const existing = currentTokens.find((t) => t.id === tName);
-        return (
-          existing || {
-            id: tName,
-            answers: "",
-            type: questionType === "MAP_DIAGRAM" ? "zone_select" : "text_input",
-          }
-        );
+      const lines = watchText.split("\n");
+      let foundTokens = [];
+
+      lines.forEach((line) => {
+        const matches = [...line.matchAll(/{{(.*?)}}/g)];
+        const lineNumMatch = line.match(/^(\d+)/); // Qator boshidagi raqam (masalan "14.")
+
+        matches.forEach((m) => {
+          const tName = m[1];
+          const existing = currentTokens.find((t) => t.id === tName);
+
+          foundTokens.push(
+            existing || {
+              id: tName,
+              answers: "",
+              // Agar qatorda raqam bo'lsa, uni vaqtincha saqlaymiz (yordamchi sifatida)
+              temp_number: lineNumMatch ? lineNumMatch[1] : null,
+              type:
+                questionType === "MAP_DIAGRAM" ? "zone_select" : "text_input",
+            }
+          );
+        });
       });
+      updatedTokens = foundTokens;
     }
 
     // Infinite loop'dan qochish uchun faqat ID'lar o'zgarganda setValue qilamiz
@@ -146,6 +160,58 @@ export default function QuestionOffcanvas({ id, initialData }) {
           data: payload,
         });
         toast.success("Saved successfully!");
+        closeOffcanvas("questionOffcanvas", { refresh: true });
+        return;
+      }
+
+      // 2. Yaxlit matnli turlar uchun BULK SAVE (SUMMARY, TABLE_FLOWCHART, MAP_DIAGRAM)
+      // Bu turlarda matnni bo'lmasdan, har bir token uchun alohida request yuboramiz
+      const isUnifiedType = ["TABLE_FLOWCHART", "MAP_DIAGRAM"].includes(
+        questionType
+      );
+
+      if (isUnifiedType) {
+        const requests = values.tokens.map((token) => {
+          // Backend bitta matnda bir nechta {{token}} ko'rib, 1 ta javob kelsa 400 beradi.
+          // Shuning uchun joriy tokendan boshqasini "........" bilan maskalaymiz.
+          let maskedText = values.text;
+          values.tokens.forEach((t) => {
+            if (t.id !== token.id) {
+              maskedText = maskedText.replace(`{{${t.id}}}`, "........");
+            }
+          });
+
+          // Tokenning savol raqamini matndan qidirib topish
+          const qNumber = getDisplayQuestionNumber(
+            questionType,
+            token,
+            0,
+            values.text
+          );
+
+          const payload = {
+            question_number: parseInt(qNumber),
+            text: maskedText,
+            group: groupId,
+            correct_answer: {
+              [token.id]: token.answers.split(",").map((a) => a.trim()),
+            },
+            metadata: {
+              [token.id]: {
+                type:
+                  token.type ||
+                  (questionType === "MAP_DIAGRAM"
+                    ? "zone_select"
+                    : "text_input"),
+                max_words: parseInt(token.max_words) || 2,
+              },
+            },
+          };
+          return authAxios.post(`/editor/${sectionType}-questions/`, payload);
+        });
+
+        await Promise.all(requests);
+        toast.success(`${requests.length} items added successfully!`);
         closeOffcanvas("questionOffcanvas", { refresh: true });
         return;
       }
@@ -242,28 +308,39 @@ export default function QuestionOffcanvas({ id, initialData }) {
           />
         )}
 
-        {(questionType === "MATCHING" ||
-          questionType === "MATCH_INFO" ||
+        {questionType === "TABLE_FLOWCHART" && (
+          <FormCompletionForm
+            register={register}
+            control={control}
+            watch={watch}
+            questionType={questionType}
+            startNumber={watch("question_number")}
+          />
+        )}
+
+        {/* MAP_DIAGRAM (Diagrammalar) uchun */}
+        {questionType === "MAP_DIAGRAM" && (
+          <MapDiagramForm
+            register={register}
+            control={control}
+            watch={watch}
+            startNumber={watch("question_number")}
+          />
+        )}
+
+        {(questionType === "MATCH_INFO" ||
           questionType === "MATCH_FEATURES" ||
-          questionType === "MATCH_HEADINGS") &&
-          (TYPES_REQUIRING_GROUP_OPTIONS.includes(questionType) ? (
-            <MatchingHeadingForm
-              register={register}
-              control={control}
-              setValue={setValue}
-              watch={watch}
-              availableOptions={groupOptions}
-              questionType={questionType}
-            />
-          ) : (
-            <MatchingQuestionForm
-              register={register}
-              control={control}
-              watch={watch}
-              setValue={setValue}
-              questionType={questionType}
-            />
-          ))}
+          questionType === "MATCH_HEADINGS") && (
+          <MatchingHeadingForm
+            register={register}
+            control={control}
+            setValue={setValue}
+            watch={watch}
+            availableOptions={groupOptions}
+            questionType={questionType}
+            startNumber={watch("question_number")}
+          />
+        )}
 
         {(questionType === "TFNG" || questionType === "YNNG") && (
           <TFNGFORM
@@ -271,6 +348,7 @@ export default function QuestionOffcanvas({ id, initialData }) {
             control={control}
             watch={watch}
             questionType={questionType}
+            startNumber={watch("question_number")}
           />
         )}
 
@@ -280,6 +358,27 @@ export default function QuestionOffcanvas({ id, initialData }) {
             control={control}
             watch={watch}
             questionType={questionType}
+            startNumber={watch("question_number")}
+          />
+        )}
+
+        {["MATCHING"].includes(questionType) && (
+          <MatchingQuestionForm
+            register={register}
+            control={control}
+            watch={watch}
+            questionType={questionType}
+            startNumber={watch("question_number")}
+          />
+        )}
+
+        {["SUMMARY"].includes(questionType) && (
+          <SummaryQuestionForm
+            register={register}
+            control={control}
+            watch={watch}
+            questionType={questionType}
+            startNumber={watch("question_number")}
           />
         )}
 
