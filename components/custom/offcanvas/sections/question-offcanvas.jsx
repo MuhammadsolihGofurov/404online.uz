@@ -21,6 +21,7 @@ import {
   parseInitialTokens,
 } from "@/utils/question-helpers";
 import { Input, SmartTextarea } from "../../details";
+import { MCQAutoGenerator } from "./auto";
 
 // Token talab qilmaydigan (Raqamga asoslangan) turlar
 const TYPES_WITHOUT_TOKEN = [
@@ -87,65 +88,44 @@ export default function QuestionOffcanvas({ id, initialData }) {
   useEffect(() => {
     if (questionType === "MCQ") return;
 
-    let updatedTokens = [];
-    const currentTokens = watch("tokens") || [];
+    // Matnni qator boshidagi raqamlar bo'yicha bo'lish (Masalan: "14. Savol matni")
+    const lines = watchText
+      .split(/\n(?=\d+[\.\)\s])/) // Yangi qatordagi "14." yoki "14)" larni topadi
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
 
-    if (TYPES_WITHOUT_TOKEN.includes(questionType)) {
-      // MATCHING, TFNG, YNNG uchun: Matnni qator boshidagi raqamlarga qarab bo'lamiz
-      const lines = watchText
-        .split("\n")
-        .map((l) => l.trim())
-        .filter((l) => l.match(/^\d+/));
+    const newTokens = lines
+      .map((line) => {
+        const match = line.match(/^(\d+)/);
+        const qNumber = match ? match[1] : null;
+        if (!qNumber) return null;
 
-      updatedTokens = lines.map((line) => {
-        const qNumber = line.match(/^(\d+)/)[1];
         const tokenId = `q_${qNumber}`;
-        const existing = currentTokens.find((t) => t.id === tokenId);
+        const existing = (watch("tokens") || []).find((t) => t.id === tokenId);
 
         return (
           existing || {
             id: tokenId,
+            q_num: qNumber,
+            full_line: line, // UI-da ko'rsatish uchun asl matn
             answers: "",
-            type: "dropdown",
+            type: TYPES_WITHOUT_TOKEN.includes(questionType)
+              ? "dropdown"
+              : "text_input",
+            max_words: 2,
           }
         );
-      });
-    } else {
-      // COMPLETION turlari uchun: Faqat {{}} belgisini qidiramiz
-      const lines = watchText.split("\n");
-      let foundTokens = [];
+      })
+      .filter(Boolean);
 
-      lines.forEach((line) => {
-        const matches = [...line.matchAll(/{{(.*?)}}/g)];
-        const lineNumMatch = line.match(/^(\d+)/); // Qator boshidagi raqam (masalan "14.")
-
-        matches.forEach((m) => {
-          const tName = m[1];
-          const existing = currentTokens.find((t) => t.id === tName);
-
-          foundTokens.push(
-            existing || {
-              id: tName,
-              answers: "",
-              // Agar qatorda raqam bo'lsa, uni vaqtincha saqlaymiz (yordamchi sifatida)
-              temp_number: lineNumMatch ? lineNumMatch[1] : null,
-              type:
-                questionType === "MAP_DIAGRAM" ? "zone_select" : "text_input",
-            }
-          );
-        });
-      });
-      updatedTokens = foundTokens;
-    }
-
-    // Infinite loop'dan qochish uchun faqat ID'lar o'zgarganda setValue qilamiz
-    const currentIds = currentTokens.map((t) => t.id).join(",");
-    const newIds = updatedTokens.map((t) => t.id).join(",");
+    // Faqat o'zgarish bo'lgandagina formni yangilaymiz
+    const currentIds = (watch("tokens") || []).map((t) => t.id).join(",");
+    const newIds = newTokens.map((t) => t.id).join(",");
 
     if (currentIds !== newIds) {
-      setValue("tokens", updatedTokens);
+      setValue("tokens", newTokens);
     }
-  }, [watchText, questionType, setValue]);
+  }, [watchText, questionType]);
 
   // 3. SUBMIT MANTIQI
   const submitFn = async (values) => {
@@ -273,7 +253,7 @@ export default function QuestionOffcanvas({ id, initialData }) {
 
   return (
     <div className="flex flex-col gap-6 p-1">
-      <h2 className="text-xl font-bold border-b pb-4 uppercase">
+      {/* <h2 className="text-xl font-bold border-b pb-4 uppercase">
         {questionType?.replace("_", " ")} - {id ? "Edit" : "Create"}
       </h2>
 
@@ -298,7 +278,6 @@ export default function QuestionOffcanvas({ id, initialData }) {
           />
         </div>
 
-        {/* DINAMIK FORMALAR */}
         {questionType === "MCQ" && (
           <McqQuestionForm
             register={register}
@@ -318,7 +297,6 @@ export default function QuestionOffcanvas({ id, initialData }) {
           />
         )}
 
-        {/* MAP_DIAGRAM (Diagrammalar) uchun */}
         {questionType === "MAP_DIAGRAM" && (
           <MapDiagramForm
             register={register}
@@ -389,7 +367,9 @@ export default function QuestionOffcanvas({ id, initialData }) {
         >
           {reqLoading ? <ButtonSpinner /> : id ? "Update" : "Bulk Save"}
         </button>
-      </form>
+      </form> */}
+
+      <MCQAutoGenerator groupId={groupId} sectionType={sectionType} onClose={closeOffcanvas} id={id} initialData={initialData}/>
     </div>
   );
 }

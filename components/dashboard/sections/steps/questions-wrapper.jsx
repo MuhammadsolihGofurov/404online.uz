@@ -42,7 +42,7 @@ export default function QuestionsWrapper() {
       : null,
     ([url, locale, groupId, p]) =>
       fetcher(
-        `${url}?group_id=${groupId}&page=${p}&page_size=8`,
+        `${url}?group_id=${groupId}&page=${p}&page_size=9`,
         { headers: { "Accept-Language": locale } },
         {},
         {},
@@ -83,11 +83,11 @@ export default function QuestionsWrapper() {
         </button>
       </div>
       {questions?.results?.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {questions.results.map((q) => (
             <QuestionItem key={q.id} question={q} />
           ))}
-          <Pagination count={questions?.count} pageSize={8} />
+          <Pagination count={questions?.count} pageSize={9} />
         </div>
       ) : (
         <p className="text-gray-400 text-xs">

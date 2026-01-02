@@ -153,6 +153,7 @@ export const generateQuestionPayload = (type, values, groupId) => {
 };
 
 // utils/question-helpers.js
+
 export const getDisplayQuestionNumber = (
   type,
   field,
@@ -179,7 +180,7 @@ export const getDisplayQuestionNumber = (
 
     if (tokenPos !== -1) {
       const textBefore = watchText.substring(0, tokenPos);
-      
+
       // Faqat nuqta yoki qavs bilan kelgan raqamlarni qidiramiz (masalan: "14." yoki "14)")
       // Shunda "8 Million" dagi 8 ni tashlab ketadi.
       const allNumbers = [...textBefore.matchAll(/(\d+)(?:\.|\s|\))/g)];
@@ -192,4 +193,28 @@ export const getDisplayQuestionNumber = (
 
   // 4. Hech narsa topilmasa, index bo'yicha (default)
   return index + 1;
+};
+
+// MCQ bulk function
+export const bulkSaveMCQ = async (
+  questions,
+  groupId,
+  sectionType,
+  authAxios
+) => {
+  const requests = questions.map((q) => {
+    // Backend kutilayotgan formatga o'tkazish
+    const formattedValues = {
+      question_number: q.question_number,
+      text: q.text,
+      correct_answer_mcq: [{ id: q.correct_answer }], // generateQuestionPayload array kutadi
+      mcq_options: q.options,
+      mcq_display_type: "radio", // default display type
+    };
+
+    const payload = generateQuestionPayload("MCQ", formattedValues, groupId);
+    return authAxios.post(`/editor/${sectionType}-questions/`, payload);
+  });
+
+  return Promise.all(requests);
 };

@@ -15,8 +15,8 @@ export const OffcanvasWrapper = ({
   }, [isOpen]);
 
   const posClasses = {
-    right: "right-0 h-full w-full max-w-2xl border-l animate-slideInRight",
-    left: "left-0 h-full w-full max-w-2xl border-r animate-slideInLeft",
+    right: "right-0 h-full w-full max-w-3xl border-l animate-slideInRight",
+    left: "left-0 h-full w-full max-w-3xl border-r animate-slideInLeft",
     bottom: "bottom-0 w-full h-[70vh] border-t animate-slideInUp",
   };
 
