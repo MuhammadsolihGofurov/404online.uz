@@ -83,7 +83,9 @@ export default function PartQuestionItem({ group }) {
         </div>
 
         <Link
-          href={`${SECTIONS_QUESTIONS_URL}?section=${sectionType}&sectionId=${sectionId}&partId=${partId}&partNumber=${partNumber}&groupId=${group?.id}&questionType=${group?.question_type || group?.group_type}`}
+          href={`${SECTIONS_QUESTIONS_URL}?section=${sectionType}&sectionId=${sectionId}&partId=${partId}&partNumber=${partNumber}&groupId=${
+            group?.id
+          }&questionType=${group?.question_type || group?.group_type}`}
           className="flex items-center gap-1.5 text-xs font-bold text-main hover:bg-main hover:text-white border border-main px-3 py-1.5 rounded-lg transition-all"
         >
           <Plus size={10} /> Add Question

@@ -143,7 +143,7 @@ export const QUESTION_TYPES = [
     ],
   },
   {
-    name: "Form/Note/Table/Flow-chart",
+    name: "Form/Note/Table/Flow-chart Completion",
     value: "COMPLETION",
     forSections: [
       {

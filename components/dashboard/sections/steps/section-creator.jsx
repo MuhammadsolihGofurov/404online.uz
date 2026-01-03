@@ -204,11 +204,8 @@ export default function SectionCreator() {
             disabled={reqLoading}
             className="rounded-xl bg-main flex items-center justify-center text-white px-8 py-4 hover:bg-blue-800 transition-all duration-200 w-full sm:w-auto font-semibold"
           >
-            {reqLoading ? (
-              <ButtonSpinner />
-            ) : (
-              intl.formatMessage({ id: id ? "Update" : "Submit" })
-            )}
+            {reqLoading && <ButtonSpinner />}{" "}
+            {intl.formatMessage({ id: id ? "Update" : "Submit" })}
           </button>
         </div>
       </form>
