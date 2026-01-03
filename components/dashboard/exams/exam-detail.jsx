@@ -1,6 +1,7 @@
 import React from "react";
 import { useIntl } from "react-intl";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { formatDate } from "@/utils/funcs";
@@ -15,6 +16,7 @@ import {
   Headphones,
   BookOpen,
   PenTool,
+  Play,
 } from "lucide-react";
 
 export default function ExamDetail({ role, loading }) {
@@ -107,13 +109,30 @@ export default function ExamDetail({ role, loading }) {
               <p className="text-gray-600">{exam.description}</p>
             )}
           </div>
-          <div className="flex items-center gap-2 ml-4">
-            <StatusIcon size={20} className={statusInfo.class.split(" ")[1]} />
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.class}`}
-            >
-              {statusInfo.label}
-            </span>
+          <div className="flex items-center gap-3 ml-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <StatusIcon
+                size={20}
+                className={statusInfo.class.split(" ")[1]}
+              />
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.class}`}
+              >
+                {statusInfo.label}
+              </span>
+            </div>
+            {exam.status === "OPEN" && (
+              <Link
+                href={`/dashboard/exams/${exam.id}/take`}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                <Play size={18} />
+                {intl.formatMessage({
+                  id: "Take Exam",
+                  defaultMessage: "Take Exam",
+                })}
+              </Link>
+            )}
           </div>
         </div>
 

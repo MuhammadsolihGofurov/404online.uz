@@ -2,39 +2,48 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import Header from "./dashboard-header";
 
-export default function DashboardLayout({ children, user }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+export default function DashboardLayout({
+  children,
+  user,
+  hideSidebar = false,
+}) {
+  const [sidebarOpen, setSidebarOpen] = useState(!hideSidebar);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
   const closeSidebar = () => setSidebarOpen(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const handleResize = () => {
-        if (window.innerWidth < 1200) {
-          setSidebarOpen(false); 
-        } else {
-          setSidebarOpen(true); 
-        }
-      };
+    if (hideSidebar || typeof window === "undefined") return;
 
-      handleResize();
-      window.addEventListener("resize", handleResize);
+    const handleResize = () => {
+      if (window.innerWidth < 1200) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
 
-      return () => window.removeEventListener("resize", handleResize);
-    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const mainClass = hideSidebar
+    ? "flex-1 w-full overflow-hidden"
+    : "flex-1 px-5 pt-7 pb-20 overflow-y-auto w-full";
 
   return (
     <div className="flex h-screen font-poppins bg-dashboardBg w-full">
       {/* Sidebar */}
-      <Sidebar user={user} isOpen={sidebarOpen} closeSidebar={closeSidebar} />
+      {!hideSidebar && (
+        <Sidebar user={user} isOpen={sidebarOpen} closeSidebar={closeSidebar} />
+      )}
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 transition-all duration-300 w-full">
         <Header user={user} toggleSidebar={toggleSidebar} />
-        <main className="flex-1 px-5 pt-7 pb-20 overflow-y-auto w-full">{children}</main>
+        <main className={mainClass}>{children}</main>
       </div>
     </div>
   );

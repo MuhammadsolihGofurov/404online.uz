@@ -5,11 +5,7 @@ const nextConfig = {
     defaultLocale: 'en',
     locales: ['en', 'ru', 'uz'],
   },
-  compiler: {
-    removeConsole: {
-      exclude: ['error'],
-    },
-  },
+  compiler: {},
   images: {
     remotePatterns: [],
   },
