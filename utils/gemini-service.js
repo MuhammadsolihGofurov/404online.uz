@@ -162,6 +162,38 @@ export const scanIELTSWithGemini = async (images, question_type) => {
         `;
         break;
 
+      case "MATCH_ENDINGS":
+        prompt = `
+          Analyze IELTS Matching Sentence Endings task.
+          
+          INSTRUCTIONS:
+          1. Extract the Reading Passage or Listening Transcript.
+          2. Extract the "Sentence Stems" (the beginning parts of sentences with numbers).
+          3. Extract the "List of Endings" (options labeled A, B, C, etc.).
+          4. Match each stem with the correct ending letter based on the context.
+
+          Return ONLY a JSON object:
+          {
+            "full_text": "Full passage text here...",
+            "endings": [
+              "A. description of the first ending",
+              "B. description of the second ending"
+            ],
+            "questions": [
+              { 
+                "number": 1, 
+                "text": "The sentence stem starts like this...", 
+                "answer": "B" 
+              },
+              { 
+                "number": 2, 
+                "text": "Another sentence stem here...", 
+                "answer": "A" 
+              }
+            ]
+          }
+        `;
+        break;
       default:
         prompt =
           "Analyze the image and extract IELTS questions in JSON format.";

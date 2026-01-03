@@ -168,7 +168,7 @@ export default function MatchingInfoGenerator({
       const requests = values.questions.map((q) => {
         const payload = {
           question_number: parseInt(q.question_number),
-          text: values.full_text,
+          text: q.question_text,
           group: groupId,
           correct_answer: { [`gap_${q.question_number}`]: [q.answer] },
           metadata: {

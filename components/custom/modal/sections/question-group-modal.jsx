@@ -30,6 +30,7 @@ export default function QuestionGroupModal({ id, initialData }) {
   const TYPES_WITH_COMMON_OPTIONS = [
     "MATCH_HEADINGS",
     // "MATCH_INFO",
+    "MATCH_ENDINGS",
     "MATCH_FEATURES",
   ];
 
