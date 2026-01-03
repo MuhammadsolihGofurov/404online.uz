@@ -7,5 +7,6 @@ export { default as TemplateItem } from "./template-item";
 export { default as TaskItem } from "./task-item";
 export { default as SectionItem } from "./section-item";
 export { default as PartQuestionItem } from "./part-question-item";
+export { default as QuestionItem } from "./question-item";
 export { default as ExamItem } from "./exam-item";
 export { default as HomeworkItem } from "./homework-item";

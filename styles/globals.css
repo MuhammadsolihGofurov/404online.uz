@@ -77,3 +77,16 @@ tbody {
 .scroll_none::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+
+/* Chrome, Safari, Edge va Opera uchun */
+.removed__number::-webkit-outer-spin-button,
+.removed__number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox uchun */
+.removed__number {
+  -moz-appearance: textfield;
+}

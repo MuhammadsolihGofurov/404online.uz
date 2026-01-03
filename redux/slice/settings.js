@@ -5,6 +5,7 @@ const settingsSlice = createSlice({
   initialState: {
     currentTopic: {},
     notifications: [],
+    partData: {},
   },
   reducers: {
     setTopicsData: (state, action) => {
@@ -13,9 +14,13 @@ const settingsSlice = createSlice({
     setNotificationsData: (state, action) => {
       state.notifications = action.payload;
     },
+    setPartData: (state, action) => {
+      state.partData = action.payload;
+    },
   },
 });
 
-export const { setTopicsData, setNotificationsData } = settingsSlice.actions;
+export const { setTopicsData, setNotificationsData, setPartData } =
+  settingsSlice.actions;
 
 export default settingsSlice.reducer;

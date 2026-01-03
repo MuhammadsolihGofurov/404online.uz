@@ -56,3 +56,4 @@ export const HOMEWORKS_URL = "/dashboard/homeworks";
 export const SECTIONS_URL = "/dashboard/sections";
 export const SECTIONS_CREATE_URL = "/dashboard/sections/create";
 export const SECTIONS_PARTS_URL = "/dashboard/sections/create/parts";
+export const SECTIONS_QUESTIONS_URL = "/dashboard/sections/create/questions";

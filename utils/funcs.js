@@ -127,3 +127,21 @@ export const parseDurationToMinutes = (timeStr) => {
   const [hours, minutes] = timeStr.split(":").map(Number);
   return hours * 60 + minutes;
 };
+
+export const renderTextWithTokens = (text) => {
+  const parts = text.split(/(\{\{.*?\}\})/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("{{") && part.endsWith("}}")) {
+      const tokenId = part.replace("{{", "").replace("}}", "");
+      return (
+        <span
+          key={index}
+          className="mx-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-xs font-mono font-bold"
+        >
+          {tokenId}
+        </span>
+      );
+    }
+    return part;
+  });
+};

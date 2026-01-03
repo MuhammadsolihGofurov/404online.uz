@@ -21,6 +21,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "../styles/globals.css";
 import { Bounce, Flip, ToastContainer } from "react-toastify";
 import { ModalProvider } from "@/context/modal-context";
+import { OffcanvasProvider } from "@/context/offcanvas-context";
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -72,22 +73,24 @@ export default function App({ Component, pageProps }) {
       >
         <LangProvider>
           <SkeletonTheme>
-            <ModalProvider>
-              <Layout>
-                <Component {...pageProps} />
+            <OffcanvasProvider>
+              <ModalProvider>
+                <Layout>
+                  <Component {...pageProps} />
 
-                {/* modals */}
-                {/* <ConfirmModal /> */}
-                {/* <PaymentModal /> */}
-              </Layout>
-              <ToastContainer
-                position="top-right"
-                autoClose={3000}
-                draggable
-                theme="light"
-                transition={Flip}
-              />
-            </ModalProvider>
+                  {/* modals */}
+                  {/* <ConfirmModal /> */}
+                  {/* <PaymentModal /> */}
+                </Layout>
+                <ToastContainer
+                  position="top-right"
+                  autoClose={3000}
+                  draggable
+                  theme="light"
+                  transition={Flip}
+                />
+              </ModalProvider>
+            </OffcanvasProvider>
           </SkeletonTheme>
         </LangProvider>
       </IntlProvider>
