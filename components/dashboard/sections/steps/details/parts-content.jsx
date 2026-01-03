@@ -5,11 +5,13 @@ import { PartQuestionItem } from "@/components/dashboard/details/items";
 import { PartQuestionGroupItemSkeleton } from "@/components/skeleton";
 import { useModal } from "@/context/modal-context";
 import { useParams } from "@/hooks/useParams";
+import { setPartData } from "@/redux/slice/settings";
 import fetcher from "@/utils/fetcher";
 import { Plus, PlusCircle } from "lucide-react";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import { useIntl } from "react-intl";
+import { useDispatch } from "react-redux";
 import useSWR from "swr";
 
 export default function PartsContent({ sectionType }) {
@@ -19,10 +21,12 @@ export default function PartsContent({ sectionType }) {
   const page = findParams("page") || 1;
   const intl = useIntl();
   const { openModal, modalClosed } = useModal();
+  const dispatch = useDispatch();
 
   // Question guruhlarini olish
   // Endpoint: /editor/listening-groups/?part=id yoki /editor/reading-groups/?passage=id
   const groupKey = sectionType === "listening" ? "part_id" : "passage_id";
+  const groupValue = sectionType === "listening" ? "parts" : "passages";
 
   const { data: groups, isLoading } = useSWR(
     activePartId
@@ -47,8 +51,33 @@ export default function PartsContent({ sectionType }) {
       )
   );
 
+  const { data: partInfo } = useSWR(
+    activePartId
+      ? [`/editor/${sectionType}-${groupValue}/`, router.locale, activePartId]
+      : null,
+    ([url, locale, iid]) =>
+      fetcher(
+        `${url}${iid}`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
+  useEffect(() => {
+    dispatch(setPartData(partInfo));
+  }, [activePartId, partInfo]);
+
   const handleModal = () => {
     openModal("questionGroupModal", {}, "big");
+  };
+
+  const handlePassageTextModal = () => {
+    openModal("passageTextModal", { id: activePartId }, "big");
   };
 
   return (
@@ -64,14 +93,26 @@ export default function PartsContent({ sectionType }) {
             })}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={!activePartId}
-          onClick={() => handleModal()}
-          className="text-xs font-medium text-white bg-main hover:bg-blue-700 rounded-xl py-2 px-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          <Plus size={12} /> {intl.formatMessage({ id: "Create group" })}
-        </button>
+        <div className="flex flex-row gap-1">
+          {sectionType === "reading" && (
+            <button
+              type="button"
+              disabled={!activePartId}
+              onClick={() => handlePassageTextModal()}
+              className="text-xs font-medium text-textPrimary hover:text-main rounded-xl py-2 px-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Plus size={12} /> Add passage text
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={!activePartId}
+            onClick={() => handleModal()}
+            className="text-xs font-medium text-white bg-main hover:bg-blue-700 rounded-xl py-2 px-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Plus size={12} /> {intl.formatMessage({ id: "Create group" })}
+          </button>
+        </div>
       </div>
 
       <Alerts
@@ -93,7 +134,7 @@ export default function PartsContent({ sectionType }) {
         </div>
       ) : groups?.results.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {groups?.results?.map((group) => (
               <PartQuestionItem key={group.id} group={group} />
             ))}

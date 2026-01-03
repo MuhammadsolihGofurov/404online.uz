@@ -71,7 +71,12 @@ export default function MatchingHeadingForm({
       <div className="grid grid-cols-1 gap-4">
         {fields.map((field, index) => {
           // Xatolikni oldini olish uchun butun field obyektini uzatamiz
-          const qNumber = getDisplayQuestionNumber(questionType, field, index, watchText);
+          const qNumber = getDisplayQuestionNumber(
+            questionType,
+            field,
+            index,
+            watchText
+          );
 
           return (
             <div

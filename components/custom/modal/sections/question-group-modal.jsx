@@ -2,7 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ButtonSpinner } from "../../loading";
 import { Controller, useForm } from "react-hook-form";
-import { FileInput, Input, Select, Textarea } from "../../details"; // Textarea import qilindi
+import {
+  FileInput,
+  Input,
+  RichTextEditor,
+  Select,
+  Textarea,
+} from "../../details"; // Textarea import qilindi
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
@@ -23,7 +29,7 @@ export default function QuestionGroupModal({ id, initialData }) {
   // Common options kerak bo'ladigan turlar ro'yxati
   const TYPES_WITH_COMMON_OPTIONS = [
     "MATCH_HEADINGS",
-    "MATCH_INFO",
+    // "MATCH_INFO",
     "MATCH_FEATURES",
   ];
 
@@ -175,12 +181,12 @@ export default function QuestionGroupModal({ id, initialData }) {
           {/* TEXT CONTENT (Only for Reading) */}
           {sectionType === "reading" && (
             <div className="col-span-1 md:col-span-2">
-              <Textarea
-                register={register}
+              <RichTextEditor
                 name="text_content"
-                title="Group Text Content (Optional)"
-                placeholder="Enter additional text or passage fragment here..."
-                rows={4}
+                control={control}
+                label="Passage Body"
+                placeholder="Paste or write your IELTS passage here..."
+                error={errors.text_content}
               />
             </div>
           )}
@@ -201,15 +207,9 @@ export default function QuestionGroupModal({ id, initialData }) {
         <button
           type="submit"
           disabled={reqLoading}
-          className="rounded-xl bg-main text-white w-full p-4 font-bold hover:bg-opacity-90 transition-all"
+          className="rounded-xl bg-main flex items-center justify-center gap-1 text-white w-full p-4 font-bold hover:bg-opacity-90 transition-all"
         >
-          {reqLoading ? (
-            <ButtonSpinner />
-          ) : id ? (
-            "Update Group"
-          ) : (
-            "Create Group"
-          )}
+          {reqLoading && <ButtonSpinner />} {id ? "Update text" : "Create text"}
         </button>
       </form>
     </div>

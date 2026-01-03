@@ -14,6 +14,7 @@ const QuestionItem = ({ question }) => {
   const { openOffcanvas } = useOffcanvas();
   const intl = useIntl();
   const sectionType = findParams("section") || "";
+  const questionType = findParams("questionType") || "";
   // Matndagi {{gap_1}} kabi tokenlarni ajratib ko'rsatish uchun render funksiyasi
 
   const handleDelete = (id) => {
@@ -69,7 +70,15 @@ const QuestionItem = ({ question }) => {
       </div>
 
       <div className="text-gray-800 text-sm leading-relaxed mb-4">
-        {renderTextWithTokens(question.text)}
+        {questionType !== "MATCH_INFO" ? (
+          renderTextWithTokens(question.text)
+        ) : (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: renderTextWithTokens(question.text),
+            }}
+          />
+        )}
       </div>
 
       {/* Answers Section */}

@@ -13,6 +13,7 @@ import {
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { toast } from "react-toastify";
+import GeneratorActionCards from "./generation-action-card";
 
 export default function MCQAutoGenerator({
   groupId,
@@ -20,6 +21,7 @@ export default function MCQAutoGenerator({
   onClose,
   id = null,
   initialData = null,
+  question_Type
 }) {
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +48,7 @@ export default function MCQAutoGenerator({
 
     try {
       // 1. Gemini orqali rasmlarni tahlil qilish
-      const data = await scanIELTSWithGemini(files);
+      const data = await scanIELTSWithGemini(files, question_Type);
 
       // 2. AI dan kelgan ma'lumotni yangi dinamik strukturamizga o'tkazamiz
       const formatted = data.map((q, idx) => {
@@ -186,36 +188,13 @@ export default function MCQAutoGenerator({
     <div className="p-6 bg-gray-50/50 rounded-3xl">
       {/* --- ACTION BAR --- */}
       {!id && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <label className="md:col-span-2 group relative flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-3xl bg-white hover:bg-gray-50 hover:border-indigo-400 transition-all cursor-pointer">
-            {loading ? (
-              <div className="animate-spin w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full" />
-            ) : (
-              <>
-                <Upload size={24} className="text-indigo-500 mb-2" />
-                <p className="text-sm font-semibold text-gray-700">
-                  AI Scanner
-                </p>
-              </>
-            )}
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleProcessImages}
-              className="hidden"
-              disabled={loading}
-            />
-          </label>
-          <button
-            type="button"
-            onClick={addNewQuestion}
-            className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-3xl bg-white hover:bg-emerald-50 transition-all"
-          >
-            <PlusCircle size={24} className="text-emerald-500 mb-2" />
-            <p className="text-sm font-semibold">Add New</p>
-          </button>
-        </div>
+        <GeneratorActionCards
+          loading={loading}
+          onScan={handleProcessImages}
+          onAdd={addNewQuestion}
+          scanLabel="AI MCQ Scanner"
+          addLabel="Add Question"
+        />
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
