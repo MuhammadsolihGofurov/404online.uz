@@ -1,3 +1,4 @@
+"use client";
 // pages/dashboard/index.js
 import { Wrapper } from "@/components/dashboard/details";
 import { SectionCreator } from "@/components/dashboard/sections/steps";
@@ -6,17 +7,12 @@ import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
 import { useParams } from "@/hooks/useParams";
 import { SECTIONS_URL } from "@/mock/router";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 function SectionCreatePage({ info, user, loading }) {
-  const router = useRouter();
   const { findParams } = useParams();
 
   const sectionType = findParams("section") || "";
-
-  if (!sectionType) {
-    router.push(SECTIONS_URL);
-  }
 
   return (
     <>
@@ -53,3 +49,4 @@ export default withAuthGuard(SectionCreatePage, [
   "TEACHER",
   "ASSISTANT",
 ]);
+// export default SectionCreatePage;

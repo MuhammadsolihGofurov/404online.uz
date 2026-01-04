@@ -218,3 +218,217 @@ export const bulkSaveMCQ = async (
 
   return Promise.all(requests);
 };
+
+export const transformEditorData = (json) => {
+  let templateHtml = "";
+  const correctAnswers = [];
+
+  const processNode = (node) => {
+    // 1. Gap Fill (Eski mantiq)
+    if (node.type === "questionInput") {
+      const { number, answer } = node.attrs;
+      correctAnswers.push({
+        number: parseInt(number),
+        answer: answer,
+      });
+      return `<question-input number='${number}' answer='${answer}'></question-input>`;
+    }
+
+    // 2. Choice Group (Eski mantiq)
+    if (node.type === "choiceGroup") {
+      const { questionNumber, title, type } = node.attrs;
+      const options = [];
+      let correctOnes = [];
+
+      node.content?.forEach((item) => {
+        if (item.type === "choiceItem") {
+          const text = item.content?.map((c) => c.text).join("") || "";
+          options.push(text);
+          if (item.attrs.isCorrect) {
+            correctOnes.push(text);
+          }
+        }
+      });
+
+      correctAnswers.push({
+        number: parseInt(questionNumber),
+        answer: type === "single" ? correctOnes[0] || "" : correctOnes,
+      });
+
+      return `<choice-group number='${questionNumber}' title='${title}' type='${type}'>${JSON.stringify(
+        options
+      )}</choice-group>`;
+    }
+
+    // 3. Matching Block (YANGI)
+    if (node.type === "matchingBlock") {
+      const { title, options, type } = node.attrs;
+
+      // Ichidagi savollarni (matchingQuestion) rekursiv qayta ishlash
+      let questionsHtml = "";
+      if (node.content) {
+        questionsHtml = node.content.map(processNode).join("");
+      }
+
+      return `<div class="matching-container" data-type="${type}">
+        <div class="matching-title">${title}</div>
+        <div class="matching-options-box">${options}</div>
+        <div class="matching-questions-list">${questionsHtml}</div>
+      </div>`;
+    }
+
+    // 4. Matching Question (YANGI)
+    if (node.type === "matchingQuestion") {
+      const { number, answer } = node.attrs;
+      const questionText =
+        node.content
+          ?.map((c) => {
+            // Bu yerda text ichidagi marklarni (bold, etc) ham hisobga olish uchun yana processNode'ga yuboramiz
+            return processNode(c);
+          })
+          .join("") || "";
+
+      correctAnswers.push({
+        number: parseInt(number),
+        answer: answer, // Masalan: "A" yoki "B"
+      });
+
+      return `<div class="matching-question-item">
+        <span class="q-num">${number}</span>
+        <span class="q-text">${questionText}</span>
+        <matching-answer-slot number='${number}' answer='${answer}'></matching-answer-slot>
+      </div>`;
+    }
+
+    if (node.type === "booleanBlock") {
+      const { title, type } = node.attrs;
+      let questionsHtml = node.content
+        ? node.content.map(processNode).join("")
+        : "";
+
+      return `<div class="boolean-container" data-type="${type}">
+    <p class="boolean-instruction">${title}</p>
+    <div class="boolean-questions-list">${questionsHtml}</div>
+  </div>`;
+    }
+
+    // 6. Boolean Question
+    if (node.type === "booleanQuestion") {
+      const { number, answer, type } = node.attrs;
+      const questionText = node.content?.map(processNode).join("") || "";
+
+      correctAnswers.push({
+        number: parseInt(number),
+        answer: answer, // "TRUE", "FALSE", "NOT GIVEN", "YES", "NO"
+      });
+
+      return `<div class="boolean-question-row">
+    <span class="q-num">${number}</span>
+    <span class="q-text">${questionText}</span>
+    <boolean-answer-slot number='${number}' type='${type}' answer='${answer}'></boolean-answer-slot>
+  </div>`;
+    }
+
+    // 7. Summary question
+    if (node.type === "summaryBlock") {
+      const { title } = node.attrs;
+      let contentHtml = "";
+
+      if (node.content) {
+        contentHtml = node.content.map(processNode).join("");
+      }
+
+      return `
+    <div class="summary-container" style="border: 2px solid #1e293b; border-radius: 12px; margin: 20px 0; overflow: hidden;">
+      <div class="summary-header" style="background: #1e293b; color: white; padding: 8px 16px; font-weight: bold; font-size: 14px;">
+        ${title}
+      </div>
+      <div class="summary-body" style="padding: 20px; background: #fffcf5; line-height: 1.8;">
+        ${contentHtml}
+      </div>
+    </div>`;
+    }
+
+    // 8. diagram labeling
+    if (node.type === "diagramBlock") {
+      const { src, labels } = node.attrs;
+
+      // Har bir labelni to'g'ri javoblar ro'yxatiga qo'shamiz
+      labels.forEach((label) => {
+        correctAnswers.push({
+          number: parseInt(label.number),
+          answer: label.answer,
+        });
+      });
+
+      return `
+    <div class="diagram-container" style="position: relative; margin: 30px 0;">
+      <img src="${src}" style="width: 100%; border-radius: 12px;" />
+      ${labels
+        .map(
+          (l) => `
+        <diagram-marker 
+          number="${l.number}" 
+          style="position: absolute; left: ${l.x}%; top: ${l.y}%;"
+        ></diagram-marker>
+      `
+        )
+        .join("")}
+    </div>`;
+    }
+
+    // --- Oddiy elementlar ---
+    if (node.type === "text") {
+      let text = node.text;
+      if (node.marks) {
+        node.marks.forEach((mark) => {
+          if (mark.type === "bold") text = `<strong>${text}</strong>`;
+          if (mark.type === "underline") text = `<u>${text}</u>`;
+          if (mark.type === "highlight") text = `<mark>${text}</mark>`;
+        });
+      }
+      return text;
+    }
+
+    let contentHtml = "";
+    if (node.content) {
+      contentHtml = node.content.map(processNode).join("");
+    }
+
+    switch (node.type) {
+      case "paragraph":
+        return `<p>${contentHtml}</p>`;
+      case "heading":
+        return `<h${node.attrs.level}>${contentHtml}</h${node.attrs.level}>`;
+      case "bulletList":
+        return `<ul>${contentHtml}</ul>`;
+      case "orderedList":
+        return `<ol>${contentHtml}</ol>`;
+      case "listItem":
+        return `<li>${contentHtml}</li>`;
+      case "table":
+        return `<table>${contentHtml}</table>`;
+      case "tableRow":
+        return `<tr>${contentHtml}</tr>`;
+      case "tableCell":
+        return `<td>${contentHtml}</td>`;
+      case "tableHeader":
+        return `<th>${contentHtml}</th>`;
+      case "horizontalRule":
+        return `<hr />`;
+      case "image":
+        return `<img src="${node.attrs.src}" />`;
+      case "doc":
+        return contentHtml;
+      default:
+        return contentHtml;
+    }
+  };
+
+  templateHtml = processNode(json);
+
+  return {
+    template: templateHtml,
+    correct_answers: correctAnswers.sort((a, b) => a.number - b.number),
+  };
+};

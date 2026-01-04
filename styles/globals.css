@@ -124,3 +124,23 @@ tbody {
     border-radius: 8px;
     text-align: center;
 }
+
+.choice-group-container {
+  counter-reset: choice-counter;
+}
+
+.choice-item-wrapper {
+  counter-increment: choice-counter;
+}
+
+.choice-item-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+}
+
+.choice-item-label::before {
+  content: counter(choice-counter, upper-alpha);
+  line-height: 1;
+}

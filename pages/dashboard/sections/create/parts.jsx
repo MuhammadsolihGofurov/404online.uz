@@ -10,6 +10,7 @@ import Seo from "@/components/seo/Seo";
 import { useParams } from "@/hooks/useParams";
 import { SECTIONS_CREATE_URL, SECTIONS_URL } from "@/mock/router";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 
 function SectionPartsPage({ info, user, loading }) {
   const router = useRouter();
@@ -18,9 +19,11 @@ function SectionPartsPage({ info, user, loading }) {
   const sectionType = findParams("section") || "";
   const sectionId = findParams("sectionId") || "";
 
-  if (!sectionType && !sectionId) {
-    router.push(SECTIONS_URL);
-  }
+  useEffect(() => {
+    if (!sectionType && !sectionId) {
+      router.push(SECTIONS_URL);
+    }
+  }, []);
 
   return (
     <>
@@ -57,3 +60,5 @@ export default withAuthGuard(SectionPartsPage, [
   "TEACHER",
   "ASSISTANT",
 ]);
+
+// export default SectionPartsPage;

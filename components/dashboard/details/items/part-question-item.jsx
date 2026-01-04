@@ -1,4 +1,5 @@
 import { useModal } from "@/context/modal-context";
+import { useOffcanvas } from "@/context/offcanvas-context";
 import { useParams } from "@/hooks/useParams";
 import { getQuestionTypeName } from "@/mock/data";
 import { SECTIONS_QUESTIONS_URL } from "@/mock/router";
@@ -11,6 +12,7 @@ import { toast } from "react-toastify";
 export default function PartQuestionItem({ group }) {
   const intl = useIntl();
   const { openModal } = useModal();
+  const { openOffcanvas } = useOffcanvas();
   const { findParams } = useParams();
   const sectionType = findParams("section") || "";
   const partId = findParams("partId") || "";
@@ -35,19 +37,18 @@ export default function PartQuestionItem({ group }) {
 
   return (
     <div className="group border border-gray-200 rounded-2xl p-5 hover:border-main/50 hover:shadow-md transition-all bg-white">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <div className="flex items-center gap-2 pb-2">
+      <div className="flex justify-between items-start pb-5">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col items-start gap-2 pb-2">
             <span className="bg-blue-50 text-main text-[10px] font-bold px-2 py-0.5 rounded uppercase">
               {getQuestionTypeName(group?.question_type || group?.group_type)}
             </span>
-            <span className="text-gray-300">|</span>
             <h4 className="font-bold sm:text-base text-xs text-gray-800">
               {intl.formatMessage({ id: "Question group order" })}:{" "}
               {group.order}
             </h4>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs leading-5 text-gray-500">
             {group.instruction || "No instruction provided"}
           </p>
         </div>
@@ -55,10 +56,10 @@ export default function PartQuestionItem({ group }) {
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() =>
-              openModal(
-                "questionGroupModal",
+              openOffcanvas(
+                "questionGeneratorOffcanvas",
                 { id: group?.id, initialData: group },
-                "big"
+                "right"
               )
             }
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -82,14 +83,14 @@ export default function PartQuestionItem({ group }) {
           </div>
         </div>
 
-        <Link
+        {/* <Link
           href={`${SECTIONS_QUESTIONS_URL}?section=${sectionType}&sectionId=${sectionId}&partId=${partId}&partNumber=${partNumber}&groupId=${
             group?.id
           }&questionType=${group?.question_type || group?.group_type}`}
           className="flex items-center gap-1.5 text-xs font-bold text-main hover:bg-main hover:text-white border border-main px-3 py-1.5 rounded-lg transition-all"
         >
           <Plus size={10} /> Add Question
-        </Link>
+        </Link> */}
       </div>
     </div>
   );
