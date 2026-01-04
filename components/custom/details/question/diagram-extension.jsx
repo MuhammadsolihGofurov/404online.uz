@@ -149,11 +149,15 @@ export const DiagramBlock = Node.create({
   group: "block",
   draggable: true,
 
-  addAttributes() {
-    return {
-      src: { default: null },
-      labels: { default: [] }, // Format: [{ x: number, y: number, number: string, answer: string }]
-    };
+  labels: {
+    default: [],
+    parseHTML: (element) => {
+      const data = element.getAttribute("labels");
+      return data ? JSON.parse(data) : [];
+    },
+    renderHTML: (attributes) => ({
+      labels: JSON.stringify(attributes.labels),
+    }),
   },
 
   parseHTML: () => [{ tag: 'div[data-type="diagram-block"]' }],
