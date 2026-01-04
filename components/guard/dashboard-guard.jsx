@@ -14,10 +14,10 @@ export function withAuthGuard(WrappedComponent, allowedRoles = []) {
       const checkAuth = async () => {
         try {
           const accessToken = localStorage.getItem(PRIVATEAUTHKEY);
-          //   if (!accessToken) {
-          //     router.replace(LOGIN_URL);
-          //     return;
-          //   }
+          if (!accessToken) {
+            router.replace(LOGIN_URL);
+            return;
+          }
 
           const { data } = await authAxios.get("/accounts/me/");
 
@@ -34,13 +34,13 @@ export function withAuthGuard(WrappedComponent, allowedRoles = []) {
         } finally {
           setTimeout(() => {
             setLoading(false);
-          }, 750)
+          }, 750);
         }
       };
 
       checkAuth();
     }, [router]);
 
-    return <WrappedComponent {...props} user={user} loading={loading}/>;
+    return <WrappedComponent {...props} user={user} loading={loading} />;
   };
 }

@@ -96,6 +96,16 @@ export default function ExamTaking({ role, loading }) {
       )
   );
 
+  // Debug: Log reading mock data
+  useEffect(() => {
+    if (readingMock) {
+      console.log(
+        "📖 READING MOCK DATA:",
+        JSON.stringify(readingMock, null, 2)
+      );
+    }
+  }, [readingMock]);
+
   // Fetch writing mock
   const { data: writingMock, isLoading: writingLoading } = useSWR(
     exam?.writing_mock
@@ -402,7 +412,7 @@ export default function ExamTaking({ role, loading }) {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto flex items-center justify-center mt-24">
+        <div className="flex-1 overflow-y-auto flex items-center justify-center pt-24">
           <div className="w-full max-w-6xl px-6 pb-40">
             <h1 className="text-3xl font-bold mb-2 text-gray-900">
               {exam.title}

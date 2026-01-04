@@ -206,15 +206,39 @@ export default function ExamQuestion({
         }
       });
     } else if (sectionType === "READING" && mock?.passages) {
-      // Reading: flatten questions from passages
+      // Reading: flatten questions from passages and question groups
       mock.passages.forEach((passage, passageIndex) => {
-        if (passage.questions) {
+        if (passage.question_groups) {
+          passage.question_groups.forEach((group, groupIndex) => {
+            if (group.questions) {
+              group.questions.forEach((question) => {
+                questions.push({
+                  ...question,
+                  passageIndex,
+                  passageTitle: passage.title,
+                  passageText: passage.text_content,
+                  passageImage: passage.image,
+                  groupIndex,
+                  groupType: group.group_type,
+                  groupInstruction: group.instruction,
+                  groupImage: group.image,
+                  displayText: group.display_text,
+                  commonOptions: group.common_options,
+                  id:
+                    question.id ||
+                    `q-${passageIndex}-${groupIndex}-${question.question_number}`,
+                });
+              });
+            }
+          });
+        } else if (passage.questions) {
+          // Fallback: direct questions on passage (old structure)
           passage.questions.forEach((question) => {
             questions.push({
               ...question,
               passageIndex,
               passageTitle: passage.title,
-              passageText: passage.text,
+              passageText: passage.text_content,
               passageImage: passage.image,
               id:
                 question.id || `q-${passageIndex}-${question.question_number}`,
@@ -367,28 +391,44 @@ export default function ExamQuestion({
 
   if (!currentQuestion) {
     return (
-      <div className="flex items-center justify-center h-full bg-white p-6">
-        <div className="text-center max-w-md">
-          <p className="text-gray-900 font-semibold mb-2">
-            {intl.formatMessage({
-              id: "No questions available",
-              defaultMessage: "No questions available",
+      <div className="flex flex-col h-full bg-white">
+        <div className="bg-white border-b border-gray-100 px-6 md:px-10 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">{sectionType}</h2>
+          <button
+            onClick={onBackToSections}
+            className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-100 rounded-xl transition text-sm font-semibold text-gray-700"
+            aria-label={intl.formatMessage({
+              id: "Back to sections",
+              defaultMessage: "Back to sections",
             })}
-          </p>
-          <p className="text-gray-600 text-sm mb-4">
-            {intl.formatMessage(
-              {
-                id: "DEBUG: Section {section}, Questions: {count}, Mock: {hasMock}",
-                defaultMessage:
-                  "Section: {section}, Questions: {count}, Has Data: {hasMock}",
-              },
-              {
-                section: sectionType,
-                count: flatQuestions.length,
-                hasMock: !!mock,
-              }
-            )}
-          </p>
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {intl.formatMessage({ id: "Back", defaultMessage: "Back" })}
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center max-w-md">
+            <p className="text-gray-900 font-semibold mb-2">
+              {intl.formatMessage({
+                id: "No questions available",
+                defaultMessage: "No questions available",
+              })}
+            </p>
+            <p className="text-gray-600 text-sm mb-4">
+              {intl.formatMessage(
+                {
+                  id: "DEBUG: Section {section}, Questions: {count}, Mock: {hasMock}",
+                  defaultMessage:
+                    "Section: {section}, Questions: {count}, Has Data: {hasMock}",
+                },
+                {
+                  section: sectionType,
+                  count: flatQuestions.length,
+                  hasMock: !!mock,
+                }
+              )}
+            </p>
+          </div>
         </div>
       </div>
     );
