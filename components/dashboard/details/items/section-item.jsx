@@ -64,12 +64,14 @@ const SectionItem = ({ data }) => {
           <Calendar size={13} className="mr-1" />
           {formatDate(data.created_at)}
         </div>
-        <Link
-          href={`${SECTIONS_CREATE_URL}?section=${currentSectionType}&id=${data?.id}`}
-          className="font-medium text-textSecondary"
-        >
-          <Edit2 size={13} />
-        </Link>
+        {data.status == "DRAFT" && (
+          <Link
+            href={`${SECTIONS_CREATE_URL}?section=${currentSectionType}&id=${data?.id}`}
+            className="font-medium text-textSecondary"
+          >
+            <Edit2 size={13} />
+          </Link>
+        )}
       </div>
     </div>
   );

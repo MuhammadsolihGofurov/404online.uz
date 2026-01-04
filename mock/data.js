@@ -196,7 +196,7 @@ export const QUESTION_TYPES = [
     forSections: [
       {
         title: "reading",
-        part_number: [1],
+        part_number: [1, 2, 3],
       },
     ],
   },

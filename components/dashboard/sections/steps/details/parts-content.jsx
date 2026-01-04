@@ -22,7 +22,6 @@ export default function PartsContent({ sectionType }) {
   const page = findParams("page") || 1;
   const intl = useIntl();
   const { openModal, modalClosed } = useModal();
-  const dispatch = useDispatch();
   const { openOffcanvas, offcanvasClosed } = useOffcanvas();
 
   // Question guruhlarini olish
@@ -37,7 +36,6 @@ export default function PartsContent({ sectionType }) {
           router.locale,
           activePartId,
           page,
-          modalClosed,
           offcanvasClosed,
         ]
       : null,
@@ -56,12 +54,7 @@ export default function PartsContent({ sectionType }) {
 
   const { data: partInfo } = useSWR(
     activePartId
-      ? [
-          `/editor/${sectionType}-${groupValue}/`,
-          router.locale,
-          activePartId,
-          offcanvasClosed,
-        ]
+      ? [`/editor/${sectionType}-${groupValue}/`, router.locale, activePartId]
       : null,
     ([url, locale, iid]) =>
       fetcher(
@@ -76,16 +69,16 @@ export default function PartsContent({ sectionType }) {
       )
   );
 
-  useEffect(() => {
-    dispatch(setPartData(partInfo));
-  }, [activePartId, partInfo]);
+  // useEffect(() => {
+  //   dispatch(setPartData(partInfo));
+  // }, [activePartId]);
 
   const handleModal = () => {
     openOffcanvas("questionGeneratorOffcanvas", {}, "right");
   };
 
   const handlePassageTextModal = () => {
-    openModal("passageTextModal", { id: activePartId }, "big");
+    openModal("passageTextModal", { id: activePartId, partInfo }, "big");
   };
 
   return (

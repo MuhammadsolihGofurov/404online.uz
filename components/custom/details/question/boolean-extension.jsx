@@ -62,7 +62,7 @@ export const BooleanBlock = Node.create({
   draggable: true,
   addAttributes() {
     return {
-      type: { default: "tfng" }, // 'tfng' yoki 'ynng'
+      type: { default: "tfng" },
       title: {
         default:
           "Do the following statements agree with the information given in the Reading Passage?",
@@ -79,16 +79,30 @@ export const BooleanBlock = Node.create({
     ReactNodeViewRenderer(
       ({ node, updateAttributes, deleteNode, editor, getPos }) => {
         const addQuestion = () => {
+          // 1. Ushbu blok ichidagi eng katta raqamni topamiz
+          let maxNumber = 0;
+          node.content.forEach((child) => {
+            const num = parseInt(child.attrs.number);
+            if (!isNaN(num) && num > maxNumber) {
+              maxNumber = num;
+            }
+          });
+
+          // 2. Keyingi raqamni aniqlaymiz (agar bo'sh bo'lsa 1 dan boshlaydi)
+          const nextNumber = (maxNumber > 0 ? maxNumber + 1 : 1).toString();
+
           const pos = getPos();
           const insertPos = pos + node.nodeSize - 1;
+
           editor
             .chain()
             .focus()
             .insertContentAt(insertPos, {
               type: "booleanQuestion",
               attrs: {
-                number: (node.childCount + 1).toString(),
+                number: nextNumber, // <--- Dinamik raqam
                 type: node.attrs.type,
+                answer: "", // Yangi savol bo'sh javob bilan
               },
             })
             .run();
@@ -131,7 +145,7 @@ export const BooleanBlock = Node.create({
               type="button"
               className="mt-4 flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-slate-800 transition-colors"
             >
-              <PlusCircle size={16} /> SAVOL QO'SHISH
+              <PlusCircle size={16} /> Add question
             </button>
           </NodeViewWrapper>
         );

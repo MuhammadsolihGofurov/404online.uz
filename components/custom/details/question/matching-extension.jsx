@@ -24,12 +24,10 @@ const MatchingQuestionComponent = ({ node, updateAttributes, deleteNode }) => {
       <div className="flex items-center gap-2">
         <span className="text-[10px] font-bold text-slate-400">Answer:</span>
         <input
-          className="w-12 h-8 text-center border-2 border-emerald-100 rounded-md font-bold text-emerald-600 uppercase outline-none focus:border-emerald-500 bg-emerald-50/30"
+          className="w-12 h-8 text-center border-2 border-emerald-100 rounded-md font-bold text-emerald-600 outline-none focus:border-emerald-500 bg-emerald-50/30"
           maxLength={5}
           value={node.attrs.answer}
-          onChange={(e) =>
-            updateAttributes({ answer: e.target.value.toUpperCase() })
-          }
+          onChange={(e) => updateAttributes({ answer: e.target.value })}
         />
         <button
           onClick={(e) => {
@@ -56,14 +54,28 @@ const MatchingBlockComponent = ({
 }) => {
   const addQuestion = (e) => {
     e.preventDefault();
+
+    // 1. Mavjud savollarning raqamlarini yig'ib chiqamiz
+    let maxNumber = 0;
+    node.content.forEach((child) => {
+      const num = parseInt(child.attrs.number);
+      if (!isNaN(num) && num > maxNumber) {
+        maxNumber = num;
+      }
+    });
+
+    // 2. Agar savollar bo'lsa max + 1, bo'lmasa 1-raqam
+    const nextNumber = (maxNumber > 0 ? maxNumber + 1 : 1).toString();
+
     const pos = getPos();
     const insertPos = pos + node.nodeSize - 1;
+
     editor
       .chain()
       .focus()
       .insertContentAt(insertPos, {
         type: "matchingQuestion",
-        attrs: { number: (node.childCount + 1).toString() },
+        attrs: { number: nextNumber }, // Yangi hisoblangan raqamni beramiz
       })
       .run();
   };
@@ -110,7 +122,7 @@ const MatchingBlockComponent = ({
         <div className="flex items-center gap-2 mb-2">
           <ListChecks size={14} className="text-slate-400" />
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            Variantlar ro'yxati (A, B, C...)
+            Options (A, B, C...)
           </p>
         </div>
         <textarea
@@ -123,7 +135,7 @@ const MatchingBlockComponent = ({
 
       <div className="space-y-3">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-          Savollar:
+          Questions:
         </p>
         <NodeViewContent className="min-h-[20px] flex flex-col gap-2" />
       </div>
@@ -133,7 +145,7 @@ const MatchingBlockComponent = ({
         onClick={addQuestion}
         className="mt-6 flex items-center gap-2 text-[11px] font-bold text-main bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-all active:scale-95 border border-blue-100"
       >
-        <PlusCircle size={16} /> SAVOL QO'SHISH
+        <PlusCircle size={16} /> Add question
       </button>
     </NodeViewWrapper>
   );

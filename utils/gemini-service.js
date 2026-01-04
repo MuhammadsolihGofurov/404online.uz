@@ -11,7 +11,7 @@ export const scanIELTSWithGemini = async (images, question_type) => {
   try {
     const model = genAI.getGenerativeModel({
       // model: "gemini-3-flash-preview", // Hozircha barqaror versiya tavsiya etiladi
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -56,147 +56,90 @@ export const scanIELTSWithGemini = async (images, question_type) => {
     // Savol turiga qarab promptni shakllantirish
     switch (question_type) {
       case "MCQ":
-        prompt = `Analyze these IELTS MCQ questions from the images. 
-      Return ONLY a raw JSON array of objects.
-      NO markdown, NO code blocks, NO text before or after JSON.
-      
-      Format:
-      [
-        {
-          "question_number": 1,
-          "text": "The text with {{gap_1}}",
-          "options": ["text1", "text2", "text3"],
-          "answer": "A"
-        }
-      ]`;
-        break;
-
-      case "SENTENCE":
-        prompt = `Analyze IELTS Sentence Completion/Table task. 
-        Return ONLY a JSON object:
-        {
-          "full_text": "Text with {{8}} and {{9}} format for gaps",
-          "questions": [
-            { "number": 8, "answer": "correct word" },
-            { "number": 9, "answer": "correct word" }
-          ]
-        }`;
-        break;
-
-      case "tfng":
-        prompt = `Analyze IELTS True/False/Not Given questions.
-        Return ONLY a JSON array:
+        prompt = `Analyze IELTS Multiple Choice Questions.
+        Return ONLY a JSON array of objects:
         [
           {
-            "question_number": 1,
-            "text": "Statement text",
-            "answer": "TRUE" 
-          }
-        ]`;
-        break;
-
-      case "matching":
-        prompt = `Analyze IELTS Matching Information/Heading task.
-        Return ONLY a JSON array:
-        [
-          {
-            "question_number": 1,
-            "text": "Description or Heading",
+            "questionNumber": "1",
+            "title": "Question text here...",
+            "type": "single",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
             "answer": "A"
           }
         ]`;
         break;
 
+      case "COMPLETION":
+      case "SENTENCE":
       case "SHORT_ANSWER":
-        prompt = `Analyze these IELTS Short Answer Questions from the image(s).
-            This can be from a Reading passage or a Listening transcript.
-
-            INSTRUCTIONS:
-            1. Extract the main text (Passage or Transcript).
-            2. Extract each question number, the question text itself, and the correct answer.
-            3. Determine the 'max_words' limit (e.g., NO MORE THAN TWO WORDS).
-
-            Return ONLY a raw JSON object:
-            {
-              "full_text": "The complete passage or transcript text here...",
-              "questions": [
-                {
-                  "number": 1,
-                  "text": "What was the original purpose of the building?",
-                  "answer": "Storage",
-                  "max_words": 2
-                }
-              ]
-            }`;
+      case "SUMMARY":
+      case "TABLE_FLOWCHART":
+        prompt = `Analyze IELTS Gap Fill task (Sentence/Note/Table/Summary Completion).
+        Extract the text and replace gaps with {{number}} placeholders.
+        Return ONLY a JSON object:
+        {
+          "title": "Task Title (if any)",
+          "full_text": "The sentence with {{1}} and {{2}}.",
+          "questions": [
+            { "number": "1", "answer": "word1" },
+            { "number": "2", "answer": "word2" }
+          ]
+        }`;
         break;
 
+      case "TFNG":
+      case "YNNG":
+        const boolType = question_type === "TFNG" ? "tfng" : "ynng";
+        prompt = `Analyze IELTS ${question_type} questions.
+        Return ONLY a JSON object:
+        {
+          "title": "Do the following statements agree with the information...",
+          "type": "${boolType}",
+          "questions": [
+            { "number": "1", "text": "Statement text...", "answer": "TRUE" }
+          ]
+        }`;
+        break;
+
+      case "MATCHING":
       case "MATCH_HEADINGS":
-        prompt = `
-            Analyze IELTS Matching Headings task.
-            1. Extract the text (Passage with paragraph markers like A, B, C...).
-            2. Identify which heading (i, ii, iii, etc.) belongs to which question number.
-            Return ONLY JSON:
-            {
-              "full_text": "Full passage text...",
-              "questions": [
-                { "number": 14, "answer": "v" },
-                { "number": 15, "answer": "i" }
-              ]
-            }
-          `;
-        break;
-
       case "MATCH_INFO":
-        prompt = `
-          Analyze IELTS Matching Information questions.
-          1. Extract the Reading Passage.
-          2. Extract statements and the corresponding paragraph letter (A, B, C, etc.) where they are found.
-          Return ONLY JSON:
-          {
-            "full_text": "Full passage text...",
-            "questions": [
-              { "number": 1, "text": "a description of various types of education", "answer": "C" },
-              { "number": 2, "text": "the effect of environmental factors", "answer": "A" }
-            ]
-          }
-        `;
-        break;
-
+      case "MATCH_FEATURES":
       case "MATCH_ENDINGS":
-        prompt = `
-          Analyze IELTS Matching Sentence Endings task.
-          
-          INSTRUCTIONS:
-          1. Extract the Reading Passage or Listening Transcript.
-          2. Extract the "Sentence Stems" (the beginning parts of sentences with numbers).
-          3. Extract the "List of Endings" (options labeled A, B, C, etc.).
-          4. Match each stem with the correct ending letter based on the context.
+        let matchSubtype = "matching-headings";
+        if (question_type === "MATCH_INFO") matchSubtype = "matching-info";
+        if (question_type === "MATCH_FEATURES")
+          matchSubtype = "matching-features";
 
-          Return ONLY a JSON object:
-          {
-            "full_text": "Full passage text here...",
-            "endings": [
-              "A. description of the first ending",
-              "B. description of the second ending"
-            ],
-            "questions": [
-              { 
-                "number": 1, 
-                "text": "The sentence stem starts like this...", 
-                "answer": "B" 
-              },
-              { 
-                "number": 2, 
-                "text": "Another sentence stem here...", 
-                "answer": "A" 
-              }
-            ]
-          }
-        `;
+        prompt = `Analyze IELTS Matching task.
+        Return ONLY a JSON object:
+        {
+          "title": "Instruction title...",
+          "options": "A. text\\nB. text\\nC. text",
+          "type": "${matchSubtype}",
+          "questions": [
+            { "number": "1", "text": "Question statement or Paragraph letter", "answer": "A" }
+          ]
+        }`;
         break;
+
+      case "DIAGRAM":
+      case "MAP_DIAGRAM":
+        prompt = `Analyze IELTS Diagram/Map Labeling.
+        I will provide an image. Identify the labels and their corresponding question numbers.
+        Return ONLY a JSON object:
+        {
+          "labels": [
+            { "number": "1", "answer": "Reception", "x": 25, "y": 40 },
+            { "number": "2", "answer": "Library", "x": 60, "y": 15 }
+          ]
+        }
+        Note: x and y are approximate percentage coordinates (0-100) on the image.`;
+        break;
+
       default:
         prompt =
-          "Analyze the image and extract IELTS questions in JSON format.";
+          "Extract IELTS questions into a structured JSON format compatible with a rich text editor.";
     }
 
     const result = await model.generateContent([
@@ -228,4 +171,78 @@ export const scanIELTSWithGemini = async (images, question_type) => {
     console.error("Detailed Error:", error);
     throw error;
   }
+};
+
+export const parseGeminiToTiptap = (data, type) => {
+  // 1. Completion / Sentence / Summary / Table
+  if (
+    [
+      "COMPLETION",
+      "SENTENCE",
+      "SHORT_ANSWER",
+      "SUMMARY",
+      "TABLE_FLOWCHART",
+    ].includes(type)
+  ) {
+    let html = data.full_text || "";
+    data.questions.forEach((q) => {
+      const placeholder = `{{${q.number}}}`;
+      const component = `<question-input number="${q.number}" answer="${q.answer}"></question-input>`;
+      html = html.split(placeholder).join(component);
+    });
+
+    if (type === "SUMMARY" || type === "TABLE_FLOWCHART") {
+      return `<div data-type="summary-block" title="${
+        data.title || ""
+      }"><p>${html}</p></div>`;
+    }
+    return `<p>${html}</p>`;
+  }
+
+  // 2. MCQ (Choice Group)
+  if (type === "MCQ") {
+    return data
+      .map((q) => {
+        const optionsJson = JSON.stringify(q.options);
+        return `<div data-type="choice-group" questionNumber="${q.questionNumber}" title="${q.title}" type="${q.type}" answer="${q.answer}">${optionsJson}</div>`;
+      })
+      .join("");
+  }
+
+  // 3. Boolean (TFNG / YNNG)
+  if (["TFNG", "YNNG"].includes(type)) {
+    const questionsHtml = data.questions
+      .map(
+        (q) => `
+      <div data-type="boolean-question" number="${q.number}" answer="${q.answer}" type="${data.type}">
+        ${q.text}
+      </div>
+    `
+      )
+      .join("");
+    return `<div data-type="boolean-block" type="${data.type}" title="${data.title}">${questionsHtml}</div>`;
+  }
+
+  // 4. Matching Blocks
+  if (type.startsWith("MATCH")) {
+    const questionsHtml = data.questions
+      .map(
+        (q) => `
+      <div data-type="matching-question" number="${q.number}" answer="${q.answer}">
+        ${q.text}
+      </div>
+    `
+      )
+      .join("");
+    return `<div data-type="matching-block" type="${data.type}" title="${data.title}" options="${data.options}">${questionsHtml}</div>`;
+  }
+
+  // 5. Diagram Labeling
+  if (type === "DIAGRAM" || type === "MAP_DIAGRAM") {
+    // Diagramda rasm src'ni UI qismida watch qilingan file'dan olamiz
+    const labelsJson = JSON.stringify(data.labels);
+    return `<div data-type="diagram-block" labels='${labelsJson}'></div>`;
+  }
+
+  return "";
 };
