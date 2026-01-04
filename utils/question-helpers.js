@@ -238,24 +238,32 @@ export const transformEditorData = (json) => {
     if (node.type === "choiceGroup") {
       const { questionNumber, title, type } = node.attrs;
       const options = [];
-      let correctOnes = [];
+      let correctIndices = []; // To'g'ri javoblar harflarini yig'ish uchun
 
-      node.content?.forEach((item) => {
+      node.content?.forEach((item, index) => {
         if (item.type === "choiceItem") {
           const text = item.content?.map((c) => c.text).join("") || "";
           options.push(text);
+
           if (item.attrs.isCorrect) {
-            correctOnes.push(text);
+            // Indexni harfga aylantirish (65 - 'A' belgisi)
+            const letter = String.fromCharCode(65 + index);
+            correctIndices.push(letter);
           }
         }
       });
 
+      // Template uchun javobni string ko'rinishiga keltiramiz
+      const finalAnswer =
+        type === "single" ? correctIndices[0] || "" : correctIndices.join(",");
+
       correctAnswers.push({
         number: parseInt(questionNumber),
-        answer: type === "single" ? correctOnes[0] || "" : correctOnes,
+        answer: finalAnswer,
       });
 
-      return `<choice-group number='${questionNumber}' title='${title}' type='${type}'>${JSON.stringify(
+      // Template ichiga answer='...' atributi qo'shildi
+      return `<choice-group number='${questionNumber}' title='${title}' type='${type}' answer='${finalAnswer}'>${JSON.stringify(
         options
       )}</choice-group>`;
     }
@@ -431,4 +439,155 @@ export const transformEditorData = (json) => {
     template: templateHtml,
     correct_answers: correctAnswers.sort((a, b) => a.number - b.number),
   };
+};
+
+/**
+ * Bazadan kelgan maxsus HTMLni Tiptap editori tushunadigan
+ * standart formatga o'giruvchi funksiya.
+ */
+
+export const prepareInitialData = (html) => {
+  if (!html) return "";
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  // 1. Choice Group tahlili
+  doc.querySelectorAll("choice-group").forEach((oldNode) => {
+    const newNode = doc.createElement("div");
+    newNode.setAttribute("data-type", "choice-group");
+
+    // Atributlarni ko'chiramiz
+    const questionNumber = oldNode.getAttribute("number") || "1";
+    const title = oldNode.getAttribute("title") || "";
+    const type = oldNode.getAttribute("type") || "single";
+    const answerAttr = oldNode.getAttribute("answer") || ""; // "A" yoki "A,C" ko'rinishida
+
+    newNode.setAttribute("questionNumber", questionNumber);
+    newNode.setAttribute("title", title);
+    newNode.setAttribute("type", type);
+
+    try {
+      const optionsArray = JSON.parse(oldNode.textContent);
+
+      // To'g'ri javoblarni massivga aylantiramiz (vergul bilan ajratilgan bo'lishi mumkin)
+      const correctLetters = answerAttr.split(",").map((s) => s.trim());
+
+      optionsArray.forEach((text, index) => {
+        const item = doc.createElement("div");
+        item.setAttribute("data-type", "choice-item");
+
+        // Indexni harfga aylantiramiz (0 -> A, 1 -> B...)
+        const currentLetter = String.fromCharCode(65 + index);
+
+        // Agar ushbu harf correctLetters ichida bo'lsa, isCorrect true bo'ladi
+        const isCorrect = correctLetters.includes(currentLetter);
+        item.setAttribute("isCorrect", isCorrect ? "true" : "false");
+
+        item.textContent = text;
+        newNode.appendChild(item);
+      });
+    } catch (e) {
+      console.error("MCQ Options parse error:", e);
+    }
+
+    oldNode.replaceWith(newNode);
+  });
+
+  // 2. Matching Block tahlili
+  doc.querySelectorAll(".matching-container").forEach((el) => {
+    const div = doc.createElement("div");
+    div.setAttribute("data-type", "matching-block");
+    div.setAttribute(
+      "type",
+      el.getAttribute("data-type") || "matching-headings"
+    );
+    div.setAttribute(
+      "title",
+      el.querySelector(".matching-title")?.textContent || ""
+    );
+    div.setAttribute(
+      "options",
+      el.querySelector(".matching-options-box")?.textContent || ""
+    );
+
+    // Savollarni ko'chirish
+    el.querySelectorAll(".matching-question-item").forEach((q) => {
+      const qDiv = doc.createElement("div");
+      qDiv.setAttribute("data-type", "matching-question");
+      qDiv.setAttribute("number", q.querySelector(".q-num")?.textContent || "");
+      qDiv.setAttribute(
+        "answer",
+        q.querySelector("matching-answer-slot")?.getAttribute("answer") || ""
+      );
+      qDiv.innerHTML = q.querySelector(".q-text")?.innerHTML || "";
+      div.appendChild(qDiv);
+    });
+    el.replaceWith(div);
+  });
+
+  // 3. Boolean Block tahlili
+  doc.querySelectorAll(".boolean-container").forEach((el) => {
+    const div = doc.createElement("div");
+    div.setAttribute("data-type", "boolean-block");
+    div.setAttribute("type", el.getAttribute("data-type") || "tfng");
+    div.setAttribute(
+      "title",
+      el.querySelector(".boolean-instruction")?.textContent || ""
+    );
+
+    el.querySelectorAll(".boolean-question-row").forEach((q) => {
+      const qDiv = doc.createElement("div");
+      qDiv.setAttribute("data-type", "boolean-question");
+      qDiv.setAttribute("number", q.querySelector(".q-num")?.textContent || "");
+
+      const slot = q.querySelector("boolean-answer-slot");
+      qDiv.setAttribute("answer", slot?.getAttribute("answer") || "");
+      qDiv.setAttribute("type", slot?.getAttribute("type") || "tfng");
+
+      qDiv.innerHTML = q.querySelector(".q-text")?.innerHTML || "";
+      div.appendChild(qDiv);
+    });
+    el.replaceWith(div);
+  });
+
+  // 4. Diagram Block (Eng muhimi!)
+  doc.querySelectorAll(".diagram-container").forEach((el) => {
+    const div = doc.createElement("div");
+    div.setAttribute("data-type", "diagram-block");
+
+    const img = el.querySelector("img");
+    div.setAttribute("src", img?.getAttribute("src") || "");
+
+    // Markerlarni yig'ish
+    const markers = Array.from(el.querySelectorAll("diagram-marker")).map(
+      (m) => ({
+        number: m.getAttribute("number"),
+        x: parseFloat(m.style.left),
+        y: parseFloat(m.style.top),
+        answer: "", // Buni alohida correctAnswers'dan olish kerak bo'ladi
+      })
+    );
+
+    // MUHIM: Extension [object Object] chiqarmasligi uchun JSON string qilib beramiz
+    div.setAttribute("labels", JSON.stringify(markers));
+    el.replaceWith(div);
+  });
+
+  // 5. Summary Block
+  doc.querySelectorAll(".summary-container").forEach((el) => {
+    const div = doc.createElement("div");
+    div.setAttribute("data-type", "summary-block");
+    div.setAttribute(
+      "title",
+      el.querySelector(".summary-header")?.textContent?.trim() || ""
+    );
+    div.innerHTML = el.querySelector(".summary-body")?.innerHTML || "";
+    el.replaceWith(div);
+  });
+
+  // 6. Question Input (Gap Fill) - O'z holicha qoladi,
+  // chunki extensioningiz "question-input" tegini taniydi
+
+  return doc.body.innerHTML;
 };

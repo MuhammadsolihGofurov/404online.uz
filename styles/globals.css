@@ -140,7 +140,7 @@ tbody {
   min-width: 32px;
 }
 
-.choice-item-label::before {
+/* .choice-item-label::before {
   content: counter(choice-counter, upper-alpha);
   line-height: 1;
-}
+} */

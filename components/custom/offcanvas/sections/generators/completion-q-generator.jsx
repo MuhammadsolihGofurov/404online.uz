@@ -93,7 +93,7 @@ const CompletionQGenerator = forwardRef(
         TableCell,
         QuestionInput,
         Placeholder.configure({
-          placeholder: "IELTS topshiriqlarini yozing...",
+          placeholder: "Write IELTS tasks...",
         }),
         ChoiceGroup,
         ChoiceItem,
@@ -160,6 +160,8 @@ const CompletionQGenerator = forwardRef(
     }, [diagramImage, editor]);
 
     if (!editor) return null;
+
+    
 
     return (
       <div className="w-full border border-slate-200 rounded-xl bg-white shadow-xl overflow-hidden flex flex-col min-h-[700px]">

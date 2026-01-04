@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "@/hooks/useParams";
 import { useOffcanvas } from "@/context/offcanvas-context";
 import { FileInput, Input, RichTextEditor, Select } from "../../details";
@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { filterQuestionTypes, QUESTION_TYPES_WITH_IMAGE } from "@/mock/data";
 import { ButtonSpinner } from "../../loading";
 import { CompletionQGenerator } from "./generators/completion-q-generator";
+import { prepareInitialData } from "@/utils/question-helpers";
 
 export default function QuestionGeneratorOffcanvas({ id, initialData }) {
   const { closeOffcanvas } = useOffcanvas();
@@ -153,6 +154,10 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
     }
   }, [watchedFile]);
 
+  const formattedInitialData = useMemo(() => {
+    return prepareInitialData(initialData?.template);
+  }, [initialData]);
+
   return (
     <form onSubmit={handleSubmit(submitFn)} className="flex flex-col gap-6 p-1">
       <div className="w-full flex flex-col  items-center gap-6 relative z-[15]">
@@ -213,7 +218,7 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
       {currentQuestionType && (
         <CompletionQGenerator
           ref={generatorRef}
-          initialData={initialData?.template}
+          initialData={formattedInitialData}
           diagramImage={imagePreview}
         />
       )}

@@ -17,6 +17,25 @@ const ChoiceItemComponent = ({
 }) => {
   const isCorrect = node.attrs.isCorrect;
 
+  const getLetter = () => {
+    // 1. pos raqam ekanligini tekshiramiz
+    const pos = getPos();
+    if (typeof pos !== "number") return "";
+
+    try {
+      // 2. Pozitsiyani resolve qilamiz
+      const $pos = editor.state.doc.resolve(pos);
+
+      // 3. Node-ning o'z indexini (parent ichidagi tartibini) olamiz
+      // Bu usul ancha xavfsiz va aniq
+      const index = $pos.index($pos.depth);
+
+      return String.fromCharCode(65 + index);
+    } catch (e) {
+      return "";
+    }
+  };
+
   const handleToggle = (e) => {
     e.preventDefault();
     const pos = getPos();
@@ -68,7 +87,10 @@ const ChoiceItemComponent = ({
             ? "bg-emerald-500 text-white border-emerald-600 shadow-md"
             : "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
         }`}
-      />
+      >
+        {/* BU YERDA HARF KO'RINADI */}
+        {getLetter()}
+      </button>
 
       {/* Matn yozish qismi */}
       <NodeViewContent
@@ -98,7 +120,11 @@ export const ChoiceItem = Node.create({
   content: "inline*",
   addAttributes() {
     return {
-      isCorrect: { default: false },
+      isCorrect: {
+        default: false,
+        // Bazadan kelganda stringni boolean qilib olish uchun:
+        parseHTML: (element) => element.getAttribute("isCorrect") === "true",
+      },
     };
   },
   parseHTML() {
