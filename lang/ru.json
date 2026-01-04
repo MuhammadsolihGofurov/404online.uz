@@ -1,3 +1,26 @@
 {
-  "login": "login"
+  "login": "login",
+  "My Groups": "Мои группы",
+  "Assigned Groups": "Назначенные группы",
+  "Materials Created": "Созданные материалы",
+  "Completed Tasks": "Выполненные задания",
+  "Pending Tasks": "Ожидающие задания",
+  "Average Band Score": "Средний балл",
+  "Quick Stats": "Быстрая статистика",
+  "Activity Overview": "Обзор активности",
+  "Active Homeworks": "Активные домашние задания",
+  "Total Submissions": "Всего отправок",
+  "Graded Submissions": "Оцененные отправки",
+  "Students Assisted": "Помощь студентам",
+  "Completed": "Выполнено",
+  "Pending": "В ожидании",
+  "Total Exams": "Всего экзаменов",
+  "Completed Exams": "Завершенные экзамены",
+  "Total Homeworks": "Всего домашних заданий",
+  "Submitted Homeworks": "Отправленные домашние задания",
+  "Pending Reviews": "Ожидающие проверки",
+  "Average Class Score": "Средний балл класса",
+  "Recent Submissions": "Недавние отправки",
+  "Recent Results": "Недавние результаты",
+  "Upcoming Deadlines": "Предстоящие сроки"
 }

@@ -1,3 +1,26 @@
 {
-  "login": "Kirish"
+  "login": "Kirish",
+  "My Groups": "Mening guruhlarim",
+  "Assigned Groups": "Tayinlangan guruhlar",
+  "Materials Created": "Yaratilgan materiallar",
+  "Completed Tasks": "Bajarilgan vazifalar",
+  "Pending Tasks": "Kutilayotgan vazifalar",
+  "Average Band Score": "O'rtacha ball",
+  "Quick Stats": "Tezkor statistika",
+  "Activity Overview": "Faollik sharhi",
+  "Active Homeworks": "Faol uy vazifalari",
+  "Total Submissions": "Jami topshiriqlar",
+  "Graded Submissions": "Baholangan topshiriqlar",
+  "Students Assisted": "Yordam berilgan talabalar",
+  "Completed": "Bajarilgan",
+  "Pending": "Kutilmoqda",
+  "Total Exams": "Jami imtihonlar",
+  "Completed Exams": "Tugatilgan imtihonlar",
+  "Total Homeworks": "Jami uy vazifalari",
+  "Submitted Homeworks": "Topshirilgan uy vazifalari",
+  "Pending Reviews": "Kutilayotgan tekshiruvlar",
+  "Average Class Score": "O'rtacha sinf balli",
+  "Recent Submissions": "So'nggi topshiriqlar",
+  "Recent Results": "So'nggi natijalar",
+  "Upcoming Deadlines": "Yaqinlashib kelayotgan muddatlar"
 }
