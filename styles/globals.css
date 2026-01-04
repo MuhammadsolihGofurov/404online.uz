@@ -90,3 +90,57 @@ tbody {
 .removed__number {
   -moz-appearance: textfield;
 }
+
+.ielts-editor-content .tiptap table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.ielts-editor-content .tiptap table td,
+.ielts-editor-content .tiptap table th {
+  min-width: 1em;
+  border: 1px solid #ced4da;
+  padding: 8px 12px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ielts-editor-content .tiptap table th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f8f9fa;
+}
+
+/* Flow-chart ko'rinishi uchun maxsus klass (ixtiyoriy) */
+.flow-chart-mode table {
+    border: none;
+}
+.flow-chart-mode td {
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.choice-group-container {
+  counter-reset: choice-counter;
+}
+
+.choice-item-wrapper {
+  counter-increment: choice-counter;
+}
+
+.choice-item-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+}
+
+.choice-item-label::before {
+  content: counter(choice-counter, upper-alpha);
+  line-height: 1;
+}

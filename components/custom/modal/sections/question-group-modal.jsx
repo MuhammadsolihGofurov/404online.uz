@@ -30,6 +30,7 @@ export default function QuestionGroupModal({ id, initialData }) {
   const TYPES_WITH_COMMON_OPTIONS = [
     "MATCH_HEADINGS",
     // "MATCH_INFO",
+    "MATCH_ENDINGS",
     "MATCH_FEATURES",
   ];
 
@@ -128,9 +129,9 @@ export default function QuestionGroupModal({ id, initialData }) {
 
       <form
         onSubmit={handleSubmit(submitFn)}
-        className="w-full flex flex-col gap-6"
+        className="w-full flex flex-col  items-center gap-6"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
           {/* Instruction */}
           <div className="col-span-1 md:col-span-2">
             <Input
@@ -207,9 +208,9 @@ export default function QuestionGroupModal({ id, initialData }) {
         <button
           type="submit"
           disabled={reqLoading}
-          className="rounded-xl bg-main flex items-center justify-center gap-1 text-white w-full p-4 font-bold hover:bg-opacity-90 transition-all"
+          className="rounded-xl bg-main flex items-center justify-center gap-1 text-white min-w-[300px] p-4 font-bold hover:bg-opacity-90 transition-all"
         >
-          {reqLoading && <ButtonSpinner />} {id ? "Update text" : "Create text"}
+          {reqLoading && <ButtonSpinner />} {id ? "Update" : "Create"}
         </button>
       </form>
     </div>

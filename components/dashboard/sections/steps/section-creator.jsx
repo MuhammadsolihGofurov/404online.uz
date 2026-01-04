@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 import { useRouter } from "next/router";
@@ -53,6 +54,10 @@ export default function SectionCreator() {
         duration: parseDurationToMinutes(initialData.duration),
       });
     }
+
+    if (!type) {
+      router.push(SECTIONS_URL);
+    }
   }, [initialData, reset]);
 
   const submitFn = async (values) => {
@@ -105,9 +110,7 @@ export default function SectionCreator() {
 
       setTimeout(() => {
         router.push(
-          id
-            ? `${SECTIONS_URL}?section=${type}`
-            : `${SECTIONS_PARTS_URL}?section=${type}&sectionId=${sectionId}`
+          `${SECTIONS_PARTS_URL}?section=${type}&sectionId=${sectionId}`
         );
       }, 500);
     } catch (e) {
@@ -202,13 +205,10 @@ export default function SectionCreator() {
           <button
             type="submit"
             disabled={reqLoading}
-            className="rounded-xl bg-main flex items-center justify-center text-white px-8 py-4 hover:bg-blue-800 transition-all duration-200 w-full sm:w-auto font-semibold"
+            className="rounded-xl bg-main flex items-center gap-1 justify-center text-white px-8 py-4 hover:bg-blue-800 transition-all duration-200 w-full sm:w-auto font-semibold"
           >
-            {reqLoading ? (
-              <ButtonSpinner />
-            ) : (
-              intl.formatMessage({ id: id ? "Update" : "Submit" })
-            )}
+            {reqLoading && <ButtonSpinner />}{" "}
+            {intl.formatMessage({ id: id ? "Update" : "Submit" })}
           </button>
         </div>
       </form>

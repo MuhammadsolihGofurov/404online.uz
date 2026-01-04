@@ -4,6 +4,7 @@ import Pagination from "@/components/custom/pagination";
 import { PartQuestionItem } from "@/components/dashboard/details/items";
 import { PartQuestionGroupItemSkeleton } from "@/components/skeleton";
 import { useModal } from "@/context/modal-context";
+import { useOffcanvas } from "@/context/offcanvas-context";
 import { useParams } from "@/hooks/useParams";
 import { setPartData } from "@/redux/slice/settings";
 import fetcher from "@/utils/fetcher";
@@ -22,6 +23,7 @@ export default function PartsContent({ sectionType }) {
   const intl = useIntl();
   const { openModal, modalClosed } = useModal();
   const dispatch = useDispatch();
+  const { openOffcanvas, offcanvasClosed } = useOffcanvas();
 
   // Question guruhlarini olish
   // Endpoint: /editor/listening-groups/?part=id yoki /editor/reading-groups/?passage=id
@@ -36,6 +38,7 @@ export default function PartsContent({ sectionType }) {
           activePartId,
           page,
           modalClosed,
+          offcanvasClosed,
         ]
       : null,
     ([url, locale, id, p]) =>
@@ -53,7 +56,12 @@ export default function PartsContent({ sectionType }) {
 
   const { data: partInfo } = useSWR(
     activePartId
-      ? [`/editor/${sectionType}-${groupValue}/`, router.locale, activePartId]
+      ? [
+          `/editor/${sectionType}-${groupValue}/`,
+          router.locale,
+          activePartId,
+          offcanvasClosed,
+        ]
       : null,
     ([url, locale, iid]) =>
       fetcher(
@@ -73,7 +81,7 @@ export default function PartsContent({ sectionType }) {
   }, [activePartId, partInfo]);
 
   const handleModal = () => {
-    openModal("questionGroupModal", {}, "big");
+    openOffcanvas("questionGeneratorOffcanvas", {}, "right");
   };
 
   const handlePassageTextModal = () => {
@@ -127,14 +135,15 @@ export default function PartsContent({ sectionType }) {
           {intl.formatMessage({ id: "Please select a part to start editing" })}
         </div>
       ) : isLoading ? (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <PartQuestionGroupItemSkeleton />
           <PartQuestionGroupItemSkeleton />
           <PartQuestionGroupItemSkeleton />
           <PartQuestionGroupItemSkeleton />
         </div>
       ) : groups?.results.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {groups?.results?.map((group) => (
               <PartQuestionItem key={group.id} group={group} />
             ))}

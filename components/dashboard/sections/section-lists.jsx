@@ -20,9 +20,9 @@ export default function SectionLists({ role, loading }) {
 
   const { data: datas, isLoading } = useSWR(
     ["/mocks", router.locale, currentPage, currentMockType, searchTerms],
-    ([url, locale, page]) =>
+    ([url, locale, page, mockType, terms]) =>
       fetcher(
-        `${url}/${currentMockType}?search=${searchTerms}&page=${page}&page_size=8`,
+        `${url}/${mockType}?search=${terms}&page=${page}&page_size=8`,
         {
           headers: {
             "Accept-Language": locale,
