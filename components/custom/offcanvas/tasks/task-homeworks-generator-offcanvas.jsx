@@ -99,15 +99,16 @@ export default function TaskHomeworksGeneratorOffcanvas({ id, initialData }) {
         })),
       };
 
-      const url = "/homeworks/tasks/";
+      const url = "/tasks/homeworks/";
+      let response;
       if (id) {
-        await authAxios.patch(`${url}${id}/`, payload);
+        response = await authAxios.patch(`${url}${id}/`, payload);
       } else {
-        await authAxios.post(url, payload);
+        response = await authAxios.post(url, payload);
       }
 
       toast.success(intl.formatMessage({ id: "Success" }));
-      closeOffcanvas("homeworksModal");
+      closeOffcanvas("taskHomeworksGeneratorOffcanvas", response?.data);
     } catch (e) {
       toast.error("Error submitting homework");
     } finally {

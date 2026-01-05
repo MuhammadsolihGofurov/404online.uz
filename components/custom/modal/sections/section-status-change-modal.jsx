@@ -66,8 +66,8 @@ export default function sectionStatusChangeModal({ id, status, sectionType }) {
       closeModal("sectionStatusChangeModal", response?.data);
     } catch (e) {
       const errorData = e?.response?.data;
-      const errorMsg = errorData?.status
-        ? `Status Error: ${errorData.status[0]}`
+      const errorMsg = errorData?.error
+        ? `Status Error: ${errorData.error[0]}`
         : errorData?.detail || "An error occurred";
 
       toast.error(errorMsg);
@@ -100,8 +100,7 @@ export default function sectionStatusChangeModal({ id, status, sectionType }) {
           disabled={reqLoading}
           className="rounded-xl bg-main flex items-center justify-center gap-1 text-white w-full p-4 font-bold hover:bg-opacity-90 transition-all"
         >
-          {reqLoading && <ButtonSpinner />}{" "}
-          {intl.formatMessage({ id: "Save changes" })}
+          {reqLoading && <ButtonSpinner />} Save changes
         </button>
       </form>
     </div>

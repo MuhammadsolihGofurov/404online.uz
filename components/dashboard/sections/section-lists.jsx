@@ -7,10 +7,12 @@ import { SectionItem, TaskItem } from "../details/items";
 import Pagination from "@/components/custom/pagination";
 import fetcher from "@/utils/fetcher";
 import { SectionSkeleton, TaskItemSkeleton } from "@/components/skeleton";
+import { useModal } from "@/context/modal-context";
 
 export default function SectionLists({ role, loading }) {
   const router = useRouter();
   const intl = useIntl();
+  const { modalClosed } = useModal();
 
   const { findParams } = useParams();
 
@@ -19,7 +21,14 @@ export default function SectionLists({ role, loading }) {
   const searchTerms = findParams("search") || "";
 
   const { data: datas, isLoading } = useSWR(
-    ["/mocks", router.locale, currentPage, currentMockType, searchTerms],
+    [
+      "/mocks",
+      router.locale,
+      currentPage,
+      currentMockType,
+      searchTerms,
+      modalClosed,
+    ],
     ([url, locale, page, mockType, terms]) =>
       fetcher(
         `${url}/${mockType}?search=${terms}&page=${page}&page_size=8`,

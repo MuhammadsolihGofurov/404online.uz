@@ -38,7 +38,11 @@ const SectionItem = ({ data }) => {
   };
 
   const handleChangeStatus = (d) => {
-    openModal("sectionStatusChangeModal", { data: d }, "small");
+    openModal(
+      "sectionStatusChangeModal",
+      { id: d?.id, sectionType: currentSectionType, status: d?.status },
+      "small"
+    );
   };
 
   return (
