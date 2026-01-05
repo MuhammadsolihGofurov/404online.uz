@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { useIntl } from "react-intl";
-import { ChevronLeft, ChevronRight, ArrowLeft, Volume2 } from "lucide-react";
-import { renderTemplate } from "@/utils/templateRenderer";
+import { ArrowLeft } from "lucide-react";
+import TiptapQuestionRenderer from "../tiptap-question-renderer";
 
 export default function DefaultQuestionLayout({
   sectionType,
@@ -17,6 +17,14 @@ export default function DefaultQuestionLayout({
   onNext,
 }) {
   const intl = useIntl();
+  const editorRef = useRef(null);
+
+  // Focus first question when group changes
+  useEffect(() => {
+    if (currentGroup?.questionNumbers?.[0] && editorRef.current) {
+      editorRef.current.focusQuestion(currentGroup.questionNumbers[0]);
+    }
+  }, [currentQuestionIndex, currentGroup?.questionNumbers]);
 
   // Calculate total question count (we no longer receive it as prop)
   const totalQuestions = currentGroup?.questionNumbers?.length || 0;
@@ -110,9 +118,13 @@ export default function DefaultQuestionLayout({
 
           <div className="mb-5">
             <div className="prose prose-base max-w-none text-gray-900 leading-relaxed">
-              {/* Render template with React components */}
               {currentGroup?.template ? (
-                renderTemplate(currentGroup.template, answers, onAnswerChange)
+                <TiptapQuestionRenderer
+                  ref={editorRef}
+                  content={currentGroup.template}
+                  answers={answers}
+                  onAnswerChange={onAnswerChange}
+                />
               ) : (
                 <p className="text-gray-400 italic">
                   {intl.formatMessage({

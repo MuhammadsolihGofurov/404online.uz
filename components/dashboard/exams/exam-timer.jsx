@@ -42,25 +42,21 @@ export default function ExamTimer({
   const isLowTime = timeLeft < 600; // Less than 10 minutes
 
   return (
-    <div
-      className={`fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-6 py-4 border-b ${
-        isLowTime ? "bg-red-50 border-red-200" : "bg-white border-gray-200"
-      }`}
-    >
+    <>
       <div className="flex items-center gap-3">
         <div
-          className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
             isLowTime ? "bg-red-100" : "bg-blue-100"
           }`}
         >
           {isLowTime ? (
             <AlertTriangle
-              size={24}
+              size={20}
               className={isLowTime ? "text-red-600" : "text-blue-600"}
             />
           ) : (
             <Clock
-              size={24}
+              size={20}
               className={isLowTime ? "text-red-600" : "text-blue-600"}
             />
           )}
@@ -73,7 +69,7 @@ export default function ExamTimer({
             })}
           </p>
           <p
-            className={`text-2xl font-bold font-mono ${
+            className={`text-lg font-bold font-mono ${
               isLowTime ? "text-red-600" : "text-gray-900"
             }`}
           >
@@ -91,6 +87,6 @@ export default function ExamTimer({
           })}
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import React from "react";
 import { useIntl } from "react-intl";
 import useSWR from "swr";
 import { HomeworkItem } from "@/components/dashboard/details/items";
+import EmptyState from "@/components/dashboard/empty-state";
 import Pagination from "@/components/custom/pagination";
 import fetcher from "@/utils/fetcher";
 import { TaskItemSkeleton } from "@/components/skeleton";
@@ -45,20 +46,20 @@ export default function HomeworkList({ role, loading }) {
   return (
     <>
       <div className="bg-white rounded-2xl p-5 sm:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {datas?.results?.length > 0 ? (
-            datas?.results?.map((item) => (
+        {datas?.results?.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {datas?.results?.map((item) => (
               <HomeworkItem item={item} key={item?.id} role={role} />
-            ))
-          ) : (
-            <p className="text-sm text-center col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-textSecondary">
-              {intl.formatMessage({ id: "There isn't anything" })}
-            </p>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState type="homeworks" />
+        )}
       </div>
 
-      <Pagination count={datas?.count} pageSize={12} />
+      {datas?.results?.length > 0 && (
+        <Pagination count={datas?.count} pageSize={12} />
+      )}
     </>
   );
 }

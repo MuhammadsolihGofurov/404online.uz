@@ -112,7 +112,7 @@ const menuItems = [
     title: "Exams",
     href: EXAMS_URL,
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 12L11 14L15 10M20.618 5.984C20.853 6.444 21 6.964 21 7.516V16.485C21 17.037 20.853 17.556 20.618 18.016M20.618 5.984C20.155 5.048 19.181 4.418 18.063 4.418H5.937C4.819 4.418 3.845 5.048 3.382 5.984M20.618 5.984L16.5 9M3.382 5.984C3.147 6.444 3 6.964 3 7.516V16.485C3 17.037 3.147 17.556 3.382 18.016M3.382 5.984L7.5 9M3.382 18.016C3.845 18.952 4.819 19.582 5.937 19.582H18.063C19.181 19.582 20.155 18.952 20.618 18.016M3.382 18.016L9 14M20.618 18.016L15 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 3V21H21M7 16V10M12 16V6M17 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         `,
     roles: ["STUDENT", "CENTER_ADMIN", "TEACHER", "ASSISTANT"],

@@ -4,6 +4,7 @@ import React from "react";
 import { useIntl } from "react-intl";
 import useSWR from "swr";
 import { ExamItem } from "@/components/dashboard/details/items";
+import EmptyState from "@/components/dashboard/empty-state";
 import Pagination from "@/components/custom/pagination";
 import fetcher from "@/utils/fetcher";
 import { TaskItemSkeleton } from "@/components/skeleton";
@@ -19,7 +20,7 @@ export default function ExamList({ role, loading }) {
     ["/tasks/exams/", router.locale, currentPage],
     ([url, locale, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=12`,
+        `${url}?page=${page}&page_size=9`,
         {
           headers: {
             "Accept-Language": locale,
@@ -33,8 +34,8 @@ export default function ExamList({ role, loading }) {
   if (loading || isLoading) {
     return (
       <div className="bg-white rounded-2xl p-5 sm:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {Array.from({ length: 12 }).map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 9 }).map((_, i) => (
             <TaskItemSkeleton key={i} />
           ))}
         </div>
@@ -45,20 +46,20 @@ export default function ExamList({ role, loading }) {
   return (
     <>
       <div className="bg-white rounded-2xl p-5 sm:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {datas?.results?.length > 0 ? (
-            datas?.results?.map((item) => (
+        {datas?.results?.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {datas?.results?.map((item) => (
               <ExamItem item={item} key={item?.id} role={role} />
-            ))
-          ) : (
-            <p className="text-sm text-center col-span-1 sm:col-span-2 lg:grid-cols-3 xl:col-span-4 text-textSecondary">
-              {intl.formatMessage({ id: "There isn't anything" })}
-            </p>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState type="exams" />
+        )}
       </div>
 
-      <Pagination count={datas?.count} pageSize={12} />
+      {datas?.results?.length > 0 && (
+        <Pagination count={datas?.count} pageSize={9} />
+      )}
     </>
   );
 }

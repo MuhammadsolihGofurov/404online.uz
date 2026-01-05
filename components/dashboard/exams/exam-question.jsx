@@ -3,10 +3,7 @@ import { useIntl } from "react-intl";
 import { ChevronLeft, ChevronRight, ArrowLeft, Volume2 } from "lucide-react";
 import { Input, Select } from "@/components/custom/details";
 import { ANSWER_PANEL, SECTION_TYPES } from "@/utils/examConstants";
-import {
-  renderTemplate,
-  extractQuestionNumbers,
-} from "@/utils/templateRenderer";
+import { extractQuestionNumbers } from "@/utils/templateRenderer";
 import ListeningQuestionLayout from "./layouts/ListeningQuestionLayout";
 import DefaultQuestionLayout from "./layouts/DefaultQuestionLayout";
 
@@ -20,13 +17,28 @@ export default function ExamQuestion({
   onPrevious,
   onSelectQuestion,
   onBackToSections,
+  onPartSummariesChange,
+  onPartChange,
+  isPractice,
+  activePartIndex: externalActivePartIndex,
+  onQuestionIndexMapChange,
+  onCurrentQuestionNumberChange,
+  focusQuestionNumber,
 }) {
   const intl = useIntl();
   const splitRef = useRef(null);
   const [answerWidth, setAnswerWidth] = useState(ANSWER_PANEL.DEFAULT_WIDTH);
   const answerMinWidth = ANSWER_PANEL.MIN_WIDTH;
   const answerMaxWidth = ANSWER_PANEL.MAX_WIDTH;
-  const [activePartIndex, setActivePartIndex] = useState(0);
+  const [activePartIndex, setActivePartIndex] = useState(
+    externalActivePartIndex ?? 0
+  );
+
+  useEffect(() => {
+    if (typeof externalActivePartIndex === "number") {
+      setActivePartIndex(externalActivePartIndex);
+    }
+  }, [externalActivePartIndex]);
 
   // Flatten question_groups instead of individual questions
   // Each group now has a template with multiple questions embedded
@@ -101,6 +113,33 @@ export default function ExamQuestion({
     return flatQuestionGroups.flatMap((group) => group.questionNumbers || []);
   }, [flatQuestionGroups]);
 
+  const questionNumberToIndex = useMemo(() => {
+    const map = {};
+    flatQuestionGroups.forEach((group, idx) => {
+      (group.questionNumbers || []).forEach((num) => {
+        if (map[num] === undefined) {
+          map[num] = idx;
+        }
+      });
+    });
+    return map;
+  }, [flatQuestionGroups]);
+
+  const currentQuestionNumber =
+    (currentGroup?.questionNumbers || [])[0] || null;
+
+  useEffect(() => {
+    if (onQuestionIndexMapChange) {
+      onQuestionIndexMapChange(questionNumberToIndex);
+    }
+  }, [questionNumberToIndex, onQuestionIndexMapChange]);
+
+  useEffect(() => {
+    if (onCurrentQuestionNumberChange) {
+      onCurrentQuestionNumberChange(currentQuestionNumber);
+    }
+  }, [currentQuestionNumber, onCurrentQuestionNumberChange]);
+
   const totalQuestions = allQuestionNumbers.length;
 
   useEffect(() => {
@@ -158,10 +197,12 @@ export default function ExamQuestion({
       );
 
       // Count total questions and answered questions in this part
-      const allQuestionNumbers = groupsForPart.flatMap(
-        (g) => g.questionNumbers || []
-      );
-      const answeredCount = allQuestionNumbers.filter(
+      const questionNumbers = Array.from(
+        new Set(
+          groupsForPart.flatMap((g) => g.questionNumbers || []).filter(Boolean)
+        )
+      ).sort((a, b) => a - b);
+      const answeredCount = questionNumbers.filter(
         (num) => answers[num]
       ).length;
 
@@ -174,9 +215,15 @@ export default function ExamQuestion({
           intl.formatMessage({ id: "Part", defaultMessage: "Part" }) +
             " " +
             (part.part_number || partIndex + 1),
-        questionCount: allQuestionNumbers.length,
+        questionCount: questionNumbers.length,
         startIndex: firstIndex >= 0 ? firstIndex : null,
         answered: answeredCount,
+        firstQuestion: questionNumbers[0] ?? null,
+        lastQuestion:
+          questionNumbers.length > 0
+            ? questionNumbers[questionNumbers.length - 1]
+            : null,
+        questionNumbers,
       };
     });
   }, [sectionType, mock?.parts, flatQuestionGroups, answers, intl]);
@@ -188,7 +235,17 @@ export default function ExamQuestion({
 
   const handlePartChange = (nextPartIndex) => {
     setActivePartIndex(nextPartIndex);
+    if (onPartChange) {
+      onPartChange(nextPartIndex);
+    }
   };
+
+  // Send partSummaries to parent component for footer
+  useEffect(() => {
+    if (onPartSummariesChange) {
+      onPartSummariesChange(partSummaries, activePartIndex);
+    }
+  }, [partSummaries, activePartIndex, onPartSummariesChange]);
 
   const handleQuestionJump = (index) => {
     if (onSelectQuestion) {
@@ -249,6 +306,8 @@ export default function ExamQuestion({
         onPrevious={onPrevious}
         onNext={onNext}
         mock={mock}
+        isPractice={isPractice}
+        focusQuestionNumber={focusQuestionNumber}
       />
     );
   }

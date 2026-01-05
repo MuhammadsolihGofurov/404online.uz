@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useIntl } from "react-intl";
 import { useRouter } from "next/router";
 import useSWR from "swr";
@@ -7,12 +7,16 @@ import { SECTION_TYPES } from "@/utils/examConstants";
 import ExamTimer from "./exam-timer";
 import ExamSectionCard from "./exam-section-card";
 import ExamQuestion from "./exam-question";
-import { AlertCircle, Loader } from "lucide-react";
+import ListeningFooter from "./listening-footer";
+import { AlertCircle, Loader, Maximize } from "lucide-react";
 
-export default function ExamTaking({ role, loading }) {
+export default function ExamTaking({ role, loading, taskType, taskId }) {
   const router = useRouter();
   const intl = useIntl();
-  const { id } = router.query;
+
+  // Use taskId if provided (from generic task page), otherwise use id from router
+  const examId = taskId || router.query.id;
+  const type = taskType || "exams"; // Default to exams
 
   // State
   const [examStarted, setExamStarted] = useState(false);
@@ -21,6 +25,35 @@ export default function ExamTaking({ role, loading }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [startError, setStartError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [partSummaries, setPartSummaries] = useState([]);
+  const [activePartIndex, setActivePartIndex] = useState(0);
+  const [questionIndexMap, setQuestionIndexMap] = useState({});
+  const [currentQuestionNumber, setCurrentQuestionNumber] = useState(null);
+  const [focusQuestionNumber, setFocusQuestionNumber] = useState(null);
+
+  const handleFullscreen = () => {
+    const elem = document.documentElement;
+    if (!isFullscreen) {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  };
 
   const parseDurationToMinutes = (value) => {
     if (!value && value !== 0) return null;
@@ -47,13 +80,13 @@ export default function ExamTaking({ role, loading }) {
     return null;
   };
 
-  // Fetch exam details
+  // Fetch exam/task details based on type
   const {
     data: exam,
     isLoading: examLoading,
     error: examError,
   } = useSWR(
-    id ? [`/tasks/exams/${id}/`, router.locale] : null,
+    examId ? [`/tasks/${type}/${examId}/`, router.locale] : null,
     ([url, locale]) =>
       fetcher(
         url,
@@ -113,59 +146,23 @@ export default function ExamTaking({ role, loading }) {
       )
   );
 
-  // Open exam room on mount
+  // Set exam started on mount without API call
   useEffect(() => {
-    if (id && !examStarted && exam) {
-      openExamRoom();
+    if (examId && !examStarted && exam) {
+      // Only set started when a section is selected (moved to handleSectionChange)
     }
-  }, [id, exam]);
+  }, [examId, exam]);
 
-  const openExamRoom = async () => {
-    try {
-      setStartError(null);
-      const response = await fetcher(
-        `/tasks/exams/${id}/open-room/`,
-        {
-          method: "POST",
-          body: JSON.stringify({}),
-        },
-        {},
-        true
-      );
-
-      if (response) {
-        setExamStarted(true);
-      }
-    } catch (error) {
-      const errorMsg =
-        error?.message ||
-        intl.formatMessage({
-          id: "Failed to start exam",
-          defaultMessage: "Failed to start exam",
-        });
-
-      console.error("Error opening exam room:", errorMsg);
-
-      // If already open, continue anyway
-      if (errorMsg.includes("already") || errorMsg.includes("open")) {
-        setExamStarted(true);
-        return;
-      }
-
-      setStartError(errorMsg);
-    }
-  };
-
-  const handleTimeUp = () => {
+  const handleTimeUp = useCallback(() => {
     handleSubmitExam();
-  };
+  }, []);
 
-  const handleAnswerChange = (questionId, answer) => {
+  const handleAnswerChange = useCallback((questionId, answer) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: answer,
     }));
-  };
+  }, []);
 
   const handleNextQuestion = () => {
     const currentMock = getMockForSection(selectedSection);
@@ -193,6 +190,7 @@ export default function ExamTaking({ role, loading }) {
   const handleSectionChange = (section) => {
     setSelectedSection(section);
     setCurrentQuestionIndex(0); // Reset to first question
+    setExamStarted(true); // Start timer when section is selected
   };
 
   const handleBackToSections = () => {
@@ -204,7 +202,7 @@ export default function ExamTaking({ role, loading }) {
     try {
       // Submit all answers to backend
       const submissionData = {
-        exam_task_id: id,
+        exam_task_id: examId,
         answers: answers,
       };
 
@@ -219,7 +217,7 @@ export default function ExamTaking({ role, loading }) {
       );
 
       if (response) {
-        router.push(`/dashboard/exams/${id}/results`);
+        router.push(`/dashboard/${type}/${examId}/results`);
       }
     } catch (error) {
       setStartError(
@@ -241,6 +239,46 @@ export default function ExamTaking({ role, loading }) {
     if (section === SECTION_TYPES.WRITING) return writingMock;
     return null;
   };
+
+  const handlePartSummariesChange = (summaries, activeIdx) => {
+    setPartSummaries(summaries);
+    setActivePartIndex(activeIdx);
+  };
+
+  const handlePartChangeFromFooter = (nextPartIndex) => {
+    setActivePartIndex(nextPartIndex);
+    const targetPart = partSummaries.find(
+      (summary) => summary.partIndex === nextPartIndex
+    );
+
+    if (
+      targetPart &&
+      targetPart.startIndex !== null &&
+      targetPart.startIndex !== undefined
+    ) {
+      setCurrentQuestionIndex(targetPart.startIndex);
+    }
+  };
+
+  const handleStepPart = (direction) => {
+    const targetIndex = Math.min(
+      partSummaries.length - 1,
+      Math.max(0, activePartIndex + direction)
+    );
+
+    handlePartChangeFromFooter(targetIndex);
+  };
+
+  const handleQuestionSelectFromFooter = useCallback(
+    (targetIndex, partIndex, questionNumber) => {
+      setCurrentQuestionIndex(targetIndex);
+      setActivePartIndex(partIndex);
+      setFocusQuestionNumber(questionNumber);
+      // Reset focus question number after a short delay
+      setTimeout(() => setFocusQuestionNumber(null), 500);
+    },
+    []
+  );
 
   const getTotalQuestionsCount = (mock) => {
     if (!mock) return 0;
@@ -402,8 +440,6 @@ export default function ExamTaking({ role, loading }) {
   if (!selectedSection) {
     return (
       <div className="h-screen bg-gray-50 flex flex-col">
-        <ExamTimer duration={examDurationMinutes} onTimeUp={handleTimeUp} />
-
         {startError && (
           <div className="bg-red-50 border-b border-red-200 px-6 py-3 text-red-700 text-sm">
             {startError}
@@ -496,8 +532,50 @@ export default function ExamTaking({ role, loading }) {
   }
 
   return (
-    <div className="h-screen bg-gray-100 overflow-hidden flex flex-col">
-      <ExamTimer duration={examDurationMinutes} onTimeUp={handleTimeUp} />
+    <div className="h-screen bg-gray-100 overflow-auto flex flex-col">
+      {/* Custom Header with Title, Timer, and Fullscreen Button */}
+      {examStarted && selectedSection && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 md:px-6 py-4">
+          <div className="flex justify-between">
+            <div className="text-center leading-tight">
+              <h2 className="text-lg font-bold text-gray-900">
+                {selectedSection === SECTION_TYPES.LISTENING && "Listening"}
+                {selectedSection === SECTION_TYPES.READING && "Reading"}
+                {selectedSection === SECTION_TYPES.WRITING && "Writing"}
+              </h2>
+              <p className="text-xs text-gray-500">
+                {intl.formatMessage({
+                  id: "Section",
+                  defaultMessage: "Section",
+                })}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <ExamTimer
+                duration={
+                  selectedSection === SECTION_TYPES.LISTENING
+                    ? listeningDuration
+                    : selectedSection === SECTION_TYPES.READING
+                    ? readingDuration
+                    : writingDuration
+                }
+                onTimeUp={handleTimeUp}
+              />
+            </div>
+            <button
+              onClick={handleFullscreen}
+              className="p-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
+              title={intl.formatMessage({
+                id: "Toggle Fullscreen",
+                defaultMessage: "Toggle Fullscreen",
+              })}
+            >
+              <Maximize size={20} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {startError && (
         <div className="bg-red-50 border-b border-red-200 px-6 py-3 text-red-700 text-sm">
@@ -505,7 +583,7 @@ export default function ExamTaking({ role, loading }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-hidden flex flex-col mt-10 mb-32 px-4 md:px-8">
+      <div className={`flex-1 flex flex-col px-3 md:px-6 pb-48`}>
         <ExamQuestion
           mock={currentMock}
           sectionType={selectedSection}
@@ -516,8 +594,36 @@ export default function ExamTaking({ role, loading }) {
           onPrevious={handlePreviousQuestion}
           onSelectQuestion={handleSelectQuestion}
           onBackToSections={handleBackToSections}
+          onPartSummariesChange={handlePartSummariesChange}
+          onPartChange={handlePartChangeFromFooter}
+          isPractice={type === "mocks"}
+          activePartIndex={activePartIndex}
+          onQuestionIndexMapChange={setQuestionIndexMap}
+          onCurrentQuestionNumberChange={setCurrentQuestionNumber}
+          focusQuestionNumber={focusQuestionNumber}
         />
       </div>
+
+      {/* Part Switcher Footer - only for Listening with multiple parts */}
+      {examStarted &&
+        selectedSection === SECTION_TYPES.LISTENING &&
+        partSummaries.length > 0 && (
+          <ListeningFooter
+            partSummaries={partSummaries}
+            activePartIndex={activePartIndex}
+            currentQuestionNumber={currentQuestionNumber}
+            answers={answers}
+            questionIndexMap={questionIndexMap}
+            onPartChange={handlePartChangeFromFooter}
+            onStepPart={handleStepPart}
+            onQuestionSelect={handleQuestionSelectFromFooter}
+          />
+        )}
+
+      {/* Add padding when footer is visible to avoid overlap */}
+      {examStarted &&
+        selectedSection === SECTION_TYPES.LISTENING &&
+        partSummaries.length > 0 && <div className="h-20" />}
     </div>
   );
 }
