@@ -1,15 +1,16 @@
 import React from "react";
 import { useIntl } from "react-intl";
 import { ChevronLeft, ChevronRight, ArrowLeft, Volume2 } from "lucide-react";
+import { renderTemplate } from "@/utils/templateRenderer";
 
 export default function ListeningQuestionLayout({
-  currentQuestion,
+  currentGroup,
   currentQuestionIndex,
-  totalQuestions,
   partSummaries,
   activePartIndex,
-  questionsInActivePart,
-  renderQuestionTextWithInlineAnswers,
+  groupsInActivePart,
+  answers,
+  onAnswerChange,
   onBackToSections,
   handlePartChange,
   onPrevious,
@@ -17,6 +18,12 @@ export default function ListeningQuestionLayout({
   mock,
 }) {
   const intl = useIntl();
+
+  // Calculate total questions across all groups
+  const totalQuestions = partSummaries.reduce(
+    (sum, part) => sum + part.questionCount,
+    0
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -28,21 +35,21 @@ export default function ListeningQuestionLayout({
                 <h2 className="text-xl font-bold text-gray-900">
                   {intl.formatMessage(
                     {
-                      id: "Listening question {num} of {total}",
-                      defaultMessage: "Listening question {num} of {total}",
+                      id: "Listening - Group {num}",
+                      defaultMessage: "Listening - Group {num}",
                     },
-                    { num: currentQuestionIndex + 1, total: totalQuestions }
+                    { num: currentQuestionIndex + 1 }
                   )}
                 </h2>
-                {currentQuestion.groupType && (
+                {currentGroup?.groupType && (
                   <span className="px-3 py-1.5 text-xs font-semibold rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                    {currentQuestion.groupType}
+                    {currentGroup.groupType}
                   </span>
                 )}
               </div>
-              {currentQuestion.groupInstruction && (
+              {currentGroup?.groupInstruction && (
                 <p className="text-sm text-blue-700 mt-2 bg-blue-50 inline-block px-3 py-1.5 rounded-xl border border-blue-100">
-                  {currentQuestion.groupInstruction}
+                  {currentGroup.groupInstruction}
                 </p>
               )}
             </div>
@@ -102,17 +109,17 @@ export default function ListeningQuestionLayout({
           <audio
             controls
             className="flex-1 h-10"
-            src={currentQuestion.audio_file || mock?.audio_file}
+            src={currentGroup?.audio_file || mock?.audio_file}
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto bg-white px-6 md:px-10 py-8">
         <div className="max-w-6xl mx-auto">
-          {currentQuestion.groupImage && (
+          {currentGroup?.groupImage && (
             <div className="mb-6">
               <img
-                src={currentQuestion.groupImage}
+                src={currentGroup.groupImage}
                 alt="Question Group"
                 className="max-w-full h-auto rounded-lg"
               />
@@ -120,11 +127,17 @@ export default function ListeningQuestionLayout({
           )}
 
           <div className="prose prose-lg max-w-none text-gray-900 leading-relaxed">
-            {questionsInActivePart.map((question, idx) => (
-              <p key={question.id} className="mb-5 text-base">
-                {renderQuestionTextWithInlineAnswers(question)}
+            {/* Render template with React components */}
+            {currentGroup?.template ? (
+              renderTemplate(currentGroup.template, answers, onAnswerChange)
+            ) : (
+              <p className="text-gray-400 italic">
+                {intl.formatMessage({
+                  id: "No template available for this group",
+                  defaultMessage: "No template available for this group",
+                })}
               </p>
-            ))}
+            )}
           </div>
         </div>
       </div>

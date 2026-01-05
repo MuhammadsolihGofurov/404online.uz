@@ -3,6 +3,7 @@ import { useIntl } from "react-intl";
 import { useRouter } from "next/router";
 import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
+import { SECTION_TYPES } from "@/utils/examConstants";
 import ExamTimer from "./exam-timer";
 import ExamSectionCard from "./exam-section-card";
 import ExamQuestion from "./exam-question";
@@ -95,16 +96,6 @@ export default function ExamTaking({ role, loading }) {
         true
       )
   );
-
-  // Debug: Log reading mock data
-  useEffect(() => {
-    if (readingMock) {
-      console.log(
-        "📖 READING MOCK DATA:",
-        JSON.stringify(readingMock, null, 2)
-      );
-    }
-  }, [readingMock]);
 
   // Fetch writing mock
   const { data: writingMock, isLoading: writingLoading } = useSWR(
@@ -245,9 +236,9 @@ export default function ExamTaking({ role, loading }) {
   };
 
   const getMockForSection = (section) => {
-    if (section === "LISTENING") return listeningMock;
-    if (section === "READING") return readingMock;
-    if (section === "WRITING") return writingMock;
+    if (section === SECTION_TYPES.LISTENING) return listeningMock;
+    if (section === SECTION_TYPES.READING) return readingMock;
+    if (section === SECTION_TYPES.WRITING) return writingMock;
     return null;
   };
 
@@ -255,23 +246,28 @@ export default function ExamTaking({ role, loading }) {
     if (!mock) return 0;
 
     if (mock.parts) {
-      // Listening: count questions across all parts
+      // Listening: extract question numbers from templates in question_groups
       return mock.parts.reduce((total, part) => {
         const partQuestions =
-          part.question_groups?.reduce(
-            (count, group) => count + (group.questions?.length || 0),
-            0
-          ) || 0;
+          part.question_groups?.reduce((count, group) => {
+            // Count questions by parsing template or using questions array length
+            const questionCount = group.questions?.length || 0;
+            return count + questionCount;
+          }, 0) || 0;
         return total + partQuestions;
       }, 0);
     }
 
     if (mock.passages) {
-      // Reading: count questions across all passages
-      return mock.passages.reduce(
-        (total, passage) => total + (passage.questions?.length || 0),
-        0
-      );
+      // Reading: extract question numbers from templates in question_groups
+      return mock.passages.reduce((total, passage) => {
+        const passageQuestions =
+          passage.question_groups?.reduce((count, group) => {
+            const questionCount = group.questions?.length || 0;
+            return count + questionCount;
+          }, 0) || 0;
+        return total + passageQuestions;
+      }, 0);
     }
 
     if (mock.tasks) {
@@ -288,31 +284,33 @@ export default function ExamTaking({ role, loading }) {
     const readingTotal = getTotalQuestionsCount(readingMock);
     const writingTotal = getTotalQuestionsCount(writingMock);
 
-    // Count answered questions per section based on flattened structure
+    // Count answered questions per section using question numbers
     const getAnsweredCount = (mock, sectionType) => {
       if (!mock) return 0;
       let count = 0;
 
-      if (sectionType === "LISTENING" && mock.parts) {
+      if (sectionType === SECTION_TYPES.LISTENING && mock.parts) {
         mock.parts.forEach((part) => {
           part.question_groups?.forEach((group) => {
             group.questions?.forEach((question) => {
-              const qId = question.id || `q-${question.question_number}`;
-              if (answers[qId]) count++;
+              // Check by question_number instead of question.id
+              if (answers[question.question_number]) count++;
             });
           });
         });
-      } else if (sectionType === "READING" && mock.passages) {
+      } else if (sectionType === SECTION_TYPES.READING && mock.passages) {
         mock.passages.forEach((passage) => {
-          passage.questions?.forEach((question) => {
-            const qId = question.id || `q-${question.question_number}`;
-            if (answers[qId]) count++;
+          passage.question_groups?.forEach((group) => {
+            group.questions?.forEach((question) => {
+              // Check by question_number instead of question.id
+              if (answers[question.question_number]) count++;
+            });
           });
         });
-      } else if (sectionType === "WRITING" && mock.tasks) {
-        mock.tasks.forEach((task, index) => {
-          const qId = task.id || `writing-${index}`;
-          if (answers[qId]) count++;
+      } else if (sectionType === SECTION_TYPES.WRITING && mock.tasks) {
+        mock.tasks.forEach((task) => {
+          // For writing, check by task_number
+          if (answers[task.task_number]) count++;
         });
       }
 
@@ -321,15 +319,15 @@ export default function ExamTaking({ role, loading }) {
 
     return {
       LISTENING: {
-        answered: getAnsweredCount(listeningMock, "LISTENING"),
+        answered: getAnsweredCount(listeningMock, SECTION_TYPES.LISTENING),
         total: listeningTotal,
       },
       READING: {
-        answered: getAnsweredCount(readingMock, "READING"),
+        answered: getAnsweredCount(readingMock, SECTION_TYPES.READING),
         total: readingTotal,
       },
       WRITING: {
-        answered: getAnsweredCount(writingMock, "WRITING"),
+        answered: getAnsweredCount(writingMock, SECTION_TYPES.WRITING),
         total: writingTotal,
       },
     };
@@ -339,9 +337,9 @@ export default function ExamTaking({ role, loading }) {
     loading ||
     examLoading ||
     (selectedSection &&
-      ((selectedSection === "LISTENING" && listeningLoading) ||
-        (selectedSection === "READING" && readingLoading) ||
-        (selectedSection === "WRITING" && writingLoading)));
+      ((selectedSection === SECTION_TYPES.LISTENING && listeningLoading) ||
+        (selectedSection === SECTION_TYPES.READING && readingLoading) ||
+        (selectedSection === SECTION_TYPES.WRITING && writingLoading)));
 
   if (isLoading) {
     return (
@@ -426,7 +424,7 @@ export default function ExamTaking({ role, loading }) {
                   duration={listeningDuration}
                   answered={progress.LISTENING.answered}
                   total={progress.LISTENING.total}
-                  onClick={() => handleSectionChange("LISTENING")}
+                  onClick={() => handleSectionChange(SECTION_TYPES.LISTENING)}
                   isLoading={listeningLoading}
                 />
               )}
@@ -437,7 +435,7 @@ export default function ExamTaking({ role, loading }) {
                   duration={readingDuration}
                   answered={progress.READING.answered}
                   total={progress.READING.total}
-                  onClick={() => handleSectionChange("READING")}
+                  onClick={() => handleSectionChange(SECTION_TYPES.READING)}
                   isLoading={readingLoading}
                 />
               )}
@@ -448,7 +446,7 @@ export default function ExamTaking({ role, loading }) {
                   duration={writingDuration}
                   answered={progress.WRITING.answered}
                   total={progress.WRITING.total}
-                  onClick={() => handleSectionChange("WRITING")}
+                  onClick={() => handleSectionChange(SECTION_TYPES.WRITING)}
                   isLoading={writingLoading}
                 />
               )}
@@ -518,7 +516,6 @@ export default function ExamTaking({ role, loading }) {
           onPrevious={handlePreviousQuestion}
           onSelectQuestion={handleSelectQuestion}
           onBackToSections={handleBackToSections}
-          totalQuestions={getTotalQuestionsCount(currentMock)}
         />
       </div>
     </div>

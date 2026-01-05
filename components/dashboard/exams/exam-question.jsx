@@ -2,7 +2,11 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useIntl } from "react-intl";
 import { ChevronLeft, ChevronRight, ArrowLeft, Volume2 } from "lucide-react";
 import { Input, Select } from "@/components/custom/details";
-import { ANSWER_PANEL } from "@/utils/examConstants";
+import { ANSWER_PANEL, SECTION_TYPES } from "@/utils/examConstants";
+import {
+  renderTemplate,
+  extractQuestionNumbers,
+} from "@/utils/templateRenderer";
 import ListeningQuestionLayout from "./layouts/ListeningQuestionLayout";
 import DefaultQuestionLayout from "./layouts/DefaultQuestionLayout";
 
@@ -16,7 +20,6 @@ export default function ExamQuestion({
   onPrevious,
   onSelectQuestion,
   onBackToSections,
-  totalQuestions,
 }) {
   const intl = useIntl();
   const splitRef = useRef(null);
@@ -24,255 +27,95 @@ export default function ExamQuestion({
   const answerMinWidth = ANSWER_PANEL.MIN_WIDTH;
   const answerMaxWidth = ANSWER_PANEL.MAX_WIDTH;
   const [activePartIndex, setActivePartIndex] = useState(0);
-  const renderQuestionTextWithInlineAnswers = (question) => {
-    const text = question?.text;
-    const metadata = question?.metadata;
 
-    if (!text || typeof text !== "string") return text;
+  // Flatten question_groups instead of individual questions
+  // Each group now has a template with multiple questions embedded
+  const flatQuestionGroups = useMemo(() => {
+    const groups = [];
 
-    const { options, isChoice } = getChoiceOptions(question);
-    const currentValue = answers[question.id] || "";
-
-    const parts = [];
-    let lastIndex = 0;
-    const regex = /{{(.*?)}}/g;
-    let match;
-
-    while ((match = regex.exec(text)) !== null) {
-      const key = match[1];
-      if (lastIndex < match.index) {
-        parts.push(text.slice(lastIndex, match.index));
-      }
-
-      const gapMeta = metadata?.[key] || {};
-      const label = gapMeta.placeholder || key.replace(/_/g, " ").toUpperCase();
-
-      if (isChoice && options.length > 0) {
-        // Render inline select dropdown for MCQ using Select component
-        const selectOptions = options.map((option, idx) => {
-          const optionValue =
-            typeof option === "string"
-              ? option
-              : option.value ?? option.label ?? option.text ?? "";
-          const optionLabel = formatOptionLabel(option);
-          return {
-            value: optionValue,
-            label: optionLabel,
-          };
-        });
-
-        parts.push(
-          <span
-            key={`${question.id}-${key}-${match.index}`}
-            className="inline-block mx-2 align-middle min-w-[150px]"
-          >
-            <Select
-              placeholder={label}
-              options={selectOptions}
-              value={currentValue}
-              onChange={(value) => onAnswerChange(question.id, value)}
-            />
-          </span>
-        );
-      } else {
-        // Render inline input for gap-fill using Input component
-        parts.push(
-          <span
-            key={`${question.id}-${key}-${match.index}`}
-            className="inline-block mx-2 align-middle min-w-[150px]"
-          >
-            <Input
-              type="text"
-              placeholder={label}
-              name={`gap-${question.id}-${key}`}
-              register={() => ({
-                value: currentValue,
-                onChange: (e) => onAnswerChange(question.id, e.target.value),
-              })}
-            />
-          </span>
-        );
-      }
-
-      lastIndex = regex.lastIndex;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push(text.slice(lastIndex));
-    }
-
-    return parts;
-  };
-
-  const renderQuestionText = (question, currentAnswerValue) => {
-    const text = question?.text;
-    const metadata = question?.metadata;
-
-    if (!text || typeof text !== "string") return null;
-
-    const { isChoice } = getChoiceOptions(question);
-
-    const parts = [];
-    let lastIndex = 0;
-    const regex = /{{(.*?)}}/g;
-    let match;
-
-    while ((match = regex.exec(text)) !== null) {
-      const key = match[1];
-      if (lastIndex < match.index) {
-        parts.push(text.slice(lastIndex, match.index));
-      }
-
-      const gapMeta = metadata?.[key] || {};
-      const label = gapMeta.placeholder || key.replace(/_/g, " ").toUpperCase();
-
-      parts.push(
-        <span
-          key={`${key}-${match.index}`}
-          className="inline-flex items-center px-2 py-1 mx-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold"
-        >
-          {label}
-        </span>
-      );
-
-      lastIndex = regex.lastIndex;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push(text.slice(lastIndex));
-    }
-
-    return parts;
-  };
-
-  const renderGapOptions = (metadata) => {
-    if (!metadata || typeof metadata !== "object") return null;
-
-    const keys = Object.keys(metadata);
-    if (keys.length !== 1) return null;
-
-    const key = keys[0];
-    const gapMeta = metadata[key];
-    const options = gapMeta?.options;
-    const isChoice = gapMeta?.type === "mcq" || gapMeta?.type === "dropdown";
-
-    if (!isChoice || !Array.isArray(options) || options.length === 0)
-      return null;
-
-    return (
-      <div className="mt-3 space-y-1">
-        <p className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide">
-          {intl.formatMessage({ id: "Options", defaultMessage: "Options" })}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {options.map((opt, idx) => (
-            <span
-              key={`${idx}-${formatOptionLabel(opt)}`}
-              className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 border border-gray-200"
-            >
-              {formatOptionLabel(opt)}
-            </span>
-          ))}
-        </div>
-      </div>
-    );
-  };
-  const flatQuestions = useMemo(() => {
-    const questions = [];
-
-    if (sectionType === "LISTENING" && mock?.parts) {
-      // Listening: flatten questions from parts and groups
+    if (sectionType === SECTION_TYPES.LISTENING && mock?.parts) {
+      // Listening: flatten question_groups from parts
       mock.parts.forEach((part, partIndex) => {
         if (part.question_groups) {
           part.question_groups.forEach((group, groupIndex) => {
-            if (group.questions) {
-              group.questions.forEach((question) => {
-                questions.push({
-                  ...question,
-                  partIndex,
-                  partNumber: part.part_number,
-                  groupIndex,
-                  groupType: group.question_type,
-                  groupInstruction: group.instruction,
-                  groupImage: group.image,
-                  audio_file: mock.audio_file,
-                  id:
-                    question.id ||
-                    `q-${partIndex}-${groupIndex}-${question.question_number}`,
-                });
-              });
-            }
-          });
-        }
-      });
-    } else if (sectionType === "READING" && mock?.passages) {
-      // Reading: flatten questions from passages and question groups
-      mock.passages.forEach((passage, passageIndex) => {
-        if (passage.question_groups) {
-          passage.question_groups.forEach((group, groupIndex) => {
-            if (group.questions) {
-              group.questions.forEach((question) => {
-                questions.push({
-                  ...question,
-                  passageIndex,
-                  passageTitle: passage.title,
-                  passageText: passage.text_content,
-                  passageImage: passage.image,
-                  groupIndex,
-                  groupType: group.group_type,
-                  groupInstruction: group.instruction,
-                  groupImage: group.image,
-                  displayText: group.display_text,
-                  commonOptions: group.common_options,
-                  id:
-                    question.id ||
-                    `q-${passageIndex}-${groupIndex}-${question.question_number}`,
-                });
-              });
-            }
-          });
-        } else if (passage.questions) {
-          // Fallback: direct questions on passage (old structure)
-          passage.questions.forEach((question) => {
-            questions.push({
-              ...question,
-              passageIndex,
-              passageTitle: passage.title,
-              passageText: passage.text_content,
-              passageImage: passage.image,
-              id:
-                question.id || `q-${passageIndex}-${question.question_number}`,
+            groups.push({
+              groupId: group.id || `group-${partIndex}-${groupIndex}`,
+              partIndex,
+              partNumber: part.part_number,
+              groupIndex,
+              groupType: group.question_type,
+              groupInstruction: group.instruction,
+              groupImage: group.image,
+              template: group.template,
+              audio_file: mock.audio_file,
+              questions: group.questions || [],
+              questionNumbers: extractQuestionNumbers(group.template || ""),
             });
           });
         }
       });
-    } else if (sectionType === "WRITING" && mock?.tasks) {
-      // Writing: map writing tasks as questions
+    } else if (sectionType === SECTION_TYPES.READING && mock?.passages) {
+      // Reading: flatten question_groups from passages
+      mock.passages.forEach((passage, passageIndex) => {
+        if (passage.question_groups) {
+          passage.question_groups.forEach((group, groupIndex) => {
+            groups.push({
+              groupId: group.id || `group-${passageIndex}-${groupIndex}`,
+              passageIndex,
+              passageTitle: passage.title,
+              passageText: passage.text_content,
+              passageImage: passage.image,
+              groupIndex,
+              groupType: group.group_type,
+              groupInstruction: group.instruction,
+              groupImage: group.image,
+              template: group.template,
+              displayText: group.display_text,
+              commonOptions: group.common_options,
+              questions: group.questions || [],
+              questionNumbers: extractQuestionNumbers(group.template || ""),
+            });
+          });
+        }
+      });
+    } else if (sectionType === SECTION_TYPES.WRITING && mock?.tasks) {
+      // Writing: tasks remain as individual items (no template structure)
       mock.tasks.forEach((task, index) => {
-        questions.push({
-          ...task,
-          id: task.id || `writing-${index}`,
+        groups.push({
+          groupId: task.id || `writing-${index}`,
           task_number: task.task_number || index + 1,
+          groupType: "WRITING_TASK",
+          template: task.template || "",
+          ...task,
         });
       });
     }
 
-    return questions;
+    return groups;
   }, [mock, sectionType]);
 
-  const currentQuestion = flatQuestions[currentQuestionIndex];
+  const currentGroup = flatQuestionGroups[currentQuestionIndex];
+
+  // Get all question numbers across all groups for navigation
+  const allQuestionNumbers = useMemo(() => {
+    return flatQuestionGroups.flatMap((group) => group.questionNumbers || []);
+  }, [flatQuestionGroups]);
+
+  const totalQuestions = allQuestionNumbers.length;
 
   useEffect(() => {
-    if (sectionType === "LISTENING" && currentQuestion?.partIndex >= 0) {
-      setActivePartIndex(currentQuestion.partIndex);
+    if (
+      sectionType === SECTION_TYPES.LISTENING &&
+      currentGroup?.partIndex >= 0
+    ) {
+      setActivePartIndex(currentGroup.partIndex);
     }
-  }, [sectionType, currentQuestion?.partIndex]);
+  }, [sectionType, currentGroup?.partIndex]);
 
-  const handleAnswerChange = (answer) => {
-    onAnswerChange(currentQuestion.id, answer);
+  // Answer handler now uses question_number instead of question.id
+  const handleAnswerChange = (questionNumber, value) => {
+    onAnswerChange(questionNumber, value);
   };
-
-  const currentAnswer = answers[currentQuestion?.id] || "";
 
   useEffect(() => {
     return () => {
@@ -304,15 +147,23 @@ export default function ExamQuestion({
   };
 
   const partSummaries = useMemo(() => {
-    if (sectionType !== "LISTENING" || !mock?.parts) return [];
+    if (sectionType !== SECTION_TYPES.LISTENING || !mock?.parts) return [];
 
     return mock.parts.map((part, partIndex) => {
-      const questionsForPart = flatQuestions.filter(
-        (q) => q.partIndex === partIndex
+      const groupsForPart = flatQuestionGroups.filter(
+        (g) => g.partIndex === partIndex
       );
-      const firstIndex = flatQuestions.findIndex(
-        (q) => q.partIndex === partIndex
+      const firstIndex = flatQuestionGroups.findIndex(
+        (g) => g.partIndex === partIndex
       );
+
+      // Count total questions and answered questions in this part
+      const allQuestionNumbers = groupsForPart.flatMap(
+        (g) => g.questionNumbers || []
+      );
+      const answeredCount = allQuestionNumbers.filter(
+        (num) => answers[num]
+      ).length;
 
       return {
         partIndex,
@@ -323,27 +174,17 @@ export default function ExamQuestion({
           intl.formatMessage({ id: "Part", defaultMessage: "Part" }) +
             " " +
             (part.part_number || partIndex + 1),
-        questionCount: questionsForPart.length,
+        questionCount: allQuestionNumbers.length,
         startIndex: firstIndex >= 0 ? firstIndex : null,
-        answered: questionsForPart.reduce((count, q) => {
-          return answers[q.id] ? count + 1 : count;
-        }, 0),
+        answered: answeredCount,
       };
     });
-  }, [sectionType, mock?.parts, flatQuestions, answers, intl]);
+  }, [sectionType, mock?.parts, flatQuestionGroups, answers, intl]);
 
-  const questionsInActivePart = useMemo(() => {
-    if (sectionType !== "LISTENING") return [];
-    return flatQuestions.filter((q) => q.partIndex === activePartIndex);
-  }, [flatQuestions, sectionType, activePartIndex]);
-
-  const questionIndexById = useMemo(() => {
-    const map = {};
-    flatQuestions.forEach((q, index) => {
-      map[q.id] = index;
-    });
-    return map;
-  }, [flatQuestions]);
+  const groupsInActivePart = useMemo(() => {
+    if (sectionType !== SECTION_TYPES.LISTENING) return [];
+    return flatQuestionGroups.filter((g) => g.partIndex === activePartIndex);
+  }, [flatQuestionGroups, sectionType, activePartIndex]);
 
   const handlePartChange = (nextPartIndex) => {
     setActivePartIndex(nextPartIndex);
@@ -355,41 +196,7 @@ export default function ExamQuestion({
     }
   };
 
-  const getChoiceOptions = (question) => {
-    if (!question) return { options: [], isChoice: false };
-    // Priority 1: explicit options array on question
-    if (Array.isArray(question.options) && question.options.length > 0) {
-      return { options: question.options, isChoice: true };
-    }
-
-    // Priority 2: metadata-based options (mcq/dropdown)
-    if (question.metadata && typeof question.metadata === "object") {
-      const keys = Object.keys(question.metadata);
-      const key = keys[0];
-      const meta = key ? question.metadata[key] : null;
-      const isChoice = meta?.type === "mcq" || meta?.type === "dropdown";
-      const metaOptions = Array.isArray(meta?.options) ? meta.options : [];
-      return {
-        options: metaOptions,
-        isChoice: isChoice && metaOptions.length > 0,
-      };
-    }
-
-    return { options: [], isChoice: false };
-  };
-
-  const formatOptionLabel = (option) => {
-    if (typeof option === "string") return option;
-
-    const label = option?.label ?? option?.value ?? "";
-    const text = option?.text ?? option?.description ?? "";
-
-    if (label && text) return `${label}) ${text}`;
-    if (text) return text;
-    return label;
-  };
-
-  if (!currentQuestion) {
+  if (!currentGroup) {
     return (
       <div className="flex flex-col h-full bg-white">
         <div className="bg-white border-b border-gray-100 px-6 md:px-10 py-4 flex justify-between items-center">
@@ -414,19 +221,11 @@ export default function ExamQuestion({
                 defaultMessage: "No questions available",
               })}
             </p>
-            <p className="text-gray-600 text-sm mb-4">
-              {intl.formatMessage(
-                {
-                  id: "DEBUG: Section {section}, Questions: {count}, Mock: {hasMock}",
-                  defaultMessage:
-                    "Section: {section}, Questions: {count}, Has Data: {hasMock}",
-                },
-                {
-                  section: sectionType,
-                  count: flatQuestions.length,
-                  hasMock: !!mock,
-                }
-              )}
+            <p className="text-gray-600 text-sm">
+              {intl.formatMessage({
+                id: "Please check back later or contact support",
+                defaultMessage: "Please check back later or contact support.",
+              })}
             </p>
           </div>
         </div>
@@ -434,71 +233,17 @@ export default function ExamQuestion({
     );
   }
 
-  const renderAnswerInput = (question) => {
-    const { options, isChoice } = getChoiceOptions(question);
-    const value = answers[question.id] || "";
-
-    if (isChoice) {
-      return (
-        <div className="space-y-2">
-          {options.map((option, idx) => {
-            const optionValue =
-              typeof option === "string"
-                ? option
-                : option.value ??
-                  option.label ??
-                  option.text ??
-                  option.description;
-
-            return (
-              <label
-                key={`${question.id}-${idx}-${optionValue}`}
-                className="flex items-start gap-2 p-2 border rounded-lg cursor-pointer hover:bg-white transition"
-              >
-                <input
-                  type="radio"
-                  name={`answer-${question.id}`}
-                  value={optionValue}
-                  checked={value === optionValue}
-                  onChange={(e) => onAnswerChange(question.id, e.target.value)}
-                  className="mt-0.5 text-blue-600"
-                />
-                <span className="text-sm text-gray-700">
-                  {formatOptionLabel(option)}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      );
-    }
-
-    return (
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onAnswerChange(question.id, e.target.value)}
-        placeholder={intl.formatMessage({
-          id: "Enter answer",
-          defaultMessage: "Enter answer",
-        })}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-      />
-    );
-  };
-
-  if (sectionType === "LISTENING") {
+  if (sectionType === SECTION_TYPES.LISTENING) {
     return (
       <ListeningQuestionLayout
-        currentQuestion={currentQuestion}
+        currentGroup={currentGroup}
         currentQuestionIndex={currentQuestionIndex}
         totalQuestions={totalQuestions}
         partSummaries={partSummaries}
         activePartIndex={activePartIndex}
-        questionsInActivePart={questionsInActivePart}
-        renderQuestionTextWithInlineAnswers={
-          renderQuestionTextWithInlineAnswers
-        }
+        groupsInActivePart={groupsInActivePart}
+        answers={answers}
+        onAnswerChange={handleAnswerChange}
         onBackToSections={onBackToSections}
         handlePartChange={handlePartChange}
         onPrevious={onPrevious}
@@ -511,17 +256,13 @@ export default function ExamQuestion({
   return (
     <DefaultQuestionLayout
       sectionType={sectionType}
-      currentQuestion={currentQuestion}
+      currentGroup={currentGroup}
       currentQuestionIndex={currentQuestionIndex}
       totalQuestions={totalQuestions}
-      currentAnswer={currentAnswer}
+      answers={answers}
       answerWidth={answerWidth}
       splitRef={splitRef}
-      renderQuestionText={renderQuestionText}
-      renderGapOptions={renderGapOptions}
-      getChoiceOptions={getChoiceOptions}
-      formatOptionLabel={formatOptionLabel}
-      handleAnswerChange={handleAnswerChange}
+      onAnswerChange={handleAnswerChange}
       handleDragStart={handleDragStart}
       onBackToSections={onBackToSections}
       onPrevious={onPrevious}
