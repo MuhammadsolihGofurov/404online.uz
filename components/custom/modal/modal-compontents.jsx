@@ -23,8 +23,10 @@ import {
 import {
   PassageTextModal,
   QuestionGroupModal,
+  SectionViewModal,
   TaskTextModal,
 } from "./sections";
+import sectionStatusChangeModal from "./sections/section-status-change-modal";
 import { TaskModal } from "./tasks";
 
 export const ModalComponents = {
@@ -48,4 +50,6 @@ export const ModalComponents = {
   questionGroupModal: QuestionGroupModal,
   passageTextModal: PassageTextModal,
   taskTextModal: TaskTextModal,
+  sectionView: SectionViewModal,
+  sectionStatusChangeModal: sectionStatusChangeModal,
 };

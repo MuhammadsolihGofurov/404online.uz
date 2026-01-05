@@ -15,7 +15,8 @@ export default function Wrapper({
   isWrapperClose = false,
   isIcon,
   isDropdown,
-  dropdownList
+  dropdownList,
+  isOffcanvas
 }) {
   return (
     <div className="flex flex-col gap-8 items-start">
@@ -33,6 +34,7 @@ export default function Wrapper({
           isIcon={isIcon}
           dropdownList={dropdownList}
           isDropdown={isDropdown}
+          isOffcanvas={isOffcanvas}
         />
       )}
       <div className="flex flex-col gap-5 w-full">{children}</div>

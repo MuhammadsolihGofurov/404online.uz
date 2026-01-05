@@ -1,10 +1,27 @@
 import { Wrapper } from "@/components/dashboard/details";
+import { TasksFilter } from "@/components/dashboard/details/filters";
 import { TasksLists } from "@/components/dashboard/tasks";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
+import { useOffcanvas } from "@/context/offcanvas-context";
 
 function TasksPage({ info, user, loading }) {
+  const { openOffcanvas } = useOffcanvas();
+
+  const dropdownList = [
+    {
+      id: 1,
+      title: "Exams",
+      func: () => openOffcanvas("taskExamsGeneratorOffcanvas", {}, "right"),
+    },
+    {
+      id: 2,
+      title: "Homeworks",
+      func: () => openOffcanvas("taskHomeworksGeneratorOffcanvas", {}, "right"),
+    },
+  ];
+
   return (
     <>
       <Seo
@@ -17,11 +34,11 @@ function TasksPage({ info, user, loading }) {
           title={"Tasks"}
           isLink
           body={"Dashboard"}
-          isButton
+          isDropdown
           buttonText={"Create task"}
-          buttonFunc={"taskModal"}
-          modalType={"big"}
+          dropdownList={dropdownList}
         >
+          <TasksFilter />
           <TasksLists loading={loading} role={user?.role} />
         </Wrapper>
       </DashboardLayout>

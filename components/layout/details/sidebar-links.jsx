@@ -106,7 +106,7 @@ const menuItems = [
         </svg>
         `,
     roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
-    query: `?type=DOCUMENTS`,
+    query: `?type=exams`,
   },
   {
     title: "Exams",

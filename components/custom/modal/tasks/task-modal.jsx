@@ -10,22 +10,17 @@ import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
 import MultiSelect from "../../details/multi-select";
 import Select from "../../details/select";
-import { MOCK_TEMPLATES, TEMPLATE_D_LEVEL } from "@/mock/data";
+import { MOCK_TEMPLATES, TASK_TYPE, TEMPLATE_D_LEVEL } from "@/mock/data";
 import { Input, ToggleSwitch } from "../../details";
+import { DateTimePickerField } from "../../details/date-picker-custom";
+import { useParams } from "@/hooks/useParams";
 
-export default function TaskModal({
-  id,
-  old_title,
-  old_description,
-  old_category,
-  old_difficulty_level,
-  old_mocks,
-  old_is_public,
-}) {
+export default function TaskModal({ id, initialData }) {
   const intl = useIntl();
   const { closeModal } = useModal();
   const [reqLoading, setReqLoading] = useState(false);
   const router = useRouter();
+  const { findParams } = useParams();
 
   const {
     handleSubmit,
@@ -34,54 +29,44 @@ export default function TaskModal({
     register,
     control,
     watch,
+    setValue,
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      title: old_title || "",
-      description: old_description || "",
-      category: old_category || "",
-      difficulty_level: old_difficulty_level || "",
-      mocks: [],
-      is_public: old_is_public || false,
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      deadline: initialData?.deadline || "",
+      type: initialData?.type || "",
+      assigned_groups: initialData?.assigned_groups || [],
     },
   });
 
   const MockCategory = watch("category");
-
-  const { data: template } = useSWR(
-    ["/material-templates/", router.locale, id],
-    ([url, locale]) =>
-      fetcher(
-        `${url}${id}/`,
-        {
-          headers: {
-            "Accept-Language": locale,
-          },
-        },
-        {},
-        true
-      )
-  );
+  const currentType = findParams("type");
 
   useEffect(() => {
-    if (old_title && old_category && old_difficulty_level)
-      reset({
-        title: old_title,
-        description: old_description,
-        category: old_category,
-        difficulty_level: old_difficulty_level,
-        mocks: template?.mocks,
-        is_public: old_is_public || false,
-      });
-  }, [
-    old_title,
-    old_description,
-    old_category,
-    old_difficulty_level,
-    old_is_public,
-    id,
-    reset,
-  ]);
+    setValue("type", currentType);
+  }, [currentType]);
+
+  // useEffect(() => {
+  //   if (old_title && old_category && old_difficulty_level)
+  //     reset({
+  //       title: old_title,
+  //       description: old_description,
+  //       category: old_category,
+  //       difficulty_level: old_difficulty_level,
+  //       mocks: template?.mocks,
+  //       is_public: old_is_public || false,
+  //     });
+  // }, [
+  //   old_title,
+  //   old_description,
+  //   old_category,
+  //   old_difficulty_level,
+  //   old_is_public,
+  //   id,
+  //   reset,
+  // ]);
 
   const submitFn = async (data) => {
     const { title, mocks, description, category, difficulty_level, is_public } =
@@ -179,6 +164,21 @@ export default function TaskModal({
       )
   );
 
+  const { data: groups } = useSWR(
+    ["/groups/", router.locale],
+    ([url, locale]) =>
+      fetcher(
+        `${url}?page_size=all`,
+        {
+          headers: {
+            "Accept-Language": locale,
+          },
+        },
+        {},
+        true
+      )
+  );
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-textPrimary text-center font-bold text-xl">
@@ -189,6 +189,7 @@ export default function TaskModal({
         className="w-full flex flex-col gap-8 text-center font-poppins"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Title */}
           <Input
             type="text"
             register={register}
@@ -201,6 +202,7 @@ export default function TaskModal({
             }}
             error={errors?.title?.message}
           />
+          {/* Description */}
           <Input
             type="text"
             register={register}
@@ -213,49 +215,62 @@ export default function TaskModal({
             }}
             error={errors?.description?.message}
           />
-
-          {!id && (
-            <Controller
-              name="category"
-              control={control}
-              rules={{ required: intl.formatMessage({ id: "Required" }) }}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  title={intl.formatMessage({ id: "Category" })}
-                  placeholder={intl.formatMessage({ id: "Select" })}
-                  options={MOCK_TEMPLATES}
-                  error={errors.category?.message}
-                />
-              )}
-            />
-          )}
+          {/* Deadline */}
           <Controller
-            name="difficulty_level"
+            name="deadline"
+            control={control}
+            rules={{
+              required: intl.formatMessage({
+                id: "Deadline is required",
+              }),
+            }}
+            render={({ field }) => (
+              <DateTimePickerField
+                {...field}
+                title={intl.formatMessage({
+                  id: "Deadline",
+                })}
+                placeholder={intl.formatMessage({
+                  id: "Select deadline",
+                })}
+                error={errors.deadline?.message}
+                minDate={new Date()}
+                required
+              />
+            )}
+          />
+          {/* Type */}
+          <Controller
+            name="type"
             control={control}
             rules={{ required: intl.formatMessage({ id: "Required" }) }}
             render={({ field }) => (
               <Select
                 {...field}
-                title={intl.formatMessage({ id: "Difficulty level" })}
+                title={intl.formatMessage({ id: "Types" })}
                 placeholder={intl.formatMessage({ id: "Select" })}
-                options={TEMPLATE_D_LEVEL}
-                error={errors.difficulty_level?.message}
+                options={TASK_TYPE}
+                error={errors.type?.message}
               />
             )}
           />
+          {/* assigned groups */}
           <div className={`${!id ? "sm:col-span-2 col-span-1" : ""}`}>
             <Controller
-              name="mocks"
+              name="assigned_groups"
               control={control}
-              rules={{ required: intl.formatMessage({ id: "Required" }) }}
+              rules={{
+                required: intl.formatMessage({
+                  id: "Please select at least one group",
+                }),
+              }}
               render={({ field }) => (
                 <MultiSelect
                   {...field}
-                  title={intl.formatMessage({ id: "Mocks" })}
-                  placeholder={intl.formatMessage({ id: "Select" })}
-                  options={mocksData || []}
-                  error={errors.mocks?.message}
+                  title={intl.formatMessage({ id: "Assign groups" })}
+                  placeholder={intl.formatMessage({ id: "Select groups" })}
+                  options={groups || []}
+                  error={errors.assigned_groups?.message}
                   value={field.value || []}
                   onChange={(val) => field.onChange(val)}
                 />

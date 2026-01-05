@@ -11,10 +11,10 @@ export const DatePickerField = forwardRef(
         {title && (
           <label className="text-sm font-medium text-gray-700">
             {title}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {/* {required && <span className="text-red-500 ml-1">*</span>} */}
           </label>
         )}
-        <div className="relative">
+        <div className="relative w-full">
           <DatePicker
             selected={value}
             onChange={onChange}
@@ -45,10 +45,10 @@ export const TimePickerField = forwardRef(
         {title && (
           <label className="text-sm font-medium text-gray-700">
             {title}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {/* {required && <span className="text-red-500 ml-1">*</span>} */}
           </label>
         )}
-        <div className="relative">
+        <div className="relative w-full">
           <DatePicker
             selected={value}
             onChange={onChange}
@@ -83,10 +83,10 @@ export const DateTimePickerField = forwardRef(
         {title && (
           <label className="text-textSecondary font-semibold text-sm">
             {title}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {/* {required && <span className="text-red-500 ml-1">*</span>} */}
           </label>
         )}
-        <div className="relative">
+        <div className="relative w-full">
           <DatePicker
             selected={value}
             onChange={onChange}
