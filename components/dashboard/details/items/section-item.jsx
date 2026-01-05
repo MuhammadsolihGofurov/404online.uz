@@ -54,7 +54,11 @@ const SectionItem = ({ data }) => {
         </div>
         <div className="flex items-center text-gray-500 bg-gray-50 rounded-xl p-2">
           <BookOpen size={15} className="mr-2 text-emerald-500" />
-          <span className="text-xs font-medium">Q: {data.questions_count}</span>
+          <span className="text-xs font-medium">
+            {currentSectionType === "writing"
+              ? `T: ${data?.tasks_count}`
+              : `Q: ${data?.questions_count}`}
+          </span>
         </div>
       </div>
 
@@ -64,12 +68,14 @@ const SectionItem = ({ data }) => {
           <Calendar size={13} className="mr-1" />
           {formatDate(data.created_at)}
         </div>
-        <Link
-          href={`${SECTIONS_CREATE_URL}?section=${currentSectionType}&id=${data?.id}`}
-          className="font-medium text-textSecondary"
-        >
-          <Edit2 size={13} />
-        </Link>
+        {data.status == "DRAFT" && (
+          <Link
+            href={`${SECTIONS_CREATE_URL}?section=${currentSectionType}&id=${data?.id}`}
+            className="font-medium text-textSecondary"
+          >
+            <Edit2 size={13} />
+          </Link>
+        )}
       </div>
     </div>
   );

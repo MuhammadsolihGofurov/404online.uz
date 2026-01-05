@@ -20,11 +20,11 @@ export default function MaterialsTypes({ role }) {
         type: "TRAINING_ZONE",
         allowedRoles: ["STUDENT"],
       },
-      {
-        label: "Templates",
-        type: "TEMPLATES",
-        allowedRoles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
-      },
+      // {
+      //   label: "Templates",
+      //   type: "TEMPLATES",
+      //   allowedRoles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+      // },
     ],
     []
   );

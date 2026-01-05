@@ -19,13 +19,13 @@ import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 
-export default function PassageTextModal({ id }) {
+export default function PassageTextModal({ id, partInfo }) {
   const { closeModal } = useModal();
   const { findParams } = useParams();
   const [reqLoading, setReqLoading] = useState(false);
 
   const sectionType = findParams("section") || "";
-  const { partData } = useSelector((state) => state.settings);
+  // const { partData } = useSelector((state) => state.settings);
 
   const {
     register,
@@ -37,17 +37,17 @@ export default function PassageTextModal({ id }) {
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      text_content: partData?.text_content || "",
+      text_content: partInfo?.text_content || "",
     },
   });
 
   useEffect(() => {
-    if (partData) {
+    if (partInfo) {
       reset({
-        ...partData,
+        ...partInfo,
       });
     }
-  }, [partData, reset]);
+  }, [partInfo, reset]);
 
   const submitFn = async (values) => {
     try {

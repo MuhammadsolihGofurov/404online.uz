@@ -94,7 +94,7 @@ const DiagramComponent = ({ node, updateAttributes, deleteNode }) => {
                 </div>
 
                 {/* Tooltip (View Answer & Delete) */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover/marker:flex flex-col items-center z-10">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 hidden group-hover/marker:flex flex-col items-center z-10">
                   <div className="bg-slate-900 text-white text-[11px] py-1.5 px-3 rounded-lg shadow-2xl flex items-center gap-3 whitespace-nowrap">
                     <span className="font-medium">
                       Answer:{" "}
@@ -128,14 +128,14 @@ const DiagramComponent = ({ node, updateAttributes, deleteNode }) => {
       </div>
 
       {/* Footer Info List */}
-      {labels.length > 0 && (
+      {labels?.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
-          {labels.map((l, i) => (
+          {labels?.map((l, i) => (
             <div
               key={i}
               className="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold text-slate-500"
             >
-              Q{l.number}: {l.answer}
+              Q{l?.number}: {l?.answer}
             </div>
           ))}
         </div>
@@ -149,23 +149,38 @@ export const DiagramBlock = Node.create({
   group: "block",
   draggable: true,
 
-  labels: {
-    default: [],
-    parseHTML: (element) => {
-      const data = element.getAttribute("labels");
-      return data ? JSON.parse(data) : [];
-    },
-    renderHTML: (attributes) => ({
-      labels: JSON.stringify(attributes.labels),
-    }),
+  // MUHIM: Atributlarni addAttributes funksiyasi ichida e'lon qiling
+  addAttributes() {
+    return {
+      src: { default: null },
+      labels: {
+        default: [],
+        // HTML'dan div ichidagi 'labels' atributini o'qib olish
+        parseHTML: (element) => {
+          const data = element.getAttribute("labels");
+          return data ? JSON.parse(data) : [];
+        },
+        // HTML'ga 'labels' atributini yozish (agar kerak bo'lsa)
+        renderHTML: (attributes) => ({
+          labels: JSON.stringify(attributes.labels),
+        }),
+      },
+    };
   },
 
-  parseHTML: () => [{ tag: 'div[data-type="diagram-block"]' }],
-  renderHTML: ({ HTMLAttributes }) => [
-    "div",
-    mergeAttributes(HTMLAttributes, { "data-type": "diagram-block" }),
-    0,
-  ],
+  parseHTML() {
+    return [{ tag: 'div[data-type="diagram-block"]' }];
+  },
 
-  addNodeView: () => ReactNodeViewRenderer(DiagramComponent),
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, { "data-type": "diagram-block" }),
+      0,
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(DiagramComponent);
+  },
 });

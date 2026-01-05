@@ -49,6 +49,8 @@ import {
   HelpCircle,
   Type,
   MapPin,
+  List,
+  ListOrdered,
 } from "lucide-react";
 
 import { QuestionInput } from "@/components/custom/details/question/question-input";
@@ -125,6 +127,11 @@ const CompletionQGenerator = forwardRef(
     };
 
     useImperativeHandle(ref, () => ({
+      // appendContent: (html) => {
+      //   if (editor) {
+      //     editor.commands.insertContent(html);
+      //   }
+      // },
       getFormattedData: () => {
         if (editor) {
           const json = editor.getJSON();
@@ -161,10 +168,8 @@ const CompletionQGenerator = forwardRef(
 
     if (!editor) return null;
 
-    
-
     return (
-      <div className="w-full border border-slate-200 rounded-xl bg-white shadow-xl overflow-hidden flex flex-col min-h-[700px]">
+      <div className="w-full border border-slate-200 rounded-xl bg-white shadow-xl flex flex-col min-h-[700px]">
         <div className="p-3 border-b border-slate-100 bg-slate-50 sticky top-0 z-10">
           <div className="flex flex-wrap items-center gap-2">
             {/* History */}
@@ -202,6 +207,25 @@ const CompletionQGenerator = forwardRef(
                 active={editor.isActive("highlight")}
               >
                 <Highlighter size={18} />
+              </ToolbarButton>
+            </div>
+
+            {/* List ordered */}
+            <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                active={editor.isActive("bulletList")}
+                title="Bullet List"
+              >
+                <List size={18} />
+              </ToolbarButton>
+
+              <ToolbarButton
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                active={editor.isActive("orderedList")}
+                title="Ordered List"
+              >
+                <ListOrdered size={18} />
               </ToolbarButton>
             </div>
 
@@ -295,7 +319,7 @@ const CompletionQGenerator = forwardRef(
                     })
                     .run();
                 }}
-                title="Matching Headings"
+                title="Matching Headings and Endings"
               >
                 <Layers size={18} className="text-amber-600" />
               </ToolbarButton>
@@ -418,47 +442,47 @@ const CompletionQGenerator = forwardRef(
             </div>
 
             {/* Summary completion */}
-            {/* <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
-            <ToolbarButton
-              onClick={() => {
-                editor
-                  .chain()
-                  .focus()
-                  .insertContent({
-                    type: "summaryBlock",
-                    content: [
-                      {
-                        type: "paragraph",
-                        content: [
-                          {
-                            type: "text",
-                            text: "Write your summary text here and insert ",
-                          },
-                          {
-                            type: "questionInput",
-                            attrs: {
-                              number: getNextQuestionNumber(),
-                              answer: "",
+            <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
+              <ToolbarButton
+                onClick={() => {
+                  editor
+                    .chain()
+                    .focus()
+                    .insertContent({
+                      type: "summaryBlock",
+                      content: [
+                        {
+                          type: "paragraph",
+                          content: [
+                            {
+                              type: "text",
+                              text: "Write your summary text here and insert ",
                             },
-                          },
-                          { type: "text", text: " wherever you need a gap." },
-                        ],
-                      },
-                    ],
-                  })
-                  .run();
-              }}
-              title="Summary Completion"
-            >
-              <div className="relative">
-                <Type size={18} className="text-slate-700" />
-                <PlusCircle
-                  size={10}
-                  className="absolute -top-1 -right-1 text-blue-600 fill-white"
-                />
-              </div>
-            </ToolbarButton>
-          </div> */}
+                            {
+                              type: "questionInput",
+                              attrs: {
+                                number: getNextQuestionNumber(),
+                                answer: "",
+                              },
+                            },
+                            { type: "text", text: " wherever you need a gap." },
+                          ],
+                        },
+                      ],
+                    })
+                    .run();
+                }}
+                title="Summary Completion"
+              >
+                <div className="relative">
+                  <Type size={18} className="text-slate-700" />
+                  <PlusCircle
+                    size={10}
+                    className="absolute -top-1 -right-1 text-blue-600 fill-white"
+                  />
+                </div>
+              </ToolbarButton>
+            </div>
 
             {/* Guruh: Complex Layouts */}
             <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1">
@@ -562,6 +586,29 @@ const CompletionQGenerator = forwardRef(
         </div>
 
         <style jsx global>{`
+          /* List styles */
+          .ProseMirror ul,
+          .ProseMirror ol {
+            padding: 0 1rem;
+            margin: 1.25rem 1rem 1.25rem 0.4rem;
+          }
+
+          .ProseMirror ul {
+            list-style-type: disc;
+          }
+
+          .ProseMirror ol {
+            list-style-type: decimal;
+          }
+
+          .ProseMirror li {
+            margin-bottom: 0.5rem;
+          }
+
+          /* Agar ro'yxat ichida paragraf bo'lsa, ortiqcha marginni olib tashlaymiz */
+          .ProseMirror li p {
+            margin: 0;
+          }
           .ProseMirror {
             min-height: 600px;
             outline: none;

@@ -227,10 +227,22 @@ export const transformEditorData = (json) => {
     // 1. Gap Fill (Eski mantiq)
     if (node.type === "questionInput") {
       const { number, answer } = node.attrs;
+
+      // Javobni vergul bo'yicha bo'lib, massivga o'giramiz
+      // Masalan: "apple, orange" -> ["apple", "orange"]
+      const answerArray =
+        typeof answer === "string"
+          ? answer
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s !== "")
+          : [answer];
+
       correctAnswers.push({
         number: parseInt(number),
-        answer: answer,
+        answer: answerArray, // Endi bu yerda massiv ketadi
       });
+
       return `<question-input number='${number}' answer='${answer}'></question-input>`;
     }
 
@@ -361,7 +373,7 @@ export const transformEditorData = (json) => {
     if (node.type === "diagramBlock") {
       const { src, labels } = node.attrs;
 
-      // Har bir labelni to'g'ri javoblar ro'yxatiga qo'shamiz
+      // Har bir labelni to'g'ri javoblar ro'yxatiga ham qo'shamiz (buni allaqachon yozgansiz)
       labels.forEach((label) => {
         correctAnswers.push({
           number: parseInt(label.number),
@@ -377,6 +389,7 @@ export const transformEditorData = (json) => {
           (l) => `
         <diagram-marker 
           number="${l.number}" 
+          answer="${l.answer || ""}" 
           style="position: absolute; left: ${l.x}%; top: ${l.y}%;"
         ></diagram-marker>
       `
@@ -559,17 +572,17 @@ export const prepareInitialData = (html) => {
     const img = el.querySelector("img");
     div.setAttribute("src", img?.getAttribute("src") || "");
 
-    // Markerlarni yig'ish
+    // Markerlarni yig'ish (answer atributi bilan birga)
     const markers = Array.from(el.querySelectorAll("diagram-marker")).map(
       (m) => ({
-        number: m.getAttribute("number"),
-        x: parseFloat(m.style.left),
-        y: parseFloat(m.style.top),
-        answer: "", // Buni alohida correctAnswers'dan olish kerak bo'ladi
+        number: m.getAttribute("number") || "",
+        answer: m.getAttribute("answer") || "", // <--- Answer endi atributdan olinadi
+        x: parseFloat(m.style.left) || 0,
+        y: parseFloat(m.style.top) || 0,
       })
     );
 
-    // MUHIM: Extension [object Object] chiqarmasligi uchun JSON string qilib beramiz
+    // Tiptap extensionga JSON string ko'rinishida beramiz
     div.setAttribute("labels", JSON.stringify(markers));
     el.replaceWith(div);
   });

@@ -9,6 +9,7 @@ import { filterQuestionTypes, QUESTION_TYPES_WITH_IMAGE } from "@/mock/data";
 import { ButtonSpinner } from "../../loading";
 import { CompletionQGenerator } from "./generators/completion-q-generator";
 import { prepareInitialData } from "@/utils/question-helpers";
+import { GeminiScanner } from "./generators/gemini-scanner";
 
 export default function QuestionGeneratorOffcanvas({ id, initialData }) {
   const { closeOffcanvas } = useOffcanvas();
@@ -120,14 +121,14 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
         });
       }
 
-      toast.success("Muvaffaqiyatli saqlandi!");
+      toast.success("Successfully saved!");
       closeOffcanvas("questionGeneratorOffcanvas", response?.data);
     } catch (e) {
       console.error("Submit Error:", e);
       const errorData = e?.response?.data;
 
       // Xatolik xabarini chiroyli ko'rsatish
-      let errorMsg = "Xatolik yuz berdi";
+      let errorMsg = "Error, please wait a bit";
       if (typeof errorData === "object") {
         // Backenddan kelgan obyekt ko'rinishidagi xatolarni yig'ish
         errorMsg = JSON.stringify(errorData);
@@ -158,8 +159,24 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
     return prepareInitialData(initialData?.template);
   }, [initialData]);
 
+  const handleAiContent = (htmlContent) => {
+    if (generatorRef.current) {
+      // appendContent - bu bizning generator komponentimizdagi custom metod
+      // U editor.commands.insertContent(htmlContent) ni chaqirishi kerak
+      generatorRef.current.appendContent(htmlContent);
+
+      // Foydalanuvchiga vizual signal
+      toast.info("Ma'lumotlar editorga joylandi. Tekshirib ko'ring.");
+    } else {
+      toast.error("Editor hali yuklanmadi!");
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit(submitFn)} className="flex flex-col gap-6 p-1">
+    <form
+      onSubmit={handleSubmit(submitFn)}
+      className="flex flex-col items-center gap-6 p-1"
+    >
       <div className="w-full flex flex-col  items-center gap-6 relative z-[15]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
           {/* Instruction */}
@@ -215,6 +232,12 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
           )}
         </div>
       </div>
+      {/* {!id && currentQuestionType && (
+        <GeminiScanner
+          questionType={currentQuestionType}
+          onScanComplete={handleAiContent}
+        />
+      )} */}
       {currentQuestionType && (
         <CompletionQGenerator
           ref={generatorRef}
