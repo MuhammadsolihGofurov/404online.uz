@@ -20,7 +20,11 @@ import {
   EduCenterCreateAdminModal,
   EduCenterModal,
 } from "./owner";
-import { PassageTextModal, QuestionGroupModal } from "./sections";
+import {
+  PassageTextModal,
+  QuestionGroupModal,
+  TaskTextModal,
+} from "./sections";
 import { TaskModal } from "./tasks";
 
 export const ModalComponents = {
@@ -43,4 +47,5 @@ export const ModalComponents = {
   taskModal: TaskModal,
   questionGroupModal: QuestionGroupModal,
   passageTextModal: PassageTextModal,
+  taskTextModal: TaskTextModal,
 };

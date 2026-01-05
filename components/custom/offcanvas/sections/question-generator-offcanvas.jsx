@@ -121,14 +121,14 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
         });
       }
 
-      toast.success("Muvaffaqiyatli saqlandi!");
+      toast.success("Successfully saved!");
       closeOffcanvas("questionGeneratorOffcanvas", response?.data);
     } catch (e) {
       console.error("Submit Error:", e);
       const errorData = e?.response?.data;
 
       // Xatolik xabarini chiroyli ko'rsatish
-      let errorMsg = "Xatolik yuz berdi";
+      let errorMsg = "Error, please wait a bit";
       if (typeof errorData === "object") {
         // Backenddan kelgan obyekt ko'rinishidagi xatolarni yig'ish
         errorMsg = JSON.stringify(errorData);
