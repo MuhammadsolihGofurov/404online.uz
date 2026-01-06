@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import { useIntl } from "react-intl";
-import { useParams } from "next/navigation";
 import {
   Calendar,
   Clock,
@@ -11,15 +10,27 @@ import {
   BookOpen,
   FileText,
   CheckCircle2,
+  DoorOpen,
+  DoorClosed,
+  Eye,
+  Edit,
+  Trash,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
+import { Dropdown } from "@/components/custom/details";
+import { useModal } from "@/context/modal-context";
+import { authAxios } from "@/utils/axios";
+import { toast } from "react-toastify";
+import { useParams } from "@/hooks/useParams";
 
 export default function TaskItem({ item }) {
   const intl = useIntl();
-  const params = useParams();
+  const { findParams } = useParams();
+  const { openModal } = useModal();
 
   // URL orqali turni aniqlash (exams yoki homeworks)
-  const isExam = params.type === "exams" || !!item.status;
+  const type = findParams("type");
+  const isExam = type === "exams" || !!item.status;
 
   const {
     id,
@@ -32,6 +43,7 @@ export default function TaskItem({ item }) {
     deadline,
     created_at,
     created_by_name,
+    description,
   } = item;
 
   // Status ranglarini aniqlash
@@ -46,8 +58,69 @@ export default function TaskItem({ item }) {
     }
   };
 
+  const handleOpenRoom = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Open room",
+        description: "Are you sure you want to open this exam?",
+        onConfirm: async () => {
+          await authAxios.post(`/tasks/exams/${i}/open-room/`);
+          toast.success(intl.formatMessage({ id: "Exam is opened!" }));
+        },
+      },
+      "short"
+    );
+  };
+
+  const handleCloseRoom = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Close room",
+        description: "Are you sure you want to close this exam?",
+        onConfirm: async () => {
+          await authAxios.post(`/tasks/exams/${i}/close-room/`);
+          toast.success(intl.formatMessage({ id: "Exam is closed!" }));
+        },
+      },
+      "short"
+    );
+  };
+
+  const handleView = (i) => {};
+
+  const handleEdit = (i) => {
+    openModal(
+      "taskEditModal",
+      {
+        id: i,
+        title: title,
+        description: description,
+        type: params.type,
+        deadline,
+      },
+      "short"
+    );
+  };
+
+  const handleDelete = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Delete task",
+        description: "Are you sure you want to delete this task?",
+        onConfirm: async () => {
+          await authAxios.delete(`/tasks/${type}/${i}/`);
+          toast.success(intl.formatMessage({ id: "Task is deleted!" }));
+        },
+      },
+      "short"
+    );
+  };
+
   return (
-    <div className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1">
+    <div className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
       {/* --- Header: Badges --- */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-2">
@@ -82,9 +155,73 @@ export default function TaskItem({ item }) {
           )}
         </div>
 
-        <button type="button" className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* <button
+          type="button"
+          className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
           <MoreHorizontal size={18} />
-        </button>
+        </button> */}
+
+        <Dropdown
+          buttonContent={<MoreHorizontal size={18} className="text-gray-400" />}
+        >
+          {/* for exams */}
+          {isExam && (
+            <>
+              {status !== "OPEN" && (
+                <button
+                  title="Open room"
+                  type="button"
+                  onClick={() => handleOpenRoom(id)}
+                  className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-green-700 hover:text-main"
+                >
+                  <DoorOpen size={14} />
+                  <span>Open room</span>
+                </button>
+              )}
+              {status !== "CLOSED" && (
+                <button
+                  title="Close room"
+                  type="button"
+                  onClick={() => handleCloseRoom(id)}
+                  className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-red-700 hover:text-main"
+                >
+                  <DoorClosed size={14} />
+                  <span>Close room</span>
+                </button>
+              )}
+            </>
+          )}
+
+          {/* for all */}
+          <button
+            title="View"
+            type="button"
+            onClick={() => handleView(id)}
+            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-blue-700 hover:text-main"
+          >
+            <Eye size={14} />
+            <span>Veiw</span>
+          </button>
+          <button
+            title="Edit"
+            type="button"
+            onClick={() => handleEdit(id)}
+            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-textPrimary hover:text-main"
+          >
+            <Edit size={14} />
+            <span>Edit</span>
+          </button>
+          <button
+            title="Delete"
+            type="button"
+            onClick={() => handleDelete(id)}
+            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-red-700 hover:text-main"
+          >
+            <Trash size={14} />
+            <span>Delete</span>
+          </button>
+        </Dropdown>
       </div>
 
       {/* --- Body: Title & Info --- */}

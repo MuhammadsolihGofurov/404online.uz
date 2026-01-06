@@ -27,7 +27,7 @@ import {
   TaskTextModal,
 } from "./sections";
 import sectionStatusChangeModal from "./sections/section-status-change-modal";
-import { TaskModal } from "./tasks";
+import { TaskEditModal, TaskModal } from "./tasks";
 
 export const ModalComponents = {
   createEduCenter: EduCenterModal,
@@ -52,4 +52,5 @@ export const ModalComponents = {
   taskTextModal: TaskTextModal,
   sectionView: SectionViewModal,
   sectionStatusChangeModal: sectionStatusChangeModal,
+  taskEditModal: TaskEditModal,
 };

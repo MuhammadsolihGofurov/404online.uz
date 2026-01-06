@@ -30,6 +30,7 @@ export default function TasksLists({ role, loading }) {
       searchTerms,
       currentPage,
       offcanvasClosed,
+      modalClosed,
     ],
     ([url, locale, type, terms, page]) =>
       fetcher(

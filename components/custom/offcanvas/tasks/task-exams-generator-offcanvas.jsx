@@ -72,6 +72,11 @@ export default function TaskExamsGeneratorOffcanvas({ id, initialData }) {
         assigned_groups: data.assigned_groups.map((g) => g.id || g),
       };
 
+      if (data.assigned_groups?.length == 0) {
+        toast.error("Please assign at least one group");
+        return;
+      }
+
       const baseUrl = "/tasks/exams/";
       let response;
 

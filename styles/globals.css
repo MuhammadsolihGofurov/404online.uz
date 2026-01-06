@@ -144,3 +144,82 @@ tbody {
   content: counter(choice-counter, upper-alpha);
   line-height: 1;
 } */
+.modern-datepicker-calendar {
+  border: none !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  font-family: inherit !important;
+  padding: 8px !important;
+  
+  /* Flex muammosini tuzatish */
+  display: flex !important;
+  height: auto !important; /* Balandlikni kontentga moslash */
+  max-height: 400px; /* Ixtiyoriy: juda katta bo'lib ketmasligi uchun */
+  overflow: hidden;
+}
+/* Vaqt tanlash qismining balandligini kalendarga tenglashtirish */
+.react-datepicker__time-container {
+  height: 300px !important; /* Kalendar balandligi bilan bir xil qilish */
+}
+
+.react-datepicker__time-box {
+  height: 100% !important;
+  border-bottom-right-radius: 12px;
+}
+
+/* Kalendar va vaqt orasidagi chiziqni to'g'irlash */
+.react-datepicker__time-container .react-datepicker__time {
+  background: white !important;
+  height: 100% !important;
+}
+
+/* Agar flex ishlatilsa, ichki elementlar siqilmasligi uchun */
+.react-datepicker__month-container {
+  flex: 1;
+}
+
+.react-datepicker__header {
+  background-color: white !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  padding-top: 12px !important;
+}
+
+.react-datepicker__day--selected, 
+.react-datepicker__day--keyboard-selected,
+.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+  background-color: #3b82f6 !important; /* Blue-500 */
+  border-radius: 8px !important;
+  color: white !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: #eff6ff !important;
+  border-radius: 8px !important;
+}
+
+.react-datepicker__current-month {
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin-bottom: 8px !important;
+}
+
+.react-datepicker__navigation {
+  top: 14px !important;
+}
+
+.react-datepicker__time-container {
+  border-left: 1px solid #f3f4f6 !important;
+  width: 90px !important;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+/* Input ichidagi xochcha (clear button) ni to'g'rilash */
+.react-datepicker__close-icon::after {
+  background-color: #9ca3af !important;
+  font-size: 14px !important;
+}
