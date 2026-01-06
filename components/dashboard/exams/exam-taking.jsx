@@ -245,20 +245,26 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
     setActivePartIndex(activeIdx);
   };
 
-  const handlePartChangeFromFooter = (nextPartIndex) => {
+  const handlePartChangeFromFooter = useCallback((nextPartIndex) => {
     setActivePartIndex(nextPartIndex);
-    const targetPart = partSummaries.find(
-      (summary) => summary.partIndex === nextPartIndex
-    );
+  }, []);
 
-    if (
-      targetPart &&
-      targetPart.startIndex !== null &&
-      targetPart.startIndex !== undefined
-    ) {
-      setCurrentQuestionIndex(targetPart.startIndex);
+  // Sync currentQuestionIndex when activePartIndex changes
+  useEffect(() => {
+    if (partSummaries.length > 0 && typeof activePartIndex === "number") {
+      const targetPart = partSummaries.find(
+        (summary) => summary.partIndex === activePartIndex
+      );
+
+      if (
+        targetPart &&
+        targetPart.startIndex !== null &&
+        targetPart.startIndex !== undefined
+      ) {
+        setCurrentQuestionIndex(targetPart.startIndex);
+      }
     }
-  };
+  }, [activePartIndex, partSummaries]);
 
   const handleStepPart = (direction) => {
     const targetIndex = Math.min(

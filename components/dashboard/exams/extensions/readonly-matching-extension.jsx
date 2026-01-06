@@ -12,43 +12,77 @@ const ReadOnlyMatchingQuestionComponent = ({ node, extension }) => {
   const questionNumber = node.attrs.number;
   const correctAnswer = node.attrs.answer;
 
+  const answersRef = extension.options.answers;
+  const onAnswerChangeRef = extension.options.onAnswerChange;
+  const hideInputsRef = extension.options.hideInputs;
+
   const [value, setValue] = React.useState(
-    extension.options.answers[questionNumber] || ""
+    answersRef.current?.[questionNumber] || ""
+  );
+  const [hideInputs, setHideInputs] = React.useState(
+    hideInputsRef?.current || false
   );
 
   React.useEffect(() => {
+    // Update hideInputs state when it changes
+    setHideInputs(hideInputsRef?.current || false);
+  }, [hideInputsRef?.current]);
+
+  React.useEffect(() => {
     // Only update if the answer from parent is different from our current value
-    const newValue = extension.options.answers[questionNumber] || "";
+    const newValue = answersRef.current?.[questionNumber] || "";
     if (newValue !== value) {
       setValue(newValue);
     }
-  }, [extension.options.answers[questionNumber]]); // Only depend on the specific question's answer
+  }, [answersRef.current?.[questionNumber], questionNumber]);
 
   const handleChange = (e) => {
     setValue(e.target.value);
-    if (extension.options.onAnswerChange) {
-      extension.options.onAnswerChange(questionNumber, e.target.value);
+    if (onAnswerChangeRef?.current) {
+      onAnswerChangeRef.current(questionNumber, e.target.value);
     }
   };
 
   return (
-    <NodeViewWrapper className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 mb-2">
-      <span className="w-8 h-8 flex items-center justify-center font-bold text-slate-700 bg-slate-100 rounded-md text-xs">
+    <NodeViewWrapper
+      className={`flex items-center gap-3 p-2 rounded-lg border mb-2 transition-all ${
+        hideInputs && value
+          ? "bg-blue-50 border-blue-400"
+          : "bg-white border-slate-200"
+      }`}
+    >
+      <span
+        className={`w-8 h-8 flex items-center justify-center font-bold rounded-md text-xs ${
+          hideInputs && value
+            ? "bg-blue-600 text-white"
+            : "bg-slate-100 text-slate-700"
+        }`}
+      >
         {questionNumber}
       </span>
       <div className="flex-1">
         <NodeViewContent className="text-slate-600 text-sm min-h-[24px]" />
       </div>
       <div className="flex items-center gap-2">
-        <input
-          type="text"
-          className="w-16 h-7 text-center border border-slate-300 rounded text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none"
-          maxLength={5}
-          value={value}
-          onChange={handleChange}
-          placeholder="..."
-          data-question-number={questionNumber}
-        />
+        {hideInputs ? (
+          <div
+            className={`min-w-[4rem] h-8 px-3 flex items-center justify-center rounded-md font-bold text-sm ${
+              value ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400"
+            }`}
+          >
+            {value || "—"}
+          </div>
+        ) : (
+          <input
+            type="text"
+            className="w-16 h-7 text-center border border-slate-300 rounded text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none"
+            maxLength={5}
+            value={value}
+            onChange={handleChange}
+            placeholder="..."
+            data-question-number={questionNumber}
+          />
+        )}
       </div>
     </NodeViewWrapper>
   );
@@ -108,6 +142,7 @@ export const ReadOnlyMatchingQuestion = Node.create({
     return {
       answers: {},
       onAnswerChange: () => {},
+      hideInputs: false,
     };
   },
   addAttributes() {

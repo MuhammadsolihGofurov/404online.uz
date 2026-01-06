@@ -27,16 +27,45 @@ const ReadOnlyQuestionInputComponent = ({ node, extension }) => {
     onAnswerChangeRef.current(number, newValue);
   };
 
+  const handleClick = () => {
+    // Check if a word was selected from drag items
+    if (window.lastSelectedOption) {
+      const word = window.lastSelectedOption;
+      setValue(word);
+      onAnswerChangeRef.current(number, word);
+      window.lastSelectedOption = null; // Clear after use
+    }
+  };
+
+  const handleRemove = () => {
+    setValue("");
+    onAnswerChangeRef.current(number, "");
+  };
+
   return (
     <NodeViewWrapper className="inline-block mx-1 align-middle">
-      <input
-        type="text"
-        value={value}
-        onChange={handleChange}
-        placeholder="..."
-        className="inline-block w-20 h-7 px-2 text-sm border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none"
-        data-question-number={number}
-      />
+      {value ? (
+        <span className="inline-flex items-center justify-center min-w-[3rem] h-8 px-3 rounded-md font-bold text-sm bg-blue-600 text-white">
+          {value}
+          <button
+            onClick={handleRemove}
+            className="ml-2 text-white hover:text-red-200 font-bold"
+            type="button"
+          >
+            ×
+          </button>
+        </span>
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onClick={handleClick}
+          placeholder="..."
+          className="inline-block w-20 h-7 px-2 text-sm border rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all border-slate-300 cursor-pointer"
+          data-question-number={number}
+        />
+      )}
     </NodeViewWrapper>
   );
 };

@@ -30,15 +30,9 @@ export default function ExamQuestion({
   const [answerWidth, setAnswerWidth] = useState(ANSWER_PANEL.DEFAULT_WIDTH);
   const answerMinWidth = ANSWER_PANEL.MIN_WIDTH;
   const answerMaxWidth = ANSWER_PANEL.MAX_WIDTH;
-  const [activePartIndex, setActivePartIndex] = useState(
-    externalActivePartIndex ?? 0
-  );
 
-  useEffect(() => {
-    if (typeof externalActivePartIndex === "number") {
-      setActivePartIndex(externalActivePartIndex);
-    }
-  }, [externalActivePartIndex]);
+  // Use external prop directly instead of local state to avoid sync issues
+  const activePartIndex = externalActivePartIndex ?? 0;
 
   // Flatten question_groups instead of individual questions
   // Each group now has a template with multiple questions embedded
@@ -142,15 +136,6 @@ export default function ExamQuestion({
 
   const totalQuestions = allQuestionNumbers.length;
 
-  useEffect(() => {
-    if (
-      sectionType === SECTION_TYPES.LISTENING &&
-      currentGroup?.partIndex >= 0
-    ) {
-      setActivePartIndex(currentGroup.partIndex);
-    }
-  }, [sectionType, currentGroup?.partIndex]);
-
   // Answer handler now uses question_number instead of question.id
   const handleAnswerChange = (questionNumber, value) => {
     onAnswerChange(questionNumber, value);
@@ -226,19 +211,12 @@ export default function ExamQuestion({
         questionNumbers,
       };
     });
-  }, [sectionType, mock?.parts, flatQuestionGroups, answers, intl]);
+  }, [sectionType, mock, answers, flatQuestionGroups, intl]);
 
   const groupsInActivePart = useMemo(() => {
     if (sectionType !== SECTION_TYPES.LISTENING) return [];
     return flatQuestionGroups.filter((g) => g.partIndex === activePartIndex);
   }, [flatQuestionGroups, sectionType, activePartIndex]);
-
-  const handlePartChange = (nextPartIndex) => {
-    setActivePartIndex(nextPartIndex);
-    if (onPartChange) {
-      onPartChange(nextPartIndex);
-    }
-  };
 
   // Send partSummaries to parent component for footer
   useEffect(() => {
@@ -291,6 +269,47 @@ export default function ExamQuestion({
   }
 
   if (sectionType === SECTION_TYPES.LISTENING) {
+    // If active part has no questions, show empty state
+    if (groupsInActivePart.length === 0) {
+      return (
+        <div className="flex flex-col h-full bg-white">
+          <div className="bg-white border-b border-gray-100 px-6 md:px-10 py-4 flex justify-between items-center">
+            <h2 className="text-xl font-bold text-gray-900">
+              {intl.formatMessage({ id: "Part", defaultMessage: "Part" })}{" "}
+              {activePartIndex + 1}
+            </h2>
+            <button
+              onClick={onBackToSections}
+              className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-100 rounded-xl transition text-sm font-semibold text-gray-700"
+              aria-label={intl.formatMessage({
+                id: "Back to sections",
+                defaultMessage: "Back to sections",
+              })}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              {intl.formatMessage({ id: "Back", defaultMessage: "Back" })}
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center max-w-md">
+              <p className="text-gray-900 font-semibold mb-2">
+                {intl.formatMessage({
+                  id: "No questions in this part",
+                  defaultMessage: "No questions in this part",
+                })}
+              </p>
+              <p className="text-gray-600 text-sm">
+                {intl.formatMessage({
+                  id: "This part doesn't have any questions yet",
+                  defaultMessage: "This part doesn't have any questions yet.",
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <ListeningQuestionLayout
         currentGroup={currentGroup}
@@ -302,7 +321,6 @@ export default function ExamQuestion({
         answers={answers}
         onAnswerChange={handleAnswerChange}
         onBackToSections={onBackToSections}
-        handlePartChange={handlePartChange}
         onPrevious={onPrevious}
         onNext={onNext}
         mock={mock}
