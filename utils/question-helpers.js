@@ -351,22 +351,40 @@ export const transformEditorData = (json) => {
 
     // 7. Summary question
     if (node.type === "summaryBlock") {
-      const { title } = node.attrs;
-      let contentHtml = "";
+      if (node.type === "summaryBlock") {
+        const { title, isDragDrop, words } = node.attrs;
+        // isDragDrop - bu summary'da shunchaki yoziladimi yoki so'zlar tanlanadimi shuni bildiradi
 
-      if (node.content) {
-        contentHtml = node.content.map(processNode).join("");
-      }
+        let contentHtml = "";
+        if (node.content) {
+          contentHtml = node.content.map(processNode).join("");
+        }
 
-      return `
-    <div class="summary-container" style="border: 2px solid #1e293b; border-radius: 12px; margin: 20px 0; overflow: hidden;">
-      <div class="summary-header" style="background: #1e293b; color: white; padding: 8px 16px; font-weight: bold; font-size: 14px;">
+        // Agar Drag & Drop bo'lsa, pastga so'zlar bankini qo'shamiz
+        const dragDropBank = isDragDrop
+          ? `
+    <div class="drag-drop-words-pool">
+      ${words
+        .map(
+          (word) =>
+            `<span class="draggable-word" draggable="true">${word}</span>`
+        )
+        .join("")}
+    </div>
+  `
+          : "";
+
+        return `
+    <div class="summary-container drag-drop-mode-${isDragDrop}" style="border: 2px solid #1e293b; border-radius: 12px; margin: 20px 0;">
+      <div class="summary-header" style="background: #1e293b; color: white; padding: 8px 16px; font-weight: bold;">
         ${title}
       </div>
-      <div class="summary-body" style="padding: 20px; background: #fffcf5; line-height: 1.8;">
+      <div class="summary-body" style="padding: 20px; background: #fffcf5; line-height: 2;">
         ${contentHtml}
       </div>
+      ${dragDropBank}
     </div>`;
+      }
     }
 
     // 8. diagram labeling
@@ -398,6 +416,39 @@ export const transformEditorData = (json) => {
     </div>`;
     }
 
+    // 9. drag drop
+    // 9. drag drop summary
+    if (node.type === "dragDropSummary") {
+      const { title, options } = node.attrs;
+
+      // Options massiv ekanligiga ishonch hosil qilamiz
+      const optionsArray = Array.isArray(options) ? options : [];
+
+      let bodyHtml = "";
+      if (node.content) {
+        bodyHtml = node.content.map(processNode).join("");
+      }
+
+      const optionsHtml = optionsArray
+        .map(
+          (opt) =>
+            `<div class="drag-item" draggable="true" data-word="${opt}">${opt}</div>`
+        )
+        .join("");
+
+      return `
+    <div class="drag-drop-summary-container" style="border: 2px solid #6366f1; border-radius: 12px; margin: 24px 0; background: #fff;">
+      <div class="summary-header" style="background: #6366f1; color: white; padding: 10px 16px; font-weight: bold; border-radius: 10px 10px 0 0;">
+        ${title}
+      </div>
+      <div class="summary-content" style="padding: 20px; line-height: 2.2; color: #334155;">
+        ${bodyHtml}
+      </div>
+      <div class="word-bank" style="padding: 16px; background: #f8fafc; border-top: 1px dashed #cbd5e1; display: flex; flex-wrap: wrap; gap: 10px; border-radius: 0 0 10px 10px;">
+        ${optionsHtml}
+      </div>
+    </div>`;
+    }
     // --- Oddiy elementlar ---
     if (node.type === "text") {
       let text = node.text;
@@ -589,6 +640,19 @@ export const prepareInitialData = (html) => {
 
   // 5. Summary Block
   doc.querySelectorAll(".summary-container").forEach((el) => {
+    const isDragDrop = container.classList.contains("drag-drop-mode-true");
+    const words = [];
+
+    if (isDragDrop) {
+      container
+        .querySelectorAll(".draggable-word")
+        .forEach((w) => words.push(w.innerText));
+    }
+
+    const newNode = doc.createElement("div");
+    newNode.setAttribute("data-type", "summaryBlock");
+    newNode.setAttribute("isDragDrop", isDragDrop);
+    newNode.setAttribute("words", JSON.stringify(words));
     const div = doc.createElement("div");
     div.setAttribute("data-type", "summary-block");
     div.setAttribute(
@@ -598,6 +662,60 @@ export const prepareInitialData = (html) => {
     div.innerHTML = el.querySelector(".summary-body")?.innerHTML || "";
     el.replaceWith(div);
   });
+
+  // 6. drag drop summary
+  doc
+    .querySelectorAll(".summary-container, .drag-drop-summary-container")
+    .forEach((el) => {
+      const newNode = doc.createElement("div");
+
+      // 1. Tipni aniqlash
+      const isDragDropMode =
+        el.classList.contains("drag-drop-mode-true") ||
+        el.classList.contains("drag-drop-summary-container") ||
+        (el.hasAttribute("data-type") &&
+          el.getAttribute("data-type") === "drag-drop-summary");
+
+      newNode.setAttribute(
+        "data-type",
+        isDragDropMode ? "dragDropSummary" : "summaryBlock"
+      );
+
+      // 2. Title (Sarlavha) ni olish - Xatolikdan himoyalangan holda
+      const headerEl = el.querySelector(".summary-header, .summary-title");
+      newNode.setAttribute(
+        "title",
+        headerEl ? headerEl.textContent.trim() : "Summary"
+      );
+
+      // 3. Words/Options (So'zlar banki) ni yig'ish
+      const words = [];
+      el.querySelectorAll(".draggable-word, .drag-item").forEach((w) => {
+        if (w.textContent) words.push(w.textContent.trim());
+      });
+
+      if (isDragDropMode) {
+        newNode.setAttribute("options", JSON.stringify(words)); // dragDropSummary uchun 'options'
+        newNode.setAttribute("isDragDrop", "true"); // summaryBlock uchun 'isDragDrop'
+        newNode.setAttribute("words", JSON.stringify(words)); // summaryBlock uchun 'words'
+      }
+
+      // 4. Ichki matnni (paragraflar va inputlar) olish
+      const bodyEl = el.querySelector(".summary-body, .summary-content");
+      if (bodyEl) {
+        newNode.innerHTML = bodyEl.innerHTML;
+      } else {
+        // Agar maxsus body bo'lmasa, elementning o'zini (lekin banklarsiz) olamiz
+        const clone = el.cloneNode(true);
+        const bank = clone.querySelector(".word-bank, .drag-drop-words-pool");
+        if (bank) bank.remove();
+        const header = clone.querySelector(".summary-header, .summary-title");
+        if (header) header.remove();
+        newNode.innerHTML = clone.innerHTML;
+      }
+
+      el.replaceWith(newNode);
+    });
 
   // 6. Question Input (Gap Fill) - O'z holicha qoladi,
   // chunki extensioningiz "question-input" tegini taniydi

@@ -23,9 +23,11 @@ import {
 import {
   PassageTextModal,
   QuestionGroupModal,
+  SectionViewModal,
   TaskTextModal,
 } from "./sections";
-import { TaskModal } from "./tasks";
+import sectionStatusChangeModal from "./sections/section-status-change-modal";
+import { TaskEditModal, TaskModal } from "./tasks";
 
 export const ModalComponents = {
   createEduCenter: EduCenterModal,
@@ -48,4 +50,7 @@ export const ModalComponents = {
   questionGroupModal: QuestionGroupModal,
   passageTextModal: PassageTextModal,
   taskTextModal: TaskTextModal,
+  sectionView: SectionViewModal,
+  sectionStatusChangeModal: sectionStatusChangeModal,
+  taskEditModal: TaskEditModal,
 };

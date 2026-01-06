@@ -210,7 +210,10 @@ export default function TemplateUseAsTaskModal({ template_id, category }) {
         )}
         {isPractice && (
           <p className="text-sm text-gray-600">
-            📚 {intl.formatMessage({id: "Exercise: With a deadline, unlimited attempts, the result is visible"})}
+            📚{" "}
+            {intl.formatMessage({
+              id: "Exercise: With a deadline, unlimited attempts, the result is visible",
+            })}
           </p>
         )}
       </div>

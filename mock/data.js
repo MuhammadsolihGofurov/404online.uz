@@ -39,6 +39,36 @@ export const TEMPLATE_D_LEVEL = [
   },
 ];
 
+export const TASK_TYPE = [
+  {
+    value: "homeworks",
+    name: "for homeworks",
+  },
+  {
+    value: "exams",
+    name: "for exams",
+  },
+];
+
+export const MOCK_STATUS = [
+  {
+    value: "DRAFT",
+    name: "Draft",
+  },
+  {
+    value: "EXAM",
+    name: "Exam",
+  },
+  {
+    value: "HOMEWORK",
+    name: "Homework",
+  },
+  {
+    value: "PRACTICE",
+    name: "Practice",
+  },
+];
+
 export const MOCK_TYPES = [
   {
     value: "LISTENING",

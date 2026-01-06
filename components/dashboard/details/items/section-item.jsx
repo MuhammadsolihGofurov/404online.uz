@@ -1,11 +1,20 @@
 import React from "react";
-import { Clock, BookOpen, Calendar, ChevronRight, Edit2 } from "lucide-react";
-import Link from "next/link";
-import { SECTIONS_CREATE_URL } from "@/mock/router";
+import {
+  Clock,
+  BookOpen,
+  Calendar,
+  ChevronRight,
+  Eye,
+  File,
+  Activity,
+  RotateCcw,
+} from "lucide-react";
 import { useParams } from "@/hooks/useParams";
+import { useModal } from "@/context/modal-context";
 
 const SectionItem = ({ data }) => {
   const { findParams } = useParams();
+  const { openModal } = useModal();
 
   const statusStyles = {
     DRAFT: "bg-slate-100 text-slate-600 border-slate-200",
@@ -23,6 +32,18 @@ const SectionItem = ({ data }) => {
   };
 
   const currentSectionType = findParams("section") || null;
+
+  const handleViewFunction = (d) => {
+    openModal("sectionView", { data: d }, "small");
+  };
+
+  const handleChangeStatus = (d) => {
+    openModal(
+      "sectionStatusChangeModal",
+      { id: d?.id, sectionType: currentSectionType, status: d?.status },
+      "small"
+    );
+  };
 
   return (
     <div className="group relative bg-white rounded-3xl border border-gray-100 p-5 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1">
@@ -68,14 +89,30 @@ const SectionItem = ({ data }) => {
           <Calendar size={13} className="mr-1" />
           {formatDate(data.created_at)}
         </div>
-        {data.status == "DRAFT" && (
+        <div className="flex itesm-center gap-2">
+          <button
+            onClick={() => handleViewFunction(data)}
+            type="button"
+            className="font-medium text-textSecondary"
+          >
+            <Eye size={14} />
+          </button>
+          <button
+            onClick={() => handleChangeStatus(data)}
+            type="button"
+            className="font-medium text-textSecondary"
+          >
+            <RotateCcw size={14} />
+          </button>
+        </div>
+        {/* {data.status == "DRAFT" && (
           <Link
             href={`${SECTIONS_CREATE_URL}?section=${currentSectionType}&id=${data?.id}`}
             className="font-medium text-textSecondary"
           >
             <Edit2 size={13} />
           </Link>
-        )}
+        )} */}
       </div>
     </div>
   );

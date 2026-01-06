@@ -232,7 +232,7 @@ export default function DocumentItem({ item, role }) {
           {item.created_by && (
             <div
               className="flex items-center text-gray-500 text-xs font-medium"
-              title="Muallif"
+              title={item.created_by.full_name}
             >
               <span className="mr-1.5 text-right truncate max-w-[100px]">
                 {item.created_by.full_name}

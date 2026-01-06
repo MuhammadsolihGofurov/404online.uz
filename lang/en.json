@@ -258,7 +258,6 @@
   "Graded Submissions": "Graded Submissions",
   "Students Assisted": "Students Assisted",
   "Completed": "Completed",
-  "Pending": "Pending",
   "Total Exams": "Total Exams",
   "Completed Exams": "Completed Exams",
   "Total Homeworks": "Total Homeworks",
@@ -267,5 +266,14 @@
   "Average Class Score": "Average Class Score",
   "Recent Submissions": "Recent Submissions",
   "Recent Results": "Recent Results",
-  "Upcoming Deadlines": "Upcoming Deadlines"
+  "Upcoming Deadlines": "Upcoming Deadlines",
+  "Exam is opened!": "Exam is opened!",
+  "Are you sure you want to open this exam?": "Are you sure you want to open this exam?",
+  "Open room": "Open room",
+  "Close room": "Close room",
+  "Are you sure you want to close this exam?": "Are you sure you want to close this exam?",
+  "Exam is closed!": "Exam is closed!",
+  "Task is deleted!": "Task is deleted!",
+  "Are you sure you want to delete this task?": "Are you sure you want to delete this task?",
+  "Delete task": "Delete task"
 }

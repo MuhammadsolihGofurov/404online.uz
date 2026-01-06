@@ -105,6 +105,44 @@ export const ChoiceGroup = Node.create({
       type: { default: "single" },
     };
   },
+  addCommands() {
+    return {
+      insertChoiceGroup:
+        () =>
+        ({ editor, chain }) => {
+          let lastNumber = 0;
+
+          // 1. Hujjatdagi eng katta raqamni topish
+          editor.state.doc.descendants((node) => {
+            if (node.type.name === "choiceGroup") {
+              const num = parseInt(node.attrs.questionNumber, 10);
+              if (!isNaN(num) && num > lastNumber) {
+                lastNumber = num;
+              }
+            }
+          });
+
+          const nextNumber = (lastNumber + 1).toString();
+
+          // 2. Yangi blokni JSON formatida kiritish
+          // Bu usul ProseMirror-ning ichki Node-lariga qaraganda xavfsizroq
+          return chain()
+            .insertContent({
+              type: this.name,
+              attrs: {
+                questionNumber: nextNumber,
+                title: "",
+                type: "single",
+              },
+              content: [
+                { type: "choiceItem", attrs: { isCorrect: false } },
+                { type: "choiceItem", attrs: { isCorrect: false } },
+              ],
+            })
+            .run();
+        },
+    };
+  },
   parseHTML() {
     return [{ tag: 'div[data-type="choice-group"]' }];
   },

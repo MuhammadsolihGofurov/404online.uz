@@ -8,21 +8,33 @@ import { TaskItem } from "../details/items";
 import Pagination from "@/components/custom/pagination";
 import fetcher from "@/utils/fetcher";
 import { TaskItemSkeleton } from "@/components/skeleton";
+import { useOffcanvas } from "@/context/offcanvas-context";
 
 export default function TasksLists({ role, loading }) {
   const router = useRouter();
   const intl = useIntl();
   const { modalClosed } = useModal();
+  const { offcanvasClosed } = useOffcanvas();
 
   const { findParams } = useParams();
 
   const currentPage = findParams("page") || 1;
+  const currentType = findParams("type") || "";
+  const searchTerms = findParams("search") || "";
 
   const { data: datas, isLoading } = useSWR(
-    ["/tasks/", router.locale, currentPage, modalClosed],
-    ([url, locale, page]) =>
+    [
+      "/tasks",
+      router.locale,
+      currentType,
+      searchTerms,
+      currentPage,
+      offcanvasClosed,
+      modalClosed,
+    ],
+    ([url, locale, type, terms, page]) =>
       fetcher(
-        `${url}?page=${page}&page_size=12`,
+        `${url}/${type}/?search=${terms}&page=${page}&page_size=12`,
         {
           headers: {
             "Accept-Language": locale,

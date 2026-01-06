@@ -30,7 +30,6 @@ export default function GenerateCodeModal() {
     defaultValues: {
       role: "",
       is_guest: "",
-      group: "",
       count: 1, // Default 1 ta kod
     },
   });
@@ -47,16 +46,13 @@ export default function GenerateCodeModal() {
       const payload = {
         role: data?.role,
         is_guest: data?.is_guest === "Yes",
-        group: data?.group,
       };
 
-      // Berilgan son miqdoricha so'rov yuboramiz
       for (let i = 0; i < count; i++) {
         const response = await authAxios.post(
           "/centers/invitations/create/",
           payload
         );
-        // API dan qaytgan kodni (masalan: response.data.code) saqlaymiz
         codes.push(response?.data);
       }
 
@@ -72,7 +68,6 @@ export default function GenerateCodeModal() {
   };
 
   const copyAllToClipboard = () => {
-    // Faqat kod matnlarini ajratib olamiz (response structuredan kelib chiqib o'zgartiring)
     const textToCopy = generatedCodes
       .map((item) => item.code || item.id)
       .join("\n");
@@ -81,7 +76,6 @@ export default function GenerateCodeModal() {
   };
 
   const handleFinish = () => {
-    // Oxirgi response ma'lumotini qaytarib modalni yopamiz
     closeModal("generateCode", generatedCodes[generatedCodes.length - 1]);
   };
 
@@ -154,7 +148,7 @@ export default function GenerateCodeModal() {
                     />
                   )}
                 />
-                <Controller
+                {/* <Controller
                   name="group"
                   control={control}
                   rules={{ required: intl.formatMessage({ id: "Required" }) }}
@@ -166,7 +160,7 @@ export default function GenerateCodeModal() {
                       error={errors.group?.message}
                     />
                   )}
-                />
+                /> */}
               </>
             )}
           </div>

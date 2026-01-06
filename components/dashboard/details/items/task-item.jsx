@@ -7,150 +7,290 @@ import {
   Users,
   AlertCircle,
   MoreHorizontal,
+  BookOpen,
+  FileText,
+  CheckCircle2,
+  DoorOpen,
+  DoorClosed,
+  Eye,
+  Edit,
+  Trash,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
+import { Dropdown } from "@/components/custom/details";
+import { useModal } from "@/context/modal-context";
+import { authAxios } from "@/utils/axios";
+import { toast } from "react-toastify";
+import { useParams } from "@/hooks/useParams";
 
-export default function TaskItem({ item, role }) {
+export default function TaskItem({ item }) {
   const intl = useIntl();
+  const { findParams } = useParams();
+  const { openModal } = useModal();
 
-  // Destructure for cleaner access
+  // URL orqali turni aniqlash (exams yoki homeworks)
+  const type = findParams("type");
+  const isExam = type === "exams" || !!item.status;
+
   const {
     id,
     title,
-    task_type,
+    status,
+    is_published,
+    assigned_groups,
+    assigned_groups_count,
+    items_count,
     deadline,
-    duration_minutes,
-    active_students_count,
-    is_exam_active,
-    is_visible,
     created_at,
+    created_by_name,
+    description,
   } = item;
 
-  // Helper to format Task Type (e.g., EXAM_MOCK -> Exam Mock)
-  const formatType = (type) => {
-    return type
-      ?.replace(/_/g, " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (l) => l.toUpperCase());
-  };
-
-  // Helper for Badge Colors based on Task Type
-  const getTypeColor = (type) => {
-    switch (type) {
-      case "EXAM_MOCK":
-        return "bg-purple-50 text-purple-700 border-purple-100";
-      case "CUSTOM_MOCK":
-        return "bg-blue-50 text-blue-700 border-blue-100";
+  // Status ranglarini aniqlash
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case "OPEN":
+        return "bg-green-50 text-green-700 border-green-100";
+      case "CLOSED":
+        return "bg-red-50 text-red-700 border-red-100";
       default:
         return "bg-gray-50 text-gray-700 border-gray-100";
     }
   };
 
-  // Check if deadline is passed
-  const isExpired = deadline ? new Date(deadline) < new Date() : false;
+  const handleOpenRoom = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Open room",
+        description: "Are you sure you want to open this exam?",
+        onConfirm: async () => {
+          await authAxios.post(`/tasks/exams/${i}/open-room/`);
+          toast.success(intl.formatMessage({ id: "Exam is opened!" }));
+        },
+      },
+      "short"
+    );
+  };
+
+  const handleCloseRoom = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Close room",
+        description: "Are you sure you want to close this exam?",
+        onConfirm: async () => {
+          await authAxios.post(`/tasks/exams/${i}/close-room/`);
+          toast.success(intl.formatMessage({ id: "Exam is closed!" }));
+        },
+      },
+      "short"
+    );
+  };
+
+  const handleView = (i) => {};
+
+  const handleEdit = (i) => {
+    openModal(
+      "taskEditModal",
+      {
+        id: i,
+        title: title,
+        description: description,
+        type: params.type,
+        deadline,
+      },
+      "short"
+    );
+  };
+
+  const handleDelete = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Delete task",
+        description: "Are you sure you want to delete this task?",
+        onConfirm: async () => {
+          await authAxios.delete(`/tasks/${type}/${i}/`);
+          toast.success(intl.formatMessage({ id: "Task is deleted!" }));
+        },
+      },
+      "short"
+    );
+  };
 
   return (
-    <Link
-      href={`/tasks/${id}`} // Navigate to details page
-      className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1"
-    >
-      {/* --- Header: Badges & Status --- */}
+    <div className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
+      {/* --- Header: Badges --- */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-2">
-          {/* Type Badge */}
+          {/* Tur belgisi (Exam yoki Homework) */}
           <span
-            className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${getTypeColor(
-              task_type
-            )}`}
+            className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+              isExam
+                ? "bg-purple-50 text-purple-700 border-purple-100"
+                : "bg-blue-50 text-blue-700 border-blue-100"
+            }`}
           >
-            {formatType(task_type)}
+            {isExam ? <FileText size={12} /> : <BookOpen size={12} />}
+            {isExam ? "Exam" : "Homework"}
           </span>
 
-          {/* Active Exam Indicator (Teacher View mostly) */}
-          {is_exam_active && (
-            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-green-50 text-green-600 border border-green-100 animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              Live
+          {/* Status (Faqat Exam uchun) */}
+          {status && (
+            <span
+              className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border ${getStatusStyles(
+                status
+              )}`}
+            >
+              {status}
+            </span>
+          )}
+
+          {/* Draft/Published holati */}
+          {!is_published && (
+            <span className="flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-100">
+              Draft
             </span>
           )}
         </div>
 
-        {/* Visibility Icon (or Menu) */}
-        <div className="text-gray-400">
-          {!is_visible ? (
-            <div title="Hidden from students">
-              <AlertCircle size={16} />
-            </div>
-          ) : (
-            // Placeholder for a dropdown menu if needed
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <MoreHorizontal size={18} />
-            </div>
+        {/* <button
+          type="button"
+          className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <MoreHorizontal size={18} />
+        </button> */}
+
+        <Dropdown
+          buttonContent={<MoreHorizontal size={18} className="text-gray-400" />}
+        >
+          {/* for exams */}
+          {isExam && (
+            <>
+              {status !== "OPEN" && (
+                <button
+                  title="Open room"
+                  type="button"
+                  onClick={() => handleOpenRoom(id)}
+                  className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-green-700 hover:text-main"
+                >
+                  <DoorOpen size={14} />
+                  <span>Open room</span>
+                </button>
+              )}
+              {status !== "CLOSED" && (
+                <button
+                  title="Close room"
+                  type="button"
+                  onClick={() => handleCloseRoom(id)}
+                  className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-red-700 hover:text-main"
+                >
+                  <DoorClosed size={14} />
+                  <span>Close room</span>
+                </button>
+              )}
+            </>
           )}
-        </div>
+
+          {/* for all */}
+          <button
+            title="View"
+            type="button"
+            onClick={() => handleView(id)}
+            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-blue-700 hover:text-main"
+          >
+            <Eye size={14} />
+            <span>Veiw</span>
+          </button>
+          <button
+            title="Edit"
+            type="button"
+            onClick={() => handleEdit(id)}
+            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-textPrimary hover:text-main"
+          >
+            <Edit size={14} />
+            <span>Edit</span>
+          </button>
+          <button
+            title="Delete"
+            type="button"
+            onClick={() => handleDelete(id)}
+            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-red-700 hover:text-main"
+          >
+            <Trash size={14} />
+            <span>Delete</span>
+          </button>
+        </Dropdown>
       </div>
 
-      {/* --- Body: Title & Meta --- */}
+      {/* --- Body: Title & Info --- */}
       <div className="mb-6">
         <h3 className="text-lg font-bold text-gray-900 leading-tight mb-3 group-hover:text-primary transition-colors line-clamp-2">
           {title}
         </h3>
 
-        <div className="space-y-2.5">
-          {/* Deadline */}
-          <div
-            className={`flex items-center gap-2 text-sm ${
-              isExpired ? "text-red-500" : "text-gray-500"
-            }`}
-          >
-            <Calendar size={16} className="shrink-0" />
-            <span>
-              {deadline ? (
-                intl.formatDate(deadline, {
+        <div className="space-y-2">
+          {/* Deadline (Homeworkda bo'ladi) */}
+          {deadline && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Calendar size={15} className="text-gray-400" />
+              <span>
+                {intl.formatMessage({ id: "deadline" })}:{" "}
+                {intl.formatDate(deadline, {
                   month: "short",
                   day: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                })
-              ) : (
-                <span className="italic text-gray-400">No deadline</span>
-              )}
-            </span>
-          </div>
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+          )}
 
-          {/* Duration */}
+          {/* Assigned Groups */}
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Clock size={16} className="shrink-0" />
-            <span>
-              {duration_minutes > 0
-                ? `${Math.floor(duration_minutes / 60)}h ${
-                    duration_minutes % 60
-                  }m`
-                : "No time limit"}
+            <Users size={15} className="text-gray-400" />
+            <span className="flex gap-1">
+              {assigned_groups?.length > 0
+                ? assigned_groups.map((g) => g.name).join(", ")
+                : `${assigned_groups_count || 0} groups`}
             </span>
           </div>
+
+          {/* Homework Items count */}
+          {items_count !== undefined && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <CheckCircle2 size={15} className="text-gray-400" />
+              <span>
+                {items_count} {intl.formatMessage({ id: "tasks" })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* --- Footer: Stats & Context --- */}
+      {/* --- Footer --- */}
       <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-        {/* Student Count (Only if count exists or role is teacher) */}
-        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-          <Users size={16} className="text-gray-400" />
-          <span className="font-medium">
-            {active_students_count ? active_students_count : 0}
+        <div className="flex flex-col">
+          <span className="text-[11px] text-gray-400 uppercase tracking-tighter">
+            Created by
           </span>
-          <span className="text-xs text-gray-400 font-normal">
-            {intl.formatMessage({ id: "students" })}
+          <span className="text-xs font-medium text-gray-600">
+            {created_by_name}
           </span>
         </div>
 
-        {/* Created Date (Subtle) */}
-        <span className="text-xs text-gray-400">{formatDate(created_at)}</span>
+        <span className="text-[11px] text-gray-400 self-end">
+          {formatDate(created_at)}
+        </span>
       </div>
 
-      {/* Decoration Gradient on Hover */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl" />
-    </Link>
+      {/* Hover Line Effect */}
+      <div
+        className={`absolute top-0 left-0 w-full h-1 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl ${
+          isExam ? "bg-purple-500" : "bg-blue-500"
+        }`}
+      />
+    </div>
   );
 }

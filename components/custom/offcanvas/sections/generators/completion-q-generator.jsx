@@ -51,6 +51,7 @@ import {
   MapPin,
   List,
   ListOrdered,
+  MousePointerClick,
 } from "lucide-react";
 
 import { QuestionInput } from "@/components/custom/details/question/question-input";
@@ -67,6 +68,7 @@ import {
 } from "@/components/custom/details/question/boolean-extension";
 import { SummaryBlock } from "@/components/custom/details/question/summary-extension";
 import { DiagramBlock } from "@/components/custom/details/question/diagram-extension";
+import { DragDropSummaryBlock } from "@/components/custom/details/question/drag-drop-summary";
 
 const CompletionQGenerator = forwardRef(
   ({ initialData, diagramImage }, ref) => {
@@ -105,6 +107,7 @@ const CompletionQGenerator = forwardRef(
         BooleanQuestion,
         SummaryBlock,
         DiagramBlock,
+        DragDropSummaryBlock,
       ],
       content: initialData || "",
       onUpdate: () => forceUpdate(),
@@ -278,18 +281,8 @@ const CompletionQGenerator = forwardRef(
 
               <ToolbarButton
                 onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                      type: "choiceGroup",
-                      attrs: { questionNumber: getNextQuestionNumber() },
-                      content: [
-                        { type: "choiceItem", attrs: { isCorrect: false } },
-                        { type: "choiceItem", attrs: { isCorrect: false } },
-                      ],
-                    })
-                    .run();
+                  editor;
+                  editor.chain().focus().insertChoiceGroup().run();
                 }}
                 title="Add Choice Block"
               >
@@ -501,7 +494,49 @@ const CompletionQGenerator = forwardRef(
               >
                 <MapPin size={18} className="text-red-600" />
               </ToolbarButton>
+              {/* Drag Drop Summary tugmasi */}
+              <ToolbarButton
+                onClick={() => {
+                  editor
+                    .chain()
+                    .focus()
+                    .insertContent({
+                      type: "dragDropSummary",
+                      attrs: {
+                        title: "Summary Completion",
+                        options: ["Option 1", "Option 2"],
+                      },
+                      content: [
+                        {
+                          type: "paragraph",
+                          content: [
+                            { type: "text", text: "Write your text and add " },
+                            {
+                              type: "questionInput",
+                              attrs: {
+                                number: getNextQuestionNumber(),
+                                answer: "",
+                              },
+                            },
+                            { type: "text", text: " gap here." },
+                          ],
+                        },
+                      ],
+                    })
+                    .run();
+                }}
+                title="Drag & Drop Summary"
+              >
+                <div className="relative">
+                  <MousePointerClick size={18} className="text-indigo-600" />
+                  <PlusCircle
+                    size={10}
+                    className="absolute -top-1 -right-1 text-indigo-600 fill-white"
+                  />
+                </div>
+              </ToolbarButton>
             </div>
+
 
             {/* <button
             type="button"

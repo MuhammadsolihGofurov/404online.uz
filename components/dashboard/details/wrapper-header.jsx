@@ -5,6 +5,7 @@ import { Check, CheckCheck } from "lucide-react";
 import Link from "next/link";
 import { useIntl } from "react-intl";
 import { FilterButtonItem } from "./filters";
+import { useOffcanvas } from "@/context/offcanvas-context";
 
 export default function WrapperHeader({
   title,
@@ -19,14 +20,18 @@ export default function WrapperHeader({
   isIcon = false,
   isDropdown = false,
   dropdownList = [],
+  isOffcanvas = false,
 }) {
   const intl = useIntl();
   const { openModal } = useModal();
+  const { openOffcanvas } = useOffcanvas();
 
   return (
     <div
       className={`w-full flex items-end ${
-        isButton || isDropdown ? "justify-between" : "justify-start"
+        isButton || isDropdown || isOffcanvas
+          ? "justify-between"
+          : "justify-start"
       }`}
     >
       <div className="flex flex-col sm:gap-1">
@@ -39,7 +44,7 @@ export default function WrapperHeader({
           {intl.formatMessage({ id: title })}
         </h1>
       </div>
-      {isButton ? (
+      {isButton && (
         <button
           type="button"
           onClick={() =>
@@ -68,8 +73,37 @@ export default function WrapperHeader({
 
           <span>{intl.formatMessage({ id: buttonText })}</span>
         </button>
-      ) : (
-        <></>
+      )}
+
+      {isOffcanvas && (
+        <button
+          type="button"
+          onClick={() =>
+            modalType ? openOffcanvas(buttonFunc, {}, modalType) : buttonFunc()
+          }
+          className="flex items-center gap-1 border border-[#E5E7EB] py-2 px-4 rounded-md bg-white text-xs sm:text-sm text-textPrimary font-normal"
+        >
+          {!isIcon ? (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.99992 3.33301V12.6663M3.33325 7.99967H12.6666"
+                stroke="#364749"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <CheckCheck className="w-4 text-textPrimary" />
+          )}
+
+          <span>{intl.formatMessage({ id: buttonText })}</span>
+        </button>
       )}
 
       {isDropdown && (
@@ -95,10 +129,28 @@ export default function WrapperHeader({
           }
         >
           {dropdownList?.map((item) => {
+            const isLink = item?.url;
+
+            if (isLink) {
+              return (
+                <Link
+                  href={item?.url}
+                  key={item?.id}
+                  className="w-full p-3 text-sm"
+                >
+                  {item?.title}
+                </Link>
+              );
+            }
+
             return (
-              <Link href={item?.url} key={item?.id} className="w-full p-3 text-sm">
+              <button
+                type="button"
+                className="w-full p-3 text-sm text-start"
+                onClick={() => item?.func()}
+              >
                 {item?.title}
-              </Link>
+              </button>
             );
           })}
         </Dropdown>
