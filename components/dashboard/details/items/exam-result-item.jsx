@@ -23,11 +23,13 @@ import { Dropdown, DropdownBtn } from "@/components/custom/details";
 import { useModal } from "@/context/modal-context";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
+import { useOffcanvas } from "@/context/offcanvas-context";
 
 export default function ExamResultItem({ item }) {
   const intl = useIntl();
   const router = useRouter();
   const { openModal } = useModal();
+  const { openOffcanvas } = useOffcanvas();
 
   const { id, student, overall_band_score, is_graded, submissions = [] } = item;
 
@@ -58,6 +60,18 @@ export default function ExamResultItem({ item }) {
     }
   };
 
+  const handleCheckWriting = (i) => {
+    const currentWritingSubmissionId = submissions?.find(
+      (item) => item.content_type === "WRITING"
+    )?.id;
+
+    openOffcanvas(
+      "examResultsOffcanvas",
+      { submission_id: currentWritingSubmissionId },
+      "right"
+    );
+  };
+
   return (
     <div className="group relative flex flex-col bg-white border border-gray-200 rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:border-blue-300">
       {/* --- Header --- */}
@@ -85,16 +99,14 @@ export default function ExamResultItem({ item }) {
             />
           }
         >
-          {/* {isWritingPending && ( */}
+          {isWritingPending && (
             <DropdownBtn
               title="Check Writing"
               icon={<CheckSquare size={14} className="text-orange-500" />}
               className="text-orange-600 font-semibold"
-              onClick={() =>
-                router.push(`/dashboard/grading/writing/${writingTask.id}`)
-              }
+              onClick={() => handleCheckWriting(id)}
             />
-          {/* )} */}
+          )}
           <DropdownBtn
             title="View Details"
             icon={<Eye size={14} />}

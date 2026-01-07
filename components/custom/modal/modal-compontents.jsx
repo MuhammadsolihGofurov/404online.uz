@@ -29,6 +29,7 @@ import {
 } from "./sections";
 import sectionStatusChangeModal from "./sections/section-status-change-modal";
 import { TaskEditModal, TaskModal } from "./tasks";
+import { GradingWritingModal } from "./tasks-exams";
 
 export const ModalComponents = {
   createEduCenter: EduCenterModal,
@@ -55,4 +56,5 @@ export const ModalComponents = {
   sectionStatusChangeModal: sectionStatusChangeModal,
   taskEditModal: TaskEditModal,
   addStudentsToGroupModal: AddStudentsToGroupModal,
+  gradingWritingModal: GradingWritingModal,
 };

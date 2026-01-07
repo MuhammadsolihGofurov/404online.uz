@@ -73,8 +73,8 @@ export default function App({ Component, pageProps }) {
       >
         <LangProvider>
           <SkeletonTheme>
-            <OffcanvasProvider>
-              <ModalProvider>
+            <ModalProvider>
+              <OffcanvasProvider>
                 <Layout>
                   <Component {...pageProps} />
 
@@ -89,8 +89,8 @@ export default function App({ Component, pageProps }) {
                   theme="light"
                   transition={Flip}
                 />
-              </ModalProvider>
-            </OffcanvasProvider>
+              </OffcanvasProvider>
+            </ModalProvider>
           </SkeletonTheme>
         </LangProvider>
       </IntlProvider>
