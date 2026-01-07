@@ -478,7 +478,7 @@ const CompletionQGenerator = forwardRef(
             </div>
 
             {/* Guruh: Complex Layouts */}
-            <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1">
+            {/* <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1">
               <ToolbarButton
                 onClick={() =>
                   editor
@@ -494,7 +494,6 @@ const CompletionQGenerator = forwardRef(
               >
                 <MapPin size={18} className="text-red-600" />
               </ToolbarButton>
-              {/* Drag Drop Summary tugmasi */}
               <ToolbarButton
                 onClick={() => {
                   editor
@@ -535,8 +534,7 @@ const CompletionQGenerator = forwardRef(
                   />
                 </div>
               </ToolbarButton>
-            </div>
-
+            </div> */}
 
             {/* <button
             type="button"

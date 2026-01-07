@@ -1,4 +1,5 @@
 import {
+  AddStudentsToGroupModal,
   AssignToTeacherModal,
   ChangeGroupMemberModal,
   EditUserModal,
@@ -53,4 +54,5 @@ export const ModalComponents = {
   sectionView: SectionViewModal,
   sectionStatusChangeModal: sectionStatusChangeModal,
   taskEditModal: TaskEditModal,
+  addStudentsToGroupModal: AddStudentsToGroupModal,
 };

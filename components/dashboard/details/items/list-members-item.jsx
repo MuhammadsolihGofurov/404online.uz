@@ -40,7 +40,7 @@ export default function ListMembersItem({ member, group_id }) {
 
       {/* Avatar + Name */}
       <td className="flex items-center gap-3 p-4 font-medium">
-        <span className="w-8 h-8 rounded-full bg-gray-200">
+        <span className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-center">
           <img
             src={member.avatar}
             alt={member.full_name}

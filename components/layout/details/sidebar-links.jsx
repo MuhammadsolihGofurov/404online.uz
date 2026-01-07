@@ -150,7 +150,7 @@ export default function SidebarLinks({ userRole, closeSidebar }) {
   );
 
   return (
-    <nav className="flex-1 p-4 space-y-2">
+    <nav className="flex-1 p-4 space-y-2 h-[500px] overflow-y-scroll">
       {filteredItems.map((item) => {
         const isActive = router.pathname === item.href;
 
