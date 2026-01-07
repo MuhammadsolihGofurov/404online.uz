@@ -9,11 +9,11 @@ export default function DropdownBtn({
   iconClass = "",
 }) {
   const intl = useIntl();
-  
+
   return (
     <button
       type="button"
-      className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 ${className}`}
+      className={`w-full flex items-center gap-2 px-4 py-2 text-[13px] hover:bg-gray-50 ${className}`}
       onClick={onClick}
     >
       {icon &&

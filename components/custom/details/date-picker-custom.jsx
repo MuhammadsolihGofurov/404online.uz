@@ -97,7 +97,7 @@ export const DateTimePickerField = forwardRef(
             timeCaption="Time"
             placeholderText={placeholder || "Date and Time"}
             className={`
-            w-full h-[50px] px-11 bg-white border rounded-xl outline-none transition-all duration-200
+            w-full h-[54px] px-11 bg-white border rounded-xl outline-none transition-all duration-200
             text-gray-700 text-sm placeholder:text-gray-400
             ${
               error

@@ -17,16 +17,24 @@ import {
   Trash,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
-import { Dropdown } from "@/components/custom/details";
+import { Dropdown, DropdownBtn } from "@/components/custom/details";
 import { useModal } from "@/context/modal-context";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useParams } from "@/hooks/useParams";
+import { useOffcanvas } from "@/context/offcanvas-context";
+import { useRouter } from "next/router";
+import {
+  TASKS_RESULTS_EXAM_URL,
+  TASKS_RESULTS_HOMEWORK_URL,
+} from "@/mock/router";
 
 export default function TaskItem({ item }) {
   const intl = useIntl();
   const { findParams } = useParams();
   const { openModal } = useModal();
+  const { openOffcanvas } = useOffcanvas();
+  const router = useRouter();
 
   // URL orqali turni aniqlash (exams yoki homeworks)
   const type = findParams("type");
@@ -88,7 +96,17 @@ export default function TaskItem({ item }) {
     );
   };
 
-  const handleView = (i) => {};
+  const handleView = (i) => {
+    if (isExam) {
+      router.push(
+        `${TASKS_RESULTS_EXAM_URL}?type=exams&exam_id=${i}&is_graded=graded`
+      );
+    } else {
+      router.push(
+        `${TASKS_RESULTS_HOMEWORK_URL}?type=homeworks&homework_id=${i}`
+      );
+    }
+  };
 
   const handleEdit = (i) => {
     openModal(
@@ -97,8 +115,7 @@ export default function TaskItem({ item }) {
         id: i,
         title: title,
         description: description,
-        type: params.type,
-        deadline,
+        deadline: deadline,
       },
       "short"
     );
@@ -148,7 +165,7 @@ export default function TaskItem({ item }) {
           )}
 
           {/* Draft/Published holati */}
-          {!is_published && (
+          {!is_published && !isExam && (
             <span className="flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-100">
               Draft
             </span>
@@ -163,64 +180,52 @@ export default function TaskItem({ item }) {
         </button> */}
 
         <Dropdown
+          width="w-36"
           buttonContent={<MoreHorizontal size={18} className="text-gray-400" />}
         >
           {/* for exams */}
           {isExam && (
             <>
               {status !== "OPEN" && (
-                <button
+                <DropdownBtn
                   title="Open room"
-                  type="button"
+                  icon={<DoorOpen size={12} className="text-green-700" />}
+                  className="text-green-700 text-sm"
                   onClick={() => handleOpenRoom(id)}
-                  className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-green-700 hover:text-main"
-                >
-                  <DoorOpen size={14} />
-                  <span>Open room</span>
-                </button>
+                />
               )}
               {status !== "CLOSED" && (
-                <button
+                <DropdownBtn
                   title="Close room"
-                  type="button"
+                  icon={<DoorClosed size={12} className="text-red-700" />}
+                  className="text-red-700 text-sm"
                   onClick={() => handleCloseRoom(id)}
-                  className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-red-700 hover:text-main"
-                >
-                  <DoorClosed size={14} />
-                  <span>Close room</span>
-                </button>
+                />
               )}
             </>
           )}
 
           {/* for all */}
-          <button
-            title="View"
-            type="button"
+          <DropdownBtn
+            title="Veiw"
+            icon={<Eye size={12} className="text-textPrimary" />}
+            className="text-textPrimary text-sm"
             onClick={() => handleView(id)}
-            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-blue-700 hover:text-main"
-          >
-            <Eye size={14} />
-            <span>Veiw</span>
-          </button>
-          <button
+          />
+
+          <DropdownBtn
             title="Edit"
-            type="button"
+            icon={<Edit size={12} className="text-textPrimary" />}
+            className="text-textPrimary text-sm"
             onClick={() => handleEdit(id)}
-            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-textPrimary hover:text-main"
-          >
-            <Edit size={14} />
-            <span>Edit</span>
-          </button>
-          <button
+          />
+
+          <DropdownBtn
             title="Delete"
-            type="button"
+            icon={<Trash size={12} className="text-red-700" />}
+            className="text-red-700 text-sm"
             onClick={() => handleDelete(id)}
-            className="flex items-center gap-1 text-xs p-1.5 px-2 rounded-md transition-colors text-red-700 hover:text-main"
-          >
-            <Trash size={14} />
-            <span>Delete</span>
-          </button>
+          />
         </Dropdown>
       </div>
 

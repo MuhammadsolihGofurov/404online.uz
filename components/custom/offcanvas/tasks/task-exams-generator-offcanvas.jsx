@@ -7,10 +7,11 @@ import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
 import MultiSelect from "../../details/multi-select";
-import { Input, ToggleSwitch } from "../../details";
+import { Input, RichTextEditor, Textarea, ToggleSwitch } from "../../details";
 import { useOffcanvas } from "@/context/offcanvas-context";
 import MockSelectorField from "./details/mock-selector-field";
 import { ButtonSpinner } from "../../loading";
+import { DateTimePickerField } from "../../details/date-picker-custom";
 
 export default function TaskExamsGeneratorOffcanvas({ id, initialData }) {
   const intl = useIntl();
@@ -37,6 +38,7 @@ export default function TaskExamsGeneratorOffcanvas({ id, initialData }) {
       writing_mock: "",
       is_published: false,
       status: "CLOSED",
+      estimated_start_time: "",
     },
   });
 
@@ -129,10 +131,26 @@ export default function TaskExamsGeneratorOffcanvas({ id, initialData }) {
             error={errors?.title?.message}
           />
 
-          <Input
+          <RichTextEditor
             register={register}
             name="description"
-            title={intl.formatMessage({ id: "Description" })}
+            control={control}
+            label={intl.formatMessage({ id: "Description" })}
+            placeholder="Something write here..."
+            error={errors.text_content}
+            required
+          />
+
+          <Controller
+            name="estimated_start_time"
+            control={control}
+            render={({ field }) => (
+              <DateTimePickerField
+                {...field}
+                title="Estimated start time"
+                required
+              />
+            )}
           />
 
           <Controller

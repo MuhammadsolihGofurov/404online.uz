@@ -20,7 +20,7 @@ export const OffcanvasWrapper = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex overflow-hidden">
+    <div className="fixed inset-0 z-[40] flex overflow-hidden">
       {/* Overlay */}
       <div
         className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
