@@ -149,7 +149,7 @@ const HomeworkItemSelector = ({
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <FileText size={14} className="text-gray-400" />
                     <span>
-                      {item.questions_count || 0}{" "}
+                      {item.questions_count || item?.content?.length || 0}{" "}
                       {intl.formatMessage({ id: "questions" })}
                     </span>
                   </div>

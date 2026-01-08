@@ -20,18 +20,14 @@ export default function SectionLists({ role, loading }) {
   const currentMockType = findParams("section") || "listening";
   const searchTerms = findParams("search") || "";
 
+  const apiUrl =
+    currentMockType === "quiz" ? "/quizzes/" : `/mocks/${currentMockType}`;
+
   const { data: datas, isLoading } = useSWR(
-    [
-      "/mocks",
-      router.locale,
-      currentPage,
-      currentMockType,
-      searchTerms,
-      modalClosed,
-    ],
-    ([url, locale, page, mockType, terms]) =>
+    [apiUrl, router.locale, currentPage, searchTerms, modalClosed],
+    ([url, locale, page, terms]) =>
       fetcher(
-        `${url}/${mockType}?search=${terms}&page=${page}&page_size=8`,
+        `${url}?search=${terms}&page=${page}&page_size=8`,
         {
           headers: {
             "Accept-Language": locale,
@@ -41,7 +37,6 @@ export default function SectionLists({ role, loading }) {
         true
       )
   );
-
   if (loading || isLoading) {
     return (
       <div className="bg-white rounded-2xl p-5 sm:p-6">

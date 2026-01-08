@@ -18,6 +18,7 @@ export default function SectionFilter() {
     { id: 1, title: "Listening", section: "listening" },
     { id: 2, title: "Reading", section: "reading" },
     { id: 3, title: "Writing", section: "writing" },
+    { id: 4, title: "Quiz", section: "quiz" },
   ];
 
   const handleTabChange = (type) => {

@@ -59,6 +59,7 @@ export const SECTIONS_URL = "/dashboard/sections";
 export const SECTIONS_CREATE_URL = "/dashboard/sections/create";
 export const SECTIONS_PARTS_URL = "/dashboard/sections/create/parts";
 export const SECTIONS_QUESTIONS_URL = "/dashboard/sections/create/questions";
+export const CREATE_QUIZ_URL = "/dashboard/sections/create/create-quiz";
 
 // === MY RESULTS ===
 export const MY_RESULTS_URL = "/dashboard/my-results";

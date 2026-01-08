@@ -153,7 +153,7 @@ export default function TaskHomeworksGeneratorOffcanvas({ id, initialData }) {
             )}
           />
 
-          <di className="col-span-1 sm:col-span-2">
+          <div className="col-span-1 sm:col-span-2">
             <RichTextEditor
               register={register}
               name="description"
@@ -163,15 +163,17 @@ export default function TaskHomeworksGeneratorOffcanvas({ id, initialData }) {
               error={errors.text_content}
               required
             />
-          </di>
+          </div>
 
-          <Controller
-            name="assigned_groups"
-            control={control}
-            render={({ field }) => (
-              <MultiSelect {...field} options={groups || []} title="Groups" />
-            )}
-          />
+          <div className="col-span-1 sm:col-span-2">
+            <Controller
+              name="assigned_groups"
+              control={control}
+              render={({ field }) => (
+                <MultiSelect {...field} options={groups || []} title="Groups" />
+              )}
+            />
+          </div>
         </div>
 
         {/* Mocks and Quizzes Selectors */}
@@ -218,7 +220,7 @@ export default function TaskHomeworksGeneratorOffcanvas({ id, initialData }) {
           />
           <button
             type="submit"
-            className="bg-main text-white px-10 py-3 rounded-xl font-bold hover:opacity-90 transition-all"
+            className="bg-main flex items-center gap-2 text-white px-10 py-3 rounded-xl font-bold hover:opacity-90 transition-all"
           >
             {reqLoading && <ButtonSpinner />}{" "}
             {intl.formatMessage({ id: "Save Homework" })}

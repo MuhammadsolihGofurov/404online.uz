@@ -5,7 +5,7 @@ import { SectionLists } from "@/components/dashboard/sections";
 import { withAuthGuard } from "@/components/guard/dashboard-guard";
 import { DashboardLayout } from "@/components/layout";
 import Seo from "@/components/seo/Seo";
-import { SECTIONS_CREATE_URL } from "@/mock/router";
+import { CREATE_QUIZ_URL, SECTIONS_CREATE_URL } from "@/mock/router";
 import { useRouter } from "next/router";
 
 function SectionsPage({ info, user, loading }) {
@@ -26,6 +26,11 @@ function SectionsPage({ info, user, loading }) {
       id: 3,
       title: "Writing",
       url: SECTIONS_CREATE_URL + "?section=writing",
+    },
+    {
+      id: 3,
+      title: "Quiz",
+      url: CREATE_QUIZ_URL + "?section=quiz",
     },
   ];
 

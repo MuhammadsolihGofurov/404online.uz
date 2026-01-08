@@ -24,11 +24,20 @@ export default function FilterMyResults() {
 
   const type = findParams("type");
 
+  const queries = [
+    { id: 1, title: "Homeworks", type: "HOMEWORK" },
+    { id: 2, title: "Exams", type: "EXAM" },
+  ];
+
+  const handleTabChange = (type) => {
+    updateParams("type", type);
+  };
+
   const { data: examsResults } = useSWR(
-    ["/tasks/exams/", router.locale],
+    ["/tasks/", type, router.locale],
     ([url, locale]) =>
       fetcher(
-        `${url}?page_size=all`,
+        `${url}${type === "EXAM" ? "exams" : "homeworks/"}?page_size=all`,
         {
           headers: { "Accept-Language": locale },
         },
@@ -41,7 +50,7 @@ export default function FilterMyResults() {
   const formattedExams = useMemo(() => {
     const allOption = {
       id: "all",
-      name: intl.formatMessage({ id: "All exams" }),
+      name: intl.formatMessage({ id: "All" }),
     };
 
     if (examsResults && Array.isArray(examsResults)) {
@@ -58,27 +67,48 @@ export default function FilterMyResults() {
           {intl.formatMessage({ id: "Filters" })}:
         </p>
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-          <div className="w-[220px]">
-            <Controller
-              name="task_id"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  value={field.value || router.query.task_id}
-                  onChange={(val) => {
-                    field.onChange(val);
-                    updateParams("task_id", val === "all" ? "" : val);
-                  }}
-                  title={""}
-                  placeholder={intl.formatMessage({ id: "Exams" })}
-                  options={formattedExams}
-                  error={errors.task_id?.message}
-                  ui_type="filter"
-                />
-              )}
-            />
-          </div>
+          {queries.map((item) => {
+            const currentQueryType = router.query.type;
+            const isActive = currentQueryType == item.type;
+
+            return (
+              <button
+                key={item.type}
+                type="button"
+                onClick={() => handleTabChange(item.type)}
+                className={`px-2 sm:px-4 py-1 sm:py-2 rounded-xl border text-xs sm:text-sm transition-colors duration-150 ${
+                  isActive
+                    ? "bg-main text-white border-main"
+                    : "border-gray-200 text-textPrimary hover:border-main hover:text-main"
+                }`}
+              >
+                {item.title}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+        <div className="w-[220px]">
+          <Controller
+            name="task_id"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                value={field.value || router.query.task_id}
+                onChange={(val) => {
+                  field.onChange(val);
+                  updateParams("task_id", val === "all" ? "" : val);
+                }}
+                title={""}
+                placeholder={type == "EXAM" ? "Exams" : "Homeworks"}
+                options={formattedExams}
+                error={errors.task_id?.message}
+                ui_type="filter"
+              />
+            )}
+          />
         </div>
       </div>
     </div>
