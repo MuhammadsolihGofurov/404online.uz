@@ -5,6 +5,7 @@ import {
   GROUPS_URL,
   HOMEWORKS_URL,
   INVITECODE_URL,
+  LEADERBOARD_URL,
   MATERIALSHUB_URL,
   MY_RESULTS_URL,
   SECTIONS_URL,
@@ -31,6 +32,7 @@ import {
   Settings,
   GraduationCap,
   CheckLine,
+  Trophy,
 } from "lucide-react";
 
 const OwnerMenuItems = [
@@ -111,6 +113,12 @@ const menuItems = [
     icon: GraduationCap,
     roles: ["STUDENT"],
     query: `?type=exams`,
+  },
+  {
+    title: "Leaderboard",
+    href: LEADERBOARD_URL,
+    icon: Trophy,
+    roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT", "STUDENT"],
   },
   {
     title: "Settings",

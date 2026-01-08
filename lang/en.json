@@ -282,5 +282,7 @@
   "Publish score": "Publish score",
   "Unpublish score": "Unpublish score",
   "Are you sure you want to unpublish this exam results?": "Are you sure you want to unpublish this exam results?",
-  "Exam result is unpublished!": "Exam result is unpublished!"
+  "Exam result is unpublished!": "Exam result is unpublished!",
+  "Please select a exam": "Please select a exam",
+  "Select a exam from filter": "Select a exam from filter"
 }

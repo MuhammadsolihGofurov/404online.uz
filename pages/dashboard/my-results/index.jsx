@@ -19,7 +19,7 @@ function MyResultsPage({ info, user, loading }) {
         keywords={info?.data?.seo_home_keywords}
       />
       <DashboardLayout user={user} loading={loading}>
-        <Wrapper title={"My results"} isLink body={"Dashboard"}>
+        <Wrapper title={"My exam results"} isLink body={"Dashboard"}>
           <FilterMyResults />
           <MyResultsLists role={user?.role} />
         </Wrapper>

@@ -12,3 +12,4 @@ export { default as ExamItem } from "./exam-item";
 export { default as HomeworkItem } from "./homework-item";
 export { default as ExamResultItem } from "./exam-result-item";
 export { default as MyResultItem } from "./my-results-item";
+export { default as LeaderboardItem } from "./leaderboard-item";

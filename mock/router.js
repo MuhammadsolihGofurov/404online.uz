@@ -62,3 +62,6 @@ export const SECTIONS_QUESTIONS_URL = "/dashboard/sections/create/questions";
 
 // === MY RESULTS ===
 export const MY_RESULTS_URL = "/dashboard/my-results";
+
+// === LEADERBOARD ===
+export const LEADERBOARD_URL = "/dashboard/leaderboard";
