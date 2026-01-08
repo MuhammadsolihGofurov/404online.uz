@@ -38,7 +38,7 @@ export default function TasksExamsList({ role, loading }) {
       fetcher(
         `${url}/?exam_task_id=${i}&page=${page}&is_graded=${
           g == "graded" ? true : false
-        }${gId && `&group_id${gId}`}&page_size=12`,
+        }${gId && `&group_id=${gId}`}&page_size=12`,
         {
           headers: {
             "Accept-Language": locale,

@@ -1,6 +1,9 @@
 import QuestionGeneratorOffcanvas from "./sections/question-generator-offcanvas";
 import QuestionOffcanvas from "./sections/question-offcanvas";
-import { ExamResultsOffcanvas } from "./tasks-exams";
+import {
+  ExamReadingResultsOffcanvas,
+  ExamResultsOffcanvas,
+} from "./tasks-exams";
 import TaskExamsGeneratorOffcanvas from "./tasks/task-exams-generator-offcanvas";
 import TaskHomeworksGeneratorOffcanvas from "./tasks/task-homeworks-generator-offcanvas";
 import TaskViewsOffcanvas from "./tasks/task-views-offcanvas";
@@ -12,4 +15,5 @@ export const OffcanvasComponents = {
   taskHomeworksGeneratorOffcanvas: TaskHomeworksGeneratorOffcanvas,
   taskViewsOffcanvas: TaskViewsOffcanvas,
   examResultsOffcanvas: ExamResultsOffcanvas,
+  examReadingResultsOffcanvas: ExamReadingResultsOffcanvas,
 };

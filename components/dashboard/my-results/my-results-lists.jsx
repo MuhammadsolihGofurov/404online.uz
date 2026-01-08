@@ -8,8 +8,9 @@ import { useIntl } from "react-intl";
 import useSWR from "swr";
 import { MyResultItem } from "../details/items";
 import Pagination from "@/components/custom/pagination";
+import { MyResultItemSkeleton } from "@/components/skeleton";
 
-export default function MyResultsLists() {
+export default function MyResultsLists({ role }) {
   const router = useRouter();
   const intl = useIntl();
   const { modalClosed } = useModal();
@@ -18,12 +19,15 @@ export default function MyResultsLists() {
   const { findParams } = useParams();
 
   const currentPage = findParams("page") || 1;
+  const currentType =
+    findParams("type") == "exams" ? "exam_task_id" : "homework_task_id";
+  const currentTypeId = findParams("task_id");
 
   const { data: datas, isLoading } = useSWR(
-    ["/my-reviews", router.locale, currentPage],
-    ([url, locale, page]) =>
+    ["/my-results", router.locale, currentPage, currentType, currentTypeId],
+    ([url, locale, page, t, tId]) =>
       fetcher(
-        `${url}/?page=${page}&page_size=12`,
+        `${url}?page=${page}${tId ? `&${t}=${tId}` : ""}&page_size=12`,
         {
           headers: {
             "Accept-Language": locale,
@@ -37,10 +41,10 @@ export default function MyResultsLists() {
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl p-5 sm:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {/* {Array.from({ length: 12 }).map((_, i) => (
-            <TaskItemSkeleton key={i} />
-          ))} */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <MyResultItemSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
@@ -52,7 +56,7 @@ export default function MyResultsLists() {
         <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-5">
           {datas?.results?.length > 0 ? (
             datas?.results?.map((item) => (
-              <MyResultItem data={item} key={item?.id} />
+              <MyResultItem data={item} key={item?.id} role={role} />
             ))
           ) : (
             <p className="text-sm text-center col-span-1 sm:col-span-2 text-textSecondary">

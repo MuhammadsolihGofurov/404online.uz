@@ -5,3 +5,4 @@ export { default as MaterialsTypes } from "./materials-types";
 export { default as SectionFilter } from "./section-filter";
 export { default as TasksFilter } from "./tasks-filter";
 export { default as FilterExams } from "./filter-exams";
+export { default as FilterMyResults } from "./filter-my-results";

@@ -29,7 +29,7 @@ export default function GradingWritingModal({ submission_id, initialData }) {
       coherence_cohesion: initialData?.coherence_cohesion || 0,
       lexical_resource: initialData?.lexical_resource || 0,
       grammar_range_accuracy: initialData?.grammar_range_accuracy || 0,
-      feedback: initialData?.feedback || "",
+      feedback_text: initialData?.feedback_text || "",
     },
   });
 
@@ -52,7 +52,10 @@ export default function GradingWritingModal({ submission_id, initialData }) {
 
   const calculateBandScore = () => {
     const total = scores.reduce((acc, curr) => acc + parseFloat(curr || 0), 0);
-    return total > 0 ? (total / 4).toFixed(1) : "0.0";
+    if (total === 0) return "0.0";
+
+    const average = total / 4;
+    return average.toFixed(1);
   };
 
   const submitFn = async (data) => {
@@ -61,12 +64,13 @@ export default function GradingWritingModal({ submission_id, initialData }) {
 
       const payload = {
         submission_id: submission_id,
-        task_achievement: parseFloat(data.task_achievement),
-        coherence_cohesion: parseFloat(data.coherence_cohesion),
-        lexical_resource: parseFloat(data.lexical_resource),
-        grammar_range_accuracy: parseFloat(data.grammar_range_accuracy),
+        rubric_data: {
+          task_achievement: parseFloat(data.task_achievement),
+          coherence_cohesion: parseFloat(data.coherence_cohesion),
+          lexical_resource: parseFloat(data.lexical_resource),
+          grammar_range_accuracy: parseFloat(data.grammar_range_accuracy),
+        },
         feedback: data.feedback,
-        rubric_data: "rubric_data",
       };
 
       let response;
@@ -127,8 +131,8 @@ export default function GradingWritingModal({ submission_id, initialData }) {
           {rubricFields.map((field) => (
             <Input
               key={field.name}
-              type="number"
-              step="0.5"
+              type="text"
+              step="0.1"
               min="0"
               max="9"
               register={register}
@@ -147,14 +151,14 @@ export default function GradingWritingModal({ submission_id, initialData }) {
 
         <Textarea
           register={register}
-          name="feedback"
+          name="feedback_text"
           title={intl.formatMessage({ id: "Feedback" })}
           placeholder={intl.formatMessage({ id: "Explain the score..." })}
           required
           validation={{
             required: intl.formatMessage({ id: "Feedback is required" }),
           }}
-          error={errors.feedback?.message}
+          error={errors.feedback_text?.message}
         />
 
         <div className="col-span-1 md:col-span-2 flex items-center justify-center">

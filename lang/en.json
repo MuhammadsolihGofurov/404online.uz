@@ -276,5 +276,11 @@
   "Task is deleted!": "Task is deleted!",
   "Are you sure you want to delete this task?": "Are you sure you want to delete this task?",
   "Delete task": "Delete task",
-  "Add students": "Add students"
+  "Add students": "Add students",
+  "Exam result is published!": "Exam result is published!",
+  "Are you sure you want to publish this exam results?": "Are you sure you want to publish this exam results?",
+  "Publish score": "Publish score",
+  "Unpublish score": "Unpublish score",
+  "Are you sure you want to unpublish this exam results?": "Are you sure you want to unpublish this exam results?",
+  "Exam result is unpublished!": "Exam result is unpublished!"
 }

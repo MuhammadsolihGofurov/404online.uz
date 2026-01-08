@@ -25,7 +25,7 @@ import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useOffcanvas } from "@/context/offcanvas-context";
 
-export default function ExamResultItem({ item }) {
+export default function ExamResultItem({ item, role }) {
   const intl = useIntl();
   const router = useRouter();
   const { openModal } = useModal();
@@ -67,7 +67,31 @@ export default function ExamResultItem({ item }) {
 
     openOffcanvas(
       "examResultsOffcanvas",
-      { submission_id: currentWritingSubmissionId },
+      { submission_id: currentWritingSubmissionId, role },
+      "right"
+    );
+  };
+
+  const handleCheckReading = () => {
+    const currentReadingSubmissionId = submissions?.find(
+      (item) => item.content_type === "READING"
+    )?.id;
+
+    openOffcanvas(
+      "examReadingResultsOffcanvas",
+      { submission_id: currentReadingSubmissionId, role },
+      "right"
+    );
+  };
+
+  const handleCheckListening = () => {
+    const currentListeningSubmissionId = submissions?.find(
+      (item) => item.content_type === "LISTENING"
+    )?.id;
+
+    openOffcanvas(
+      "examReadingResultsOffcanvas",
+      { submission_id: currentListeningSubmissionId, role },
       "right"
     );
   };
@@ -99,18 +123,27 @@ export default function ExamResultItem({ item }) {
             />
           }
         >
-          {isWritingPending && (
-            <DropdownBtn
-              title="Check Writing"
-              icon={<CheckSquare size={14} className="text-orange-500" />}
-              className="text-orange-600 font-semibold"
-              onClick={() => handleCheckWriting(id)}
-            />
-          )}
           <DropdownBtn
-            title="View Details"
-            icon={<Eye size={14} />}
-            onClick={() => router.push(`/dashboard/results/exam-detail/${id}`)}
+            title={isWritingPending ? "Check Writing" : "Writing result"}
+            icon={
+              <CheckSquare
+                size={14}
+                className={`${isWritingPending ? "text-orange-500" : ""}`}
+              />
+            }
+            className={`${isWritingPending ? "text-orange-500" : ""}`}
+            onClick={() => handleCheckWriting(id)}
+          />
+
+          <DropdownBtn
+            title="Reading result"
+            icon={<BookOpen size={14} />}
+            onClick={() => handleCheckReading()}
+          />
+          <DropdownBtn
+            title="Listening result"
+            icon={<Headphones size={14} />}
+            onClick={() => handleCheckListening()}
           />
           {/* <DropdownBtn
             title="Delete Result"
@@ -142,7 +175,7 @@ export default function ExamResultItem({ item }) {
         {submissions.map((sub) => (
           <div
             key={sub.id}
-            className="flex flex-col items-center p-2 bg-gray-50 rounded-xl border border-gray-100"
+            className="flex flex-col min-h-11 items-center p-2 bg-gray-50 rounded-xl border border-gray-100"
           >
             <div className="mb-1">{getSectionIcon(sub.content_type)}</div>
             <span className="text-[9px] uppercase font-bold text-gray-400">

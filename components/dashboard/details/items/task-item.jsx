@@ -15,6 +15,8 @@ import {
   Eye,
   Edit,
   Trash,
+  Rocket,
+  Ban,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
 import { Dropdown, DropdownBtn } from "@/components/custom/details";
@@ -136,11 +138,45 @@ export default function TaskItem({ item }) {
     );
   };
 
+  const handlePublishScores = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Publish score",
+        description: "Are you sure you want to publish this exam results?",
+        onConfirm: async () => {
+          await authAxios.post(`/tasks/exams/${i}/publish-scores/`);
+          toast.success(
+            intl.formatMessage({ id: "Exam result is published!" })
+          );
+        },
+      },
+      "short"
+    );
+  };
+
+  const handleUnPublishScores = (i) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Unpublish score",
+        description: "Are you sure you want to unpublish this exam results?",
+        onConfirm: async () => {
+          await authAxios.post(`/tasks/exams/${i}/unpublish-scores/`);
+          toast.success(
+            intl.formatMessage({ id: "Exam result is unpublished!" })
+          );
+        },
+      },
+      "short"
+    );
+  };
+
   return (
     <div className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
       {/* --- Header: Badges --- */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-wrap gap-2">
           {/* Tur belgisi (Exam yoki Homework) */}
           <span
             className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
@@ -165,9 +201,9 @@ export default function TaskItem({ item }) {
           )}
 
           {/* Draft/Published holati */}
-          {!is_published && !isExam && (
+          {!is_published && isExam && (
             <span className="flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-100">
-              Draft
+              Unpublished
             </span>
           )}
         </div>
@@ -180,7 +216,7 @@ export default function TaskItem({ item }) {
         </button> */}
 
         <Dropdown
-          width="w-36"
+          width="w-44"
           buttonContent={<MoreHorizontal size={18} className="text-gray-400" />}
         >
           {/* for exams */}
@@ -203,6 +239,23 @@ export default function TaskItem({ item }) {
                 />
               )}
             </>
+          )}
+
+          {isExam && !is_published && (
+            <DropdownBtn
+              title="Publish score"
+              icon={<Rocket size={12} className="text-textPrimary" />}
+              className="text-textPrimary text-sm"
+              onClick={() => handlePublishScores(id)}
+            />
+          )}
+          {isExam && is_published && (
+            <DropdownBtn
+              title="Unpublish score"
+              icon={<Ban size={12} className="text-textPrimary" />}
+              className="text-textPrimary text-sm"
+              onClick={() => handleUnPublishScores(id)}
+            />
           )}
 
           {/* for all */}

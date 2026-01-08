@@ -44,7 +44,7 @@ function TasksResultsExamPage({ info, user, loading }) {
           body={"Dashboard"}
         >
           <FilterExams />
-          <TasksExamsList />
+          <TasksExamsList role={user?.role} />
         </Wrapper>
       </DashboardLayout>
     </>
