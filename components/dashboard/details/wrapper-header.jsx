@@ -146,6 +146,7 @@ export default function WrapperHeader({
             return (
               <button
                 type="button"
+                key={item?.id}
                 className="w-full p-3 text-sm text-start"
                 onClick={() => item?.func()}
               >

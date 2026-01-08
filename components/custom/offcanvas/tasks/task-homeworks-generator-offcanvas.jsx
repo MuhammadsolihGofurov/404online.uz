@@ -10,7 +10,7 @@ import { useRouter } from "next/router";
 import MultiSelect from "../../details/multi-select";
 import Select from "../../details/select";
 import { MOCK_TEMPLATES, TASK_TYPE, TEMPLATE_D_LEVEL } from "@/mock/data";
-import { Input, ToggleSwitch } from "../../details";
+import { Input, RichTextEditor, ToggleSwitch } from "../../details";
 import { DateTimePickerField } from "../../details/date-picker-custom";
 import { useParams } from "@/hooks/useParams";
 import { useOffcanvas } from "@/context/offcanvas-context";
@@ -144,12 +144,6 @@ export default function TaskHomeworksGeneratorOffcanvas({ id, initialData }) {
             required
             error={errors?.title?.message}
           />
-          <Input
-            register={register}
-            name="description"
-            placeholder={"You should spend about 40 minutes for test"}
-            title={intl.formatMessage({ id: "Description" })}
-          />
 
           <Controller
             name="deadline"
@@ -158,6 +152,18 @@ export default function TaskHomeworksGeneratorOffcanvas({ id, initialData }) {
               <DateTimePickerField {...field} title="Deadline" required />
             )}
           />
+
+          <di className="col-span-1 sm:col-span-2">
+            <RichTextEditor
+              register={register}
+              name="description"
+              control={control}
+              label={intl.formatMessage({ id: "Description" })}
+              placeholder="Something write here..."
+              error={errors.text_content}
+              required
+            />
+          </di>
 
           <Controller
             name="assigned_groups"

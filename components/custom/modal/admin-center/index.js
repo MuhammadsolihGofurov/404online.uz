@@ -6,3 +6,4 @@ export { default as AssignToTeacherModal } from "./assign-to-teacher";
 export { default as ListGroupMembersModal } from "./list-group-members-modal";
 export { default as ChangeGroupMemberModal } from "./change-group-member-modal";
 export { default as ViewProfileModal } from "./view-profile-modal";
+export { default as AddStudentsToGroupModal } from "./add-students-to-group-modal";

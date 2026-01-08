@@ -45,6 +45,8 @@ export const MOCKS_CREATE_FOURTH_STEP_URL = "/dashboard/mocks/create/4-step";
 
 // === TASKS ===
 export const TASKS_URL = "/dashboard/tasks";
+export const TASKS_RESULTS_HOMEWORK_URL = "/dashboard/tasks-results/homework";
+export const TASKS_RESULTS_EXAM_URL = "/dashboard/tasks-results/exams";
 
 // === EXAMS ===
 export const EXAMS_URL = "/dashboard/exams";
@@ -57,3 +59,9 @@ export const SECTIONS_URL = "/dashboard/sections";
 export const SECTIONS_CREATE_URL = "/dashboard/sections/create";
 export const SECTIONS_PARTS_URL = "/dashboard/sections/create/parts";
 export const SECTIONS_QUESTIONS_URL = "/dashboard/sections/create/questions";
+
+// === MY RESULTS ===
+export const MY_RESULTS_URL = "/dashboard/my-results";
+
+// === LEADERBOARD ===
+export const LEADERBOARD_URL = "/dashboard/leaderboard";

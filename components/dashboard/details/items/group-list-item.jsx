@@ -5,8 +5,10 @@ import { authAxios } from "@/utils/axios";
 import {
   Check,
   Edit2,
+  MessageSquare,
   MoreVertical,
   Trash2,
+  User,
   Users,
   Users2,
 } from "lucide-react";
@@ -56,6 +58,7 @@ export default function GroupListItem({ item, role }) {
           <span>{item?.member_count}</span>
         </div>
         <Dropdown
+          width="w-44"
           buttonContent={<MoreVertical className="h-5 w-5 text-gray-500" />}
         >
           {/* ! center admin */}
@@ -86,15 +89,42 @@ export default function GroupListItem({ item, role }) {
                 onClick={() => {
                   console.log("🔍 [GroupListItem] Navigating to members page");
                   console.log("🔍 [GroupListItem] item?.id:", item?.id);
-                  console.log("🔍 [GroupListItem] Full URL:", `${GROUPSMEMBERS_URL}?group_id=${item?.id}`);
+                  console.log(
+                    "🔍 [GroupListItem] Full URL:",
+                    `${GROUPSMEMBERS_URL}?group_id=${item?.id}`
+                  );
                   router.push(`${GROUPSMEMBERS_URL}?group_id=${item?.id}`);
                 }}
               />
 
               <DropdownBtn
                 title="Chats"
-                icon={<Users className="text-gray-500" />}
+                icon={<MessageSquare className="text-gray-500" />}
                 onClick={() => router.push(chat_url)}
+              />
+
+              <DropdownBtn
+                title="Add students"
+                icon={<Users className="text-gray-500" />}
+                onClick={() =>
+                  openModal(
+                    "addStudentsToGroupModal",
+                    { group_id: item?.id, userType: "STUDENT" },
+                    "short"
+                  )
+                }
+              />
+
+              <DropdownBtn
+                title="Add assistants"
+                icon={<User className="text-gray-500" />}
+                onClick={() =>
+                  openModal(
+                    "addStudentsToGroupModal",
+                    { group_id: item?.id, userType: "ASSISTANT" },
+                    "short"
+                  )
+                }
               />
             </>
           )}

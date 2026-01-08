@@ -75,7 +75,7 @@ export default function Sidebar({
           ${
             isOpen
               ? "w-64 translate-x-0 sm:translate-x-0 sm:relative"
-              : "w-0 overflow-hidden -translate-x-full"
+              : "w-0 overflow-y-hidden overflow-x-hidden -translate-x-full"
           } 
         `}
       >
@@ -93,7 +93,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        <SidebarLinks userRole={user?.role}/>
+        <SidebarLinks userRole={user?.role} />
 
         <button
           onClick={handleLogout}

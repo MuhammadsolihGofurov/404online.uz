@@ -166,6 +166,9 @@ tbody {
   height: 100% !important;
   border-bottom-right-radius: 12px;
 }
+.react-datepicker-popper{
+  z-index: 41 !important;
+}
 
 /* Kalendar va vaqt orasidagi chiziqni to'g'irlash */
 .react-datepicker__time-container .react-datepicker__time {

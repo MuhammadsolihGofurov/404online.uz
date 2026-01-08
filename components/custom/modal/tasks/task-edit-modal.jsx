@@ -5,13 +5,8 @@ import { Controller, useForm } from "react-hook-form";
 import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
-import useSWR from "swr";
-import fetcher from "@/utils/fetcher";
 import { useRouter } from "next/router";
-import MultiSelect from "../../details/multi-select";
-import Select from "../../details/select";
-import { MOCK_TEMPLATES, TASK_TYPE, TEMPLATE_D_LEVEL } from "@/mock/data";
-import { Input, ToggleSwitch } from "../../details";
+import { Input, Textarea } from "../../details";
 import { DateTimePickerField } from "../../details/date-picker-custom";
 import { useParams } from "@/hooks/useParams";
 
@@ -43,7 +38,9 @@ export default function TaskEditModal({ id, title, description, deadline }) {
   useEffect(() => {
     setValue("title", title);
     setValue("description", description);
-    setValue("deadline", new Date(deadline));
+    if (deadline) {
+      setValue("deadline", new Date(deadline));
+    }
   }, [title, description, deadline]);
 
   const submitFn = async (data) => {
@@ -100,7 +97,7 @@ export default function TaskEditModal({ id, title, description, deadline }) {
             error={errors?.title?.message}
           />
           {/* Description */}
-          <Input
+          <Textarea
             type="text"
             register={register}
             name="description"
@@ -113,13 +110,21 @@ export default function TaskEditModal({ id, title, description, deadline }) {
             error={errors?.description?.message}
           />
           {/* Deadline */}
-          <Controller
-            name="deadline"
-            control={control}
-            render={({ field }) => (
-              <DateTimePickerField {...field} title="Deadline" required />
-            )}
-          />
+          {deadline && (
+            <Controller
+              name="deadline"
+              control={control}
+              render={({ field }) => (
+                <DateTimePickerField
+                  {...field}
+                  title="Deadline"
+                  selected={field.value ? new Date(field.value) : null}
+                  onChange={(date) => field.onChange(date)}
+                  required
+                />
+              )}
+            />
+          )}
         </div>
 
         <button

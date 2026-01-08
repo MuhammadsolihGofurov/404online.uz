@@ -43,7 +43,7 @@ export default function TasksFilter() {
 
             return (
               <button
-                key={item.section}
+                key={item.type}
                 type="button"
                 onClick={() => handleTabChange(item.type)}
                 className={`px-2 sm:px-4 py-1 sm:py-2 rounded-xl border text-xs sm:text-sm transition-colors duration-150 ${
