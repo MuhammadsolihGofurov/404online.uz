@@ -6,6 +6,9 @@ import { ANSWER_PANEL, SECTION_TYPES } from "@/utils/examConstants";
 import { extractQuestionNumbers } from "@/utils/templateRenderer";
 import ListeningQuestionLayout from "./layouts/ListeningQuestionLayout";
 import DefaultQuestionLayout from "./layouts/DefaultQuestionLayout";
+import ReadingQuestionLayout from "./layouts/ReadingQuestionLayout";
+import WritingQuestionLayout from "./layouts/WritingQuestionLayout";
+import AudioPlayer from "./audio-player";
 
 export default function ExamQuestion({
   mock,
@@ -33,6 +36,9 @@ export default function ExamQuestion({
 
   // Use external prop directly instead of local state to avoid sync issues
   const activePartIndex = externalActivePartIndex ?? 0;
+
+  // Stable audio source for listening section to prevent player resets
+  const audioSrc = useMemo(() => mock?.audio_file, [mock?.audio_file]);
 
   // Flatten question_groups instead of individual questions
   // Each group now has a template with multiple questions embedded
@@ -90,6 +96,8 @@ export default function ExamQuestion({
         groups.push({
           groupId: task.id || `writing-${index}`,
           task_number: task.task_number || index + 1,
+          taskIndex: index,
+          partNumber: task.task_number || index + 1,
           groupType: "WRITING_TASK",
           template: task.template || "",
           ...task,
@@ -128,12 +136,6 @@ export default function ExamQuestion({
     }
   }, [questionNumberToIndex, onQuestionIndexMapChange]);
 
-  useEffect(() => {
-    if (onCurrentQuestionNumberChange) {
-      onCurrentQuestionNumberChange(currentQuestionNumber);
-    }
-  }, [currentQuestionNumber, onCurrentQuestionNumberChange]);
-
   const totalQuestions = allQuestionNumbers.length;
 
   // Answer handler now uses question_number instead of question.id
@@ -171,14 +173,32 @@ export default function ExamQuestion({
   };
 
   const partSummaries = useMemo(() => {
-    if (sectionType !== SECTION_TYPES.LISTENING || !mock?.parts) return [];
+    // Listening uses parts, Reading uses passages
+    const sourceParts =
+      sectionType === SECTION_TYPES.LISTENING
+        ? mock?.parts || []
+        : sectionType === SECTION_TYPES.READING
+        ? mock?.passages || []
+        : sectionType === SECTION_TYPES.WRITING
+        ? mock?.tasks || []
+        : [];
 
-    return mock.parts.map((part, partIndex) => {
-      const groupsForPart = flatQuestionGroups.filter(
-        (g) => g.partIndex === partIndex
+    if (!sourceParts.length) return [];
+
+    return sourceParts.map((part, partIndex) => {
+      const groupsForPart = flatQuestionGroups.filter((g) =>
+        sectionType === SECTION_TYPES.LISTENING
+          ? g.partIndex === partIndex
+          : sectionType === SECTION_TYPES.READING
+          ? g.passageIndex === partIndex
+          : g.taskIndex === partIndex
       );
-      const firstIndex = flatQuestionGroups.findIndex(
-        (g) => g.partIndex === partIndex
+      const firstIndex = flatQuestionGroups.findIndex((g) =>
+        sectionType === SECTION_TYPES.LISTENING
+          ? g.partIndex === partIndex
+          : sectionType === SECTION_TYPES.READING
+          ? g.passageIndex === partIndex
+          : g.taskIndex === partIndex
       );
 
       // Count total questions and answered questions in this part
@@ -193,13 +213,25 @@ export default function ExamQuestion({
 
       return {
         partIndex,
-        partNumber: part.part_number || partIndex + 1,
+        partNumber:
+          part.part_number ||
+          part.passage_number ||
+          part.task_number ||
+          partIndex + 1,
         title:
           part.title ||
           part.name ||
+          (sectionType === SECTION_TYPES.WRITING
+            ? intl.formatMessage({ id: "Task", defaultMessage: "Task" }) +
+              " " +
+              (part.task_number || partIndex + 1)
+            : null) ||
           intl.formatMessage({ id: "Part", defaultMessage: "Part" }) +
             " " +
-            (part.part_number || partIndex + 1),
+            (part.part_number ||
+              part.passage_number ||
+              part.task_number ||
+              partIndex + 1),
         questionCount: questionNumbers.length,
         startIndex: firstIndex >= 0 ? firstIndex : null,
         answered: answeredCount,
@@ -218,12 +250,27 @@ export default function ExamQuestion({
     return flatQuestionGroups.filter((g) => g.partIndex === activePartIndex);
   }, [flatQuestionGroups, sectionType, activePartIndex]);
 
-  // Send partSummaries to parent component for footer
+  // Check if current group belongs to active part
+  const currentGroupInActivePart = useMemo(() => {
+    if (sectionType !== SECTION_TYPES.LISTENING) return true;
+    return currentGroup?.partIndex === activePartIndex;
+  }, [sectionType, currentGroup, activePartIndex]);
+
+  // Send partSummaries and questionNumberToIndex to parent component for footer
   useEffect(() => {
     if (onPartSummariesChange) {
-      onPartSummariesChange(partSummaries, activePartIndex);
+      onPartSummariesChange(
+        partSummaries,
+        activePartIndex,
+        questionNumberToIndex
+      );
     }
-  }, [partSummaries, activePartIndex, onPartSummariesChange]);
+  }, [
+    partSummaries,
+    activePartIndex,
+    questionNumberToIndex,
+    onPartSummariesChange,
+  ]);
 
   const handleQuestionJump = (index) => {
     if (onSelectQuestion) {
@@ -234,6 +281,13 @@ export default function ExamQuestion({
   if (!currentGroup) {
     return (
       <div className="flex flex-col h-full bg-white">
+        {sectionType === SECTION_TYPES.LISTENING && (
+          <AudioPlayer
+            audioSrc={audioSrc}
+            allowControls={isPractice}
+            isPractice={isPractice}
+          />
+        )}
         <div className="bg-white border-b border-gray-100 px-6 md:px-10 py-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">{sectionType}</h2>
           <button
@@ -269,10 +323,15 @@ export default function ExamQuestion({
   }
 
   if (sectionType === SECTION_TYPES.LISTENING) {
-    // If active part has no questions, show empty state
-    if (groupsInActivePart.length === 0) {
+    // If current group doesn't belong to active part, show empty state
+    if (!currentGroupInActivePart) {
       return (
         <div className="flex flex-col h-full bg-white">
+          <AudioPlayer
+            audioSrc={audioSrc}
+            allowControls={isPractice}
+            isPractice={isPractice}
+          />
           <div className="bg-white border-b border-gray-100 px-6 md:px-10 py-4 flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-900">
               {intl.formatMessage({ id: "Part", defaultMessage: "Part" })}{" "}
@@ -311,20 +370,57 @@ export default function ExamQuestion({
     }
 
     return (
-      <ListeningQuestionLayout
+      <div className="flex flex-col h-full">
+        <AudioPlayer
+          audioSrc={audioSrc}
+          allowControls={isPractice}
+          isPractice={isPractice}
+        />
+        <ListeningQuestionLayout
+          currentGroup={currentGroup}
+          currentQuestionIndex={currentQuestionIndex}
+          totalQuestions={totalQuestions}
+          partSummaries={partSummaries}
+          activePartIndex={activePartIndex}
+          groupsInActivePart={groupsInActivePart}
+          answers={answers}
+          onAnswerChange={handleAnswerChange}
+          onBackToSections={onBackToSections}
+          onPrevious={onPrevious}
+          onNext={onNext}
+          mock={mock}
+          isPractice={isPractice}
+          focusQuestionNumber={focusQuestionNumber}
+        />
+      </div>
+    );
+  }
+
+  if (sectionType === SECTION_TYPES.READING) {
+    return (
+      <ReadingQuestionLayout
         currentGroup={currentGroup}
         currentQuestionIndex={currentQuestionIndex}
-        totalQuestions={totalQuestions}
-        partSummaries={partSummaries}
-        activePartIndex={activePartIndex}
-        groupsInActivePart={groupsInActivePart}
         answers={answers}
         onAnswerChange={handleAnswerChange}
         onBackToSections={onBackToSections}
         onPrevious={onPrevious}
         onNext={onNext}
-        mock={mock}
-        isPractice={isPractice}
+        focusQuestionNumber={focusQuestionNumber}
+      />
+    );
+  }
+
+  if (sectionType === SECTION_TYPES.WRITING) {
+    return (
+      <WritingQuestionLayout
+        currentGroup={currentGroup}
+        currentQuestionIndex={currentQuestionIndex}
+        answers={answers}
+        onAnswerChange={handleAnswerChange}
+        onBackToSections={onBackToSections}
+        onPrevious={onPrevious}
+        onNext={onNext}
         focusQuestionNumber={focusQuestionNumber}
       />
     );

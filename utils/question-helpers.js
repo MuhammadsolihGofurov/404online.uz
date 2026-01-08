@@ -233,9 +233,9 @@ export const transformEditorData = (json) => {
       const answerArray =
         typeof answer === "string"
           ? answer
-              .split(",")
-              .map((s) => s.trim())
-              .filter((s) => s !== "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s !== "")
           : [answer];
 
       correctAnswers.push({
@@ -365,11 +365,11 @@ export const transformEditorData = (json) => {
           ? `
     <div class="drag-drop-words-pool">
       ${words
-        .map(
-          (word) =>
-            `<span class="draggable-word" draggable="true">${word}</span>`
-        )
-        .join("")}
+            .map(
+              (word) =>
+                `<span class="draggable-word" draggable="true">${word}</span>`
+            )
+            .join("")}
     </div>
   `
           : "";
@@ -403,16 +403,16 @@ export const transformEditorData = (json) => {
     <div class="diagram-container" style="position: relative; margin: 30px 0;">
       <img src="${src}" style="width: 100%; border-radius: 12px;" />
       ${labels
-        .map(
-          (l) => `
+          .map(
+            (l) => `
         <diagram-marker 
           number="${l.number}" 
           answer="${l.answer || ""}" 
           style="position: absolute; left: ${l.x}%; top: ${l.y}%;"
         ></diagram-marker>
       `
-        )
-        .join("")}
+          )
+          .join("")}
     </div>`;
     }
 
@@ -703,7 +703,10 @@ export const prepareInitialData = (html) => {
       // 4. Ichki matnni (paragraflar va inputlar) olish
       const bodyEl = el.querySelector(".summary-body, .summary-content");
       if (bodyEl) {
-        newNode.innerHTML = bodyEl.innerHTML;
+        // Clone body and remove word bank items from content
+        const bodyClone = bodyEl.cloneNode(true);
+        bodyClone.querySelectorAll(".draggable-word, .drag-item").forEach((item) => item.remove());
+        newNode.innerHTML = bodyClone.innerHTML;
       } else {
         // Agar maxsus body bo'lmasa, elementning o'zini (lekin banklarsiz) olamiz
         const clone = el.cloneNode(true);

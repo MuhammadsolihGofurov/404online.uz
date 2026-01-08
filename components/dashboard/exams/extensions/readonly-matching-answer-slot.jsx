@@ -37,12 +37,17 @@ const ReadOnlyMatchingAnswerSlotComponent = ({ node, extension }) => {
     }
   };
 
+  const isDropDisabled =
+    Number(questionNumber) >= 38 && Number(questionNumber) <= 40;
+
   const handleDragOver = (e) => {
+    if (isDropDisabled) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = (e) => {
+    if (isDropDisabled) return;
     e.preventDefault();
     const option = e.dataTransfer.getData("text/plain");
 
@@ -71,46 +76,18 @@ const ReadOnlyMatchingAnswerSlotComponent = ({ node, extension }) => {
   };
 
   return (
-    <NodeViewWrapper
-      as="span"
-      className="inline-flex items-center"
-      onDragOver={hideInputs ? handleDragOver : undefined}
-      onDrop={hideInputs ? handleDrop : undefined}
-    >
-      {hideInputs ? (
-        <span
-          className={`inline-flex items-center justify-center min-w-[3rem] h-8 px-3 rounded-md font-bold text-sm transition-all ${
-            value
-              ? "bg-blue-600 text-white cursor-pointer"
-              : "bg-slate-100 text-slate-400 border-2 border-dashed border-slate-300"
-          }`}
-        >
-          {value ? (
-            <>
-              {value}
-              <button
-                onClick={handleRemoveAnswer}
-                className="ml-2 text-white hover:text-red-200 font-bold"
-                type="button"
-              >
-                ×
-              </button>
-            </>
-          ) : (
-            "—"
-          )}
-        </span>
-      ) : (
-        <input
-          type="text"
-          className="w-16 h-8 text-center border border-slate-300 rounded text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none"
-          maxLength={5}
-          value={value}
-          onChange={handleChange}
-          placeholder="..."
-          data-question-number={questionNumber}
-        />
-      )}
+    <NodeViewWrapper as="span" className="inline-flex items-center">
+      <input
+        type="text"
+        className="w-16 h-8 text-center border border-slate-300 rounded text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none"
+        maxLength={5}
+        value={value}
+        onChange={handleChange}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        placeholder={String(questionNumber)}
+        data-question-number={questionNumber}
+      />
     </NodeViewWrapper>
   );
 };

@@ -7,12 +7,56 @@ export default function ListeningFooter({
   activePartIndex,
   currentQuestionNumber,
   answers,
-  questionIndexMap,
+  questionNumberToIndexMap,
   onPartChange,
-  onStepPart,
+  onStepPart, // kept for backward compatibility (unused for arrows)
   onQuestionSelect,
 }) {
   const intl = useIntl();
+
+  // Flatten all question numbers across parts in order
+  const allQuestionNumbers = React.useMemo(() => {
+    return partSummaries
+      .flatMap((p) =>
+        Array.isArray(p.questionNumbers) ? p.questionNumbers : []
+      )
+      .filter((n) => n !== null && n !== undefined);
+  }, [partSummaries]);
+
+  const currentIndex = React.useMemo(() => {
+    if (!currentQuestionNumber) return -1;
+    return allQuestionNumbers.indexOf(currentQuestionNumber);
+  }, [allQuestionNumbers, currentQuestionNumber]);
+
+  const getPartIndexForQuestion = (qNum) => {
+    const part = partSummaries.find((p) => p.questionNumbers?.includes(qNum));
+    return part ? part.partIndex : undefined;
+  };
+
+  const stepQuestion = (delta) => {
+    if (currentIndex < 0) return;
+    const nextIndex = Math.min(
+      allQuestionNumbers.length - 1,
+      Math.max(0, currentIndex + delta)
+    );
+    const qNum = allQuestionNumbers[nextIndex];
+    const targetIndex = getTargetIndexForQuestion(qNum);
+    const partIndex = getPartIndexForQuestion(qNum);
+    if (typeof targetIndex === "number") {
+      onQuestionSelect?.(targetIndex, partIndex, qNum);
+    }
+  };
+
+  // Use the correct questionNumberToIndex map from exam-question
+  const getTargetIndexForQuestion = (qNum) => {
+    if (
+      questionNumberToIndexMap &&
+      questionNumberToIndexMap[qNum] !== undefined
+    ) {
+      return questionNumberToIndexMap[qNum];
+    }
+    return undefined;
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
@@ -20,12 +64,12 @@ export default function ListeningFooter({
         <div className="flex items-stretch gap-2">
           <button
             type="button"
-            onClick={() => onStepPart(-1)}
-            disabled={activePartIndex === 0}
+            onClick={() => stepQuestion(-1)}
+            disabled={currentIndex <= 0}
             className="shrink-0 px-2 py-1.5 rounded-lg border border-gray-200 text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label={intl.formatMessage({
-              id: "Previous part",
-              defaultMessage: "Previous part",
+              id: "Previous question",
+              defaultMessage: "Previous question",
             })}
           >
             <ChevronLeft className="w-4 h-4" />
@@ -76,7 +120,7 @@ export default function ListeningFooter({
                         const isAnswered = Boolean(
                           answerValue && String(answerValue).trim()
                         );
-                        const targetIndex = questionIndexMap[qNum];
+                        const targetIndex = getTargetIndexForQuestion(qNum);
 
                         return (
                           <button
@@ -119,12 +163,12 @@ export default function ListeningFooter({
 
           <button
             type="button"
-            onClick={() => onStepPart(1)}
-            disabled={activePartIndex === partSummaries.length - 1}
+            onClick={() => stepQuestion(1)}
+            disabled={currentIndex === allQuestionNumbers.length - 1}
             className="shrink-0 px-2 py-1.5 rounded-lg border border-gray-200 text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label={intl.formatMessage({
-              id: "Next part",
-              defaultMessage: "Next part",
+              id: "Next question",
+              defaultMessage: "Next question",
             })}
           >
             <ChevronRight className="w-4 h-4" />

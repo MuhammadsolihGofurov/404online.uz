@@ -78,7 +78,6 @@ tbody {
   display: none; /* Chrome, Safari, Opera */
 }
 
-
 /* Chrome, Safari, Edge va Opera uchun */
 .removed__number::-webkit-outer-spin-button,
 .removed__number::-webkit-inner-spin-button {
@@ -117,12 +116,12 @@ tbody {
 
 /* Flow-chart ko'rinishi uchun maxsus klass (ixtiyoriy) */
 .flow-chart-mode table {
-    border: none;
+  border: none;
 }
 .flow-chart-mode td {
-    border: 1px solid #3b82f6;
-    border-radius: 8px;
-    text-align: center;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  text-align: center;
 }
 
 .choice-group-container {
@@ -146,11 +145,12 @@ tbody {
 } */
 .modern-datepicker-calendar {
   border: none !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
   border-radius: 12px !important;
   font-family: inherit !important;
   padding: 8px !important;
-  
+
   /* Flex muammosini tuzatish */
   display: flex !important;
   height: auto !important; /* Balandlikni kontentga moslash */
@@ -186,9 +186,13 @@ tbody {
   padding-top: 12px !important;
 }
 
-.react-datepicker__day--selected, 
+.react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected,
-.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+.react-datepicker__time-container
+  .react-datepicker__time
+  .react-datepicker__time-box
+  ul.react-datepicker__time-list
+  li.react-datepicker__time-list-item--selected {
   background-color: #3b82f6 !important; /* Blue-500 */
   border-radius: 8px !important;
   color: white !important;

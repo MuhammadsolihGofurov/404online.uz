@@ -24,12 +24,17 @@ import {
 } from "./extensions/readonly-matching-extension";
 import { ReadOnlyMatchingAnswerSlot } from "./extensions/readonly-matching-answer-slot";
 import { ReadOnlyMatchingDragOptions } from "./extensions/readonly-matching-drag-options";
+import { ReadOnlyMatchingOptionsBox } from "./extensions/readonly-matching-options-box";
+import { ReadOnlyMatchingContainer } from "./extensions/readonly-matching-container";
+import { ReadOnlyMatchingTitle } from "./extensions/readonly-matching-title";
 import {
   ReadOnlyBooleanBlock,
   ReadOnlyBooleanQuestion,
+  ReadOnlyBooleanRow,
 } from "./extensions/readonly-boolean-extension";
 import { ReadOnlyDiagramBlock } from "./extensions/readonly-diagram-extension";
 import { ReadOnlySummaryBlock } from "./extensions/readonly-summary-extension";
+import { ReadOnlyDragDropSummary } from "./extensions/readonly-drag-drop-summary";
 import { WordBankHandler } from "./extensions/word-bank-handler";
 import { ReadOnlyDragItem } from "./extensions/readonly-drag-item";
 
@@ -52,6 +57,10 @@ const TiptapQuestionRenderer = forwardRef(function TiptapQuestionRenderer(
   // Create extensions only once - don't include answers/onAnswerChange in deps
   const extensions = useMemo(
     () => [
+      // Add matching extensions FIRST with high priority before StarterKit
+      ReadOnlyMatchingContainer,
+      ReadOnlyMatchingTitle,
+      ReadOnlyMatchingOptionsBox,
       StarterKit.configure({
         bulletList: false, // Disable from StarterKit to use explicit config
         orderedList: false,
@@ -109,11 +118,19 @@ const TiptapQuestionRenderer = forwardRef(function TiptapQuestionRenderer(
         answers: answersRef,
         onAnswerChange: onAnswerChangeRef,
       }),
+      ReadOnlyBooleanRow.configure({
+        answers: answersRef,
+        onAnswerChange: onAnswerChangeRef,
+      }),
       ReadOnlyDiagramBlock.configure({
         answers: answersRef,
         onAnswerChange: onAnswerChangeRef,
       }),
       ReadOnlySummaryBlock.configure({
+        answers: answersRef,
+        onAnswerChange: onAnswerChangeRef,
+      }),
+      ReadOnlyDragDropSummary.configure({
         answers: answersRef,
         onAnswerChange: onAnswerChangeRef,
       }),
@@ -133,7 +150,8 @@ const TiptapQuestionRenderer = forwardRef(function TiptapQuestionRenderer(
       immediatelyRender: false,
       editorProps: {
         attributes: {
-          class: "prose prose-lg max-w-none focus:outline-none",
+          class:
+            "tiptap-question-renderer prose prose-lg max-w-none focus:outline-none",
         },
       },
       onCreate: ({ editor }) => {
@@ -190,15 +208,22 @@ const TiptapQuestionRenderer = forwardRef(function TiptapQuestionRenderer(
 
         // Use setTimeout to ensure DOM is ready
         setTimeout(() => {
-          // First try to find an input element
+          // Prefer concrete form controls for the question number
           let element = document.querySelector(
-            `[data-question-number="${questionNumber}"]`
+            `input[data-question-number="${questionNumber}"], textarea[data-question-number="${questionNumber}"]`
           );
 
           // If not found, try to find a choice-group container
           if (!element) {
             element = document.querySelector(
               `.choice-group-container[data-question-number="${questionNumber}"]`
+            );
+          }
+
+          // As a last fallback, target any element with the attribute
+          if (!element) {
+            element = document.querySelector(
+              `[data-question-number="${questionNumber}"]`
             );
           }
 

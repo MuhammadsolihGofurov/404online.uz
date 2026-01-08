@@ -40,7 +40,12 @@ export default async function fetcher(
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "API request failed");
+      const enrichedError = new Error(errorData.message || "API request failed");
+      // Preserve additional error metadata for callers that need detailed context
+      enrichedError.error = errorData.error;
+      enrichedError.status = response.status;
+      enrichedError.data = errorData;
+      throw enrichedError;
     }
 
     return await response.json();

@@ -2,11 +2,7 @@ import React, { useState, useRef } from "react";
 import { useIntl } from "react-intl";
 import { Volume2, Play } from "lucide-react";
 
-export default function AudioPlayer({
-  audioSrc,
-  allowControls = false,
-  isPractice = false,
-}) {
+function AudioPlayer({ audioSrc, allowControls = false, isPractice = false }) {
   const intl = useIntl();
   const [showModal, setShowModal] = useState(!allowControls); // Auto-show for exam mode
   const [audioStarted, setAudioStarted] = useState(false);
@@ -82,15 +78,6 @@ export default function AudioPlayer({
 
             <div className="flex gap-3">
               <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
-              >
-                {intl.formatMessage({
-                  id: "Cancel",
-                  defaultMessage: "Cancel",
-                })}
-              </button>
-              <button
                 onClick={handleStartAudio}
                 className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
               >
@@ -106,3 +93,5 @@ export default function AudioPlayer({
     </>
   );
 }
+
+export default React.memo(AudioPlayer);

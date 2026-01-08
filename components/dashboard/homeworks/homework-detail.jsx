@@ -14,6 +14,7 @@ import {
   XCircle,
   List,
 } from "lucide-react";
+import HomeworkItemsList from "./homework-items-list";
 
 export default function HomeworkDetail({ role, loading }) {
   const router = useRouter();
@@ -66,6 +67,17 @@ export default function HomeworkDetail({ role, loading }) {
 
   if (!homework) return null;
 
+  // Normalize API fields for UI
+  const items = homework.items || homework.homework_items || [];
+  const assignedGroups = homework.assigned_groups || [];
+  const assignedUsers = homework.assigned_users || [];
+  const deadline = homework.deadline || homework.due_date;
+
+  // Show "Take Homework" button for students if not graded/submitted
+  const showTakeButton =
+    role === "STUDENT" &&
+    ["PENDING", "DRAFT", undefined, null].includes(homework.status);
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "PENDING":
@@ -106,6 +118,23 @@ export default function HomeworkDetail({ role, loading }) {
 
   return (
     <div className="space-y-6">
+      {/* Take Homework Button */}
+      {showTakeButton && (
+        <div className="flex justify-end mb-4">
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+            onClick={() => router.push(`/dashboard/homeworks/${homework.id}/take`)}
+          >
+            {intl.formatMessage({ id: "Take Homework", defaultMessage: "Take Homework" })}
+          </button>
+        </div>
+      )}
+      {/* Fallback for empty state */}
+      {items.length === 0 && (
+        <div className="flex flex-col items-center justify-center min-h-[300px]">
+          <h2 className="text-2xl font-bold text-gray-400 mb-2">{intl.formatMessage({ id: "No homework items", defaultMessage: "No homework items" })}</h2>
+        </div>
+      )}
       {/* Header Section */}
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-start justify-between mb-4">
@@ -145,7 +174,6 @@ export default function HomeworkDetail({ role, loading }) {
               </p>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
               <Users size={20} className="text-purple-600" />
@@ -158,12 +186,10 @@ export default function HomeworkDetail({ role, loading }) {
                 })}
               </p>
               <p className="text-sm font-medium text-gray-900">
-                {homework.assigned_groups_count || 0}{" "}
-                {intl.formatMessage({ id: "groups", defaultMessage: "groups" })}
+                {assignedGroups.length} {intl.formatMessage({ id: "groups", defaultMessage: "groups" })}
               </p>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
               <Calendar size={20} className="text-green-600" />
@@ -181,8 +207,7 @@ export default function HomeworkDetail({ role, loading }) {
             </div>
           </div>
         </div>
-
-        {homework.due_date && (
+        {deadline && (
           <div className="mt-4 p-3 bg-orange-50 rounded-lg flex items-center gap-2">
             <Clock size={18} className="text-orange-600" />
             <span className="text-sm text-orange-900">
@@ -190,71 +215,16 @@ export default function HomeworkDetail({ role, loading }) {
                 id: "Due Date",
                 defaultMessage: "Due Date",
               })}
-              : {formatDate(homework.due_date)}
+              : {formatDate(deadline)}
             </span>
           </div>
         )}
       </div>
 
       {/* Homework Items Section */}
-      {homework.homework_items && homework.homework_items.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <List size={20} />
-            {intl.formatMessage({
-              id: "Homework Items",
-              defaultMessage: "Homework Items",
-            })}
-          </h2>
-
-          <div className="space-y-3">
-            {homework.homework_items.map((item, index) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                  <span className="text-blue-600 font-bold">{index + 1}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    {item.title}
-                  </p>
-                  {item.description && (
-                    <p className="text-xs text-gray-600 mt-1">
-                      {item.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                    {item.max_score && (
-                      <span className="flex items-center gap-1">
-                        <FileText size={14} />
-                        {intl.formatMessage({
-                          id: "Max Score",
-                          defaultMessage: "Max Score",
-                        })}
-                        : {item.max_score}
-                      </span>
-                    )}
-                    {item.order && (
-                      <span className="flex items-center gap-1">
-                        {intl.formatMessage({
-                          id: "Order",
-                          defaultMessage: "Order",
-                        })}
-                        : {item.order}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
+      <HomeworkItemsList items={items} />
       {/* Assigned Users Section */}
-      {homework.assigned_users && homework.assigned_users.length > 0 && (
+      {assignedUsers.length > 0 && (
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Users size={20} />
@@ -263,9 +233,8 @@ export default function HomeworkDetail({ role, loading }) {
               defaultMessage: "Individually Assigned",
             })}
           </h2>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {homework.assigned_users.map((user) => (
+            {assignedUsers.map((user) => (
               <div
                 key={user.id}
                 className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"

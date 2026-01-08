@@ -2,53 +2,107 @@
 
 import { Node, mergeAttributes } from "@tiptap/core";
 import {
-  ReactNodeViewRenderer,
   NodeViewWrapper,
   NodeViewContent,
+  ReactNodeViewRenderer,
 } from "@tiptap/react";
 import React from "react";
 
-const ReadOnlyBooleanQuestionComponent = ({ node, extension }) => {
-  const questionNumber = node.attrs.number;
-  const isTF = node.attrs.type === "tfng";
+const ReadOnlyBooleanRowComponent = ({ node, extension }) => {
+  const { number, type, text } = node.attrs;
+  const answersRef = extension.options.answers;
+  const onAnswerChangeRef = extension.options.onAnswerChange;
 
   const [value, setValue] = React.useState(
-    extension.options.answers[questionNumber] || ""
+    () => answersRef.current?.[number] || ""
   );
 
   React.useEffect(() => {
-    // Only update if the answer from parent is different from our current value
-    const newValue = extension.options.answers[questionNumber] || "";
-    if (newValue !== value) {
-      setValue(newValue);
+    const latest = answersRef.current?.[number] || "";
+    if (latest !== value) {
+      setValue(latest);
     }
-  }, [extension.options.answers[questionNumber]]); // Only depend on the specific question's answer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answersRef.current?.[number]]);
 
   const handleChange = (e) => {
-    setValue(e.target.value);
-    if (extension.options.onAnswerChange) {
-      extension.options.onAnswerChange(questionNumber, e.target.value);
-    }
+    const newValue = e.target.value;
+    setValue(newValue);
+    onAnswerChangeRef?.current?.(number, newValue);
   };
 
+  const isTF = (type || "tfng").toLowerCase() === "tfng";
   const options = isTF
     ? ["TRUE", "FALSE", "NOT GIVEN"]
     : ["YES", "NO", "NOT GIVEN"];
 
   return (
-    <NodeViewWrapper className="flex items-start gap-3 bg-white p-3 rounded-xl border border-slate-200 mb-2">
-      <span className="w-10 h-10 flex items-center justify-center font-bold text-slate-700 bg-slate-100 rounded-lg">
-        {questionNumber}
+    <NodeViewWrapper className="boolean-question-row flex items-center gap-3 py-2 border-b border-slate-100 last:border-b-0">
+      <span className="q-num w-10 h-10 flex items-center justify-center font-semibold text-slate-700 bg-slate-100 rounded-lg text-base flex-shrink-0">
+        {number}
       </span>
-      <div className="flex-1 pt-2">
-        <NodeViewContent className="text-slate-700 text-sm italic min-h-[24px]" />
+      <span className="q-text flex-1 text-slate-800 text-base leading-6 px-2">
+        {text}
+      </span>
+      <select
+        value={value}
+        onChange={handleChange}
+        className="text-sm font-medium border border-slate-300 rounded-md px-3 h-10 bg-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 text-slate-700 flex-shrink-0"
+        data-question-number={number}
+      >
+        <option value="">Select</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </NodeViewWrapper>
+  );
+};
+
+const ReadOnlyBooleanQuestionComponent = ({ node, extension }) => {
+  const { number, type } = node.attrs;
+  const answersRef = extension.options.answers;
+  const onAnswerChangeRef = extension.options.onAnswerChange;
+
+  const [value, setValue] = React.useState(
+    () => answersRef.current?.[number] || ""
+  );
+
+  React.useEffect(() => {
+    const latest = answersRef.current?.[number] || "";
+    if (latest !== value) {
+      setValue(latest);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answersRef.current?.[number]]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+    onAnswerChangeRef?.current?.(number, newValue);
+  };
+
+  const isTF = (type || "tfng").toLowerCase() === "tfng";
+  const options = isTF
+    ? ["TRUE", "FALSE", "NOT GIVEN"]
+    : ["YES", "NO", "NOT GIVEN"];
+
+  return (
+    <NodeViewWrapper className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-b-0">
+      <span className="w-10 h-10 flex items-center justify-center font-semibold text-slate-700 bg-slate-100 rounded-lg text-base">
+        {number}
+      </span>
+      <div className="flex-1">
+        <NodeViewContent className="text-slate-800 text-base leading-6" />
       </div>
-      <div className="flex flex-col items-end">
+      <div className="flex items-center">
         <select
           value={value}
           onChange={handleChange}
-          className="text-xs font-medium border border-slate-300 rounded px-2 py-1 h-7 bg-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 text-slate-700 uppercase"
-          data-question-number={questionNumber}
+          className="text-sm font-medium border border-slate-300 rounded-md px-3 h-10 bg-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 text-slate-700"
+          data-question-number={number}
         >
           <option value="">Select</option>
           {options.map((opt) => (
@@ -82,14 +136,85 @@ export const ReadOnlyBooleanQuestion = Node.create({
   },
   parseHTML: () => [
     { tag: 'div[data-type="boolean-question"]' },
-    { tag: "boolean-question" },
+    {
+      tag: "boolean-answer-slot",
+      getAttrs: (el) => ({
+        number: el.getAttribute("number"),
+        type: el.getAttribute("type"),
+      }),
+    },
   ],
   renderHTML: ({ HTMLAttributes }) => [
-    "div",
-    mergeAttributes(HTMLAttributes, { "data-type": "boolean-question" }),
+    "boolean-answer-slot",
+    mergeAttributes(HTMLAttributes),
     0,
   ],
   addNodeView: () => ReactNodeViewRenderer(ReadOnlyBooleanQuestionComponent),
+});
+
+export const ReadOnlyBooleanRow = Node.create({
+  name: "booleanRow",
+  group: "block",
+  draggable: false,
+  addOptions() {
+    return {
+      answers: {},
+      onAnswerChange: () => {},
+    };
+  },
+  addAttributes() {
+    return {
+      number: {
+        default: "1",
+        parseHTML: (el) => {
+          const numEl = el.querySelector?.(".q-num");
+          return numEl?.textContent?.trim() || "1";
+        },
+      },
+      type: {
+        default: "tfng",
+        parseHTML: (el) => {
+          const slotEl = el.querySelector?.("boolean-answer-slot");
+          return slotEl?.getAttribute("type") || "tfng";
+        },
+      },
+      text: {
+        default: "",
+        parseHTML: (el) => {
+          const textSpan = el.querySelector?.(".q-text");
+          return textSpan?.textContent?.trim() || "";
+        },
+      },
+    };
+  },
+  parseHTML() {
+    return [
+      {
+        tag: "div.boolean-question-row",
+        getAttrs: (el) => {
+          const slotEl = el.querySelector("boolean-answer-slot");
+          const textEl = el.querySelector(".q-text");
+          return {
+            number: el.querySelector(".q-num")?.textContent?.trim() || "1",
+            type: slotEl?.getAttribute("type") || "tfng",
+            text: textEl?.textContent?.trim() || "",
+          };
+        },
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, { class: "boolean-question-row" }),
+      0,
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ReadOnlyBooleanRowComponent);
+  },
 });
 
 export const ReadOnlyBooleanBlock = Node.create({

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { useIntl } from "react-intl";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import TiptapQuestionRenderer from "../tiptap-question-renderer";
 
 export default function DefaultQuestionLayout({
@@ -18,13 +18,10 @@ export default function DefaultQuestionLayout({
 }) {
   const intl = useIntl();
   const editorRef = useRef(null);
+  const isReading =
+    typeof sectionType === "string" && sectionType.toLowerCase() === "reading";
 
-  // Focus first question when group changes
-  useEffect(() => {
-    if (currentGroup?.questionNumbers?.[0] && editorRef.current) {
-      editorRef.current.focusQuestion(currentGroup.questionNumbers[0]);
-    }
-  }, [currentQuestionIndex, currentGroup?.questionNumbers]);
+  // Explicit focusing is handled by parent via focusQuestionNumber in other layouts
 
   // Calculate total question count (we no longer receive it as prop)
   const totalQuestions = currentGroup?.questionNumbers?.length || 0;
@@ -80,7 +77,13 @@ export default function DefaultQuestionLayout({
         ref={splitRef}
         className="flex-1 overflow-hidden flex items-stretch relative"
       >
-        <div className="flex-1 bg-white border-r border-gray-100 p-5 overflow-y-auto">
+        <div
+          className={`flex-1 bg-white p-5 overflow-y-auto ${
+            isReading
+              ? "border-l border-gray-100 order-3"
+              : "border-r border-gray-100 order-1"
+          }`}
+        >
           {currentGroup?.groupImage && (
             <div className="mb-6">
               <img
@@ -139,7 +142,7 @@ export default function DefaultQuestionLayout({
 
         <div
           onMouseDown={handleDragStart}
-          className="w-1 cursor-col-resize bg-gray-200 hover:bg-gray-300 transition-colors"
+          className={`w-1 cursor-col-resize bg-gray-200 hover:bg-gray-300 transition-colors order-2`}
           aria-label={intl.formatMessage({
             id: "Resize answer panel",
             defaultMessage: "Resize answer panel",
@@ -147,7 +150,11 @@ export default function DefaultQuestionLayout({
         />
 
         <div
-          className="bg-gray-50 p-5 border-l border-gray-100 flex-shrink-0 min-w-[200px] max-w-[900px] overflow-y-auto"
+          className={`bg-gray-50 p-5 flex-shrink-0 min-w-[200px] max-w-[900px] overflow-y-auto ${
+            isReading
+              ? "border-r border-gray-100 order-1"
+              : "border-l border-gray-100 order-3"
+          }`}
           style={{ width: `${answerWidth}px` }}
         >
           <h4 className="font-semibold text-gray-900 mb-4 text-sm">

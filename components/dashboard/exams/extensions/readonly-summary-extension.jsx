@@ -42,9 +42,19 @@ export const ReadOnlySummaryBlock = Node.create({
             </h4>
           </div>
 
-          <div className="p-6 bg-amber-50/30 border-2 border-slate-800 rounded-b-xl">
+          <div className="p-6 bg-amber-50/30 border-2 border-t-0 border-slate-800">
             <div className="prose prose-sm max-w-none italic text-slate-700">
               <NodeViewContent />
+            </div>
+          </div>
+
+          {/* Word Bank Container */}
+          <div className="p-4 bg-slate-50 border-2 border-t border-slate-300 rounded-b-xl">
+            <div className="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-wider">
+              Word Bank
+            </div>
+            <div className="flex flex-wrap gap-2 word-bank-container">
+              {/* Drag items will appear here */}
             </div>
           </div>
         </NodeViewWrapper>

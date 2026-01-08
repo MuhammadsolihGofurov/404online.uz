@@ -1,10 +1,17 @@
 import React from "react";
 import { useIntl } from "react-intl";
 import Link from "next/link";
-import { FileText, Calendar, Award, AlertCircle } from "lucide-react";
+import { 
+  Calendar, 
+  Award, 
+  CheckCircle, 
+  Clock, 
+  ChevronRight, 
+  FileText 
+} from "lucide-react";
 import { formatDate } from "@/utils/funcs";
 
-export default function HomeworkItem({ item, role }) {
+export default function HomeworkItem({ item }) {
   const intl = useIntl();
 
   const {
@@ -15,124 +22,111 @@ export default function HomeworkItem({ item, role }) {
     submission_status,
     status,
     grade,
-    feedback,
+    items_count,
     created_at,
   } = item;
 
   const currentStatus = submission_status || status;
+  const isGraded = currentStatus === "GRADED";
+  const isSubmitted = currentStatus === "SUBMITTED";
+  const isOverdue = due_date && new Date(due_date) < new Date() && !isGraded && !isSubmitted;
 
-  const getStatusInfo = () => {
+  // Status Configuration
+  const getStatusConfig = () => {
     switch (currentStatus) {
-      case "DRAFT":
+      case "GRADED":
         return {
-          label: intl.formatMessage({ id: "Draft", defaultMessage: "Draft" }),
-          class: "bg-gray-50 text-gray-700 border-gray-100",
-          icon: FileText,
+          bg: "bg-green-100",
+          text: "text-green-800",
+          label: intl.formatMessage({ id: "Graded", defaultMessage: "Graded" }),
+          icon: Award,
         };
       case "SUBMITTED":
         return {
-          label: intl.formatMessage({
-            id: "Submitted",
-            defaultMessage: "Submitted",
-          }),
-          class: "bg-blue-50 text-blue-700 border-blue-100",
-          icon: FileText,
+          bg: "bg-blue-100",
+          text: "text-blue-800",
+          label: intl.formatMessage({ id: "Submitted", defaultMessage: "Submitted" }),
+          icon: CheckCircle,
         };
-      case "GRADED":
+      case "DRAFT":
         return {
-          label: intl.formatMessage({ id: "Graded", defaultMessage: "Graded" }),
-          class: "bg-green-50 text-green-700 border-green-100",
-          icon: Award,
+          bg: "bg-yellow-100",
+          text: "text-yellow-800",
+          label: intl.formatMessage({ id: "Draft", defaultMessage: "Draft" }),
+          icon: FileText,
         };
       default:
         return {
-          label: intl.formatMessage({
-            id: "Pending",
-            defaultMessage: "Pending",
-          }),
-          class: "bg-yellow-50 text-yellow-700 border-yellow-100",
-          icon: AlertCircle,
+          bg: "bg-gray-100",
+          text: "text-gray-600",
+          label: intl.formatMessage({ id: "Not Started", defaultMessage: "Not Started" }),
+          icon: null,
         };
     }
   };
 
-  const statusInfo = getStatusInfo();
-  const StatusIcon = statusInfo.icon;
-  const isOverdue =
-    due_date && new Date(due_date) < new Date() && currentStatus !== "GRADED";
+  const statusConfig = getStatusConfig();
+  const StatusIcon = statusConfig.icon;
 
   return (
     <Link
       href={`/dashboard/homeworks/${id}`}
-      className="group relative flex flex-col justify-between bg-white border border-gray-200 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1"
+      className="group block bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-xl hover:border-blue-200 transition-all duration-300 relative overflow-hidden"
     >
-      {/* Header: Title & Status */}
-      <div className="mb-4">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-bold text-gray-900 leading-tight group-hover:text-primary transition-colors line-clamp-2 flex-1">
-            {title ||
-              intl.formatMessage({
-                id: "Homework",
-                defaultMessage: "Homework",
-              })}
-          </h3>
-          <span
-            className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${statusInfo.class} ml-2 shrink-0`}
-          >
-            {statusInfo.label}
-          </span>
+      {/* Decorative gradient on hover */}
+      <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      <div className="flex flex-col h-full">
+        {/* Header: Date & Status Badge */}
+        <div className="flex justify-between items-start mb-4">
+            <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg ${statusConfig.bg} ${statusConfig.text}`}>
+                {StatusIcon && <StatusIcon size={14} />}
+                <span>{statusConfig.label}</span>
+            </div>
+            
+            {due_date && (
+                <div className={`flex items-center gap-1 text-xs ${isOverdue ? "text-red-500 font-bold" : "text-gray-500"}`}>
+                    <Clock size={14} />
+                    <span>{formatDate(due_date)}</span>
+                </div>
+            )}
         </div>
 
-        {description && (
-          <p className="text-sm text-gray-500 line-clamp-2">{description}</p>
-        )}
-      </div>
-
-      {/* Body: Meta Information */}
-      <div className="space-y-2.5 mb-4">
-        {/* Grade */}
-        {grade !== null && grade !== undefined && (
-          <div className="flex items-center gap-2 text-sm text-gray-700">
-            <Award size={16} className="text-green-500 shrink-0" />
-            <span className="font-semibold">
-              {intl.formatMessage({ id: "Grade", defaultMessage: "Grade" })}:
-            </span>
-            <span className="font-bold text-primary">{grade}</span>
-          </div>
-        )}
-
-        {/* Due Date */}
-        {due_date && (
-          <div
-            className={`flex items-center gap-2 text-sm ${
-              isOverdue ? "text-red-500" : "text-gray-500"
-            }`}
-          >
-            <Calendar size={16} className="shrink-0" />
-            <span>
-              {intl.formatMessage({ id: "Due Date", defaultMessage: "Due" })}:{" "}
-              {formatDate(due_date)}
-            </span>
-            {isOverdue && <AlertCircle size={14} className="animate-pulse" />}
-          </div>
-        )}
-      </div>
-
-      {/* Footer: Feedback */}
-      {feedback && (
-        <div className="pt-4 border-t border-gray-100">
-          <p className="text-xs text-gray-500 mb-1">
-            {intl.formatMessage({ id: "Feedback", defaultMessage: "Feedback" })}
-            :
-          </p>
-          <p className="text-sm text-gray-700 italic line-clamp-2">
-            "{feedback}"
-          </p>
+        {/* Content: Title & Description */}
+        <div className="mb-6 flex-1">
+           <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+              {title}
+           </h3>
+           <p className="text-sm text-gray-500 line-clamp-2">
+              {description || intl.formatMessage({ id: "No description", defaultMessage: "No description provided" })}
+           </p>
         </div>
-      )}
 
-      {/* Decoration Gradient on Hover */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl" />
+        {/* Footer: Metrics & Action */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+            <div className="flex items-center gap-4">
+                {/* Grade Display */}
+                {isGraded && grade !== null && (
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold">Grade</span>
+                        <span className="text-lg font-bold text-green-600">{grade}%</span>
+                    </div>
+                )}
+                
+                {/* Task Count (if available) */}
+                {items_count > 0 && (
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold">Tasks</span>
+                        <span className="text-sm font-semibold text-gray-700">{items_count}</span>
+                    </div>
+                )}
+            </div>
+
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <ChevronRight size={18} />
+            </div>
+        </div>
+      </div>
     </Link>
   );
 }

@@ -4,13 +4,24 @@ import { useRouter } from "next/router";
 import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { SECTION_TYPES } from "@/utils/examConstants";
+import { parseDurationToMinutes } from "@/utils/durationParser";
+import {
+  getSectionConfig,
+  getMockIdForSection,
+  getMockTypeString,
+  getSectionTitle,
+} from "@/utils/sectionConfig";
+import { useExamSubmission } from "@/hooks/useExamSubmission";
+import { useLazyMocks } from "@/hooks/useLazyMocks";
+import { useQuestionSession } from "@/hooks/useQuestionSession";
 import ExamTimer from "./exam-timer";
 import ExamSectionCard from "./exam-section-card";
 import ExamQuestion from "./exam-question";
 import ListeningFooter from "./listening-footer";
 import { AlertCircle, Loader, Maximize } from "lucide-react";
+import { toast } from "react-toastify";
 
-export default function ExamTaking({ role, loading, taskType, taskId }) {
+export default function ExamTaking({ loading, taskType, taskId }) {
   const router = useRouter();
   const intl = useIntl();
 
@@ -19,66 +30,100 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
   const type = taskType || "exams"; // Default to exams
 
   // State
+  // State
   const [examStarted, setExamStarted] = useState(false);
-  const [selectedSection, setSelectedSection] = useState(null); // 'LISTENING', 'READING', 'WRITING', null
-  const [answers, setAnswers] = useState({}); // { [question_id]: answer }
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [startError, setStartError] = useState(null);
+  const [selectedSection, setSelectedSection] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [partSummaries, setPartSummaries] = useState([]);
-  const [activePartIndex, setActivePartIndex] = useState(0);
-  const [questionIndexMap, setQuestionIndexMap] = useState({});
-  const [currentQuestionNumber, setCurrentQuestionNumber] = useState(null);
-  const [focusQuestionNumber, setFocusQuestionNumber] = useState(null);
 
-  const handleFullscreen = () => {
-    const elem = document.documentElement;
-    if (!isFullscreen) {
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
+  // Custom hooks (must be before useLazyMocks)
+  const {
+    currentSubmissionId,
+    setCurrentSubmissionId,
+    examResultId,
+    sectionSubmissions,
+    setSectionSubmissions,
+    startError,
+    setStartError,
+    startSection,
+  } = useExamSubmission(examId, intl);
+
+  // Block Ctrl+R and F5 refresh with confirmation if in an active section
+  useEffect(() => {
+    // Handler for keyboard-based refresh (F5, Ctrl+R, Cmd+R)
+    const handleKeyDown = (e) => {
+      if (selectedSection && !isSubmitting) {
+        // F5
+        if (e.key === "F5") {
+          e.preventDefault();
+        }
+        // Ctrl+R or Cmd+R
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r") {
+          e.preventDefault();
+        }
       }
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
+    };
+
+    // Handler for all forms of refresh/navigation away
+    const handleBeforeUnload = (e) => {
+      if (selectedSection && !isSubmitting) {
+        const message = intl.formatMessage({
+          id: "refresh.confirm",
+          defaultMessage:
+            "Are you sure you want to leave or refresh? Your progress may be lost.",
+        });
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
       }
-      setIsFullscreen(false);
-    }
-  };
+    };
 
-  const parseDurationToMinutes = (value) => {
-    if (!value && value !== 0) return null;
-    if (typeof value === "number") return value;
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [selectedSection, isSubmitting, intl]);
 
-    if (typeof value === "string") {
-      // Format: HH:MM:SS
-      const parts = value.split(":");
-      if (parts.length === 3 && parts.every((p) => p !== "")) {
-        const [h, m, s] = parts.map((p) => Number(p) || 0);
-        return h * 60 + m + Math.floor(s / 60);
-      }
+  const {
+    fetchMock,
+    getMock,
+    isLoading: isMockLoading,
+    setMockForSection,
+    mockData,
+  } = useLazyMocks(router.locale, intl, setStartError);
 
-      // Format: PT40M / PT1H20M
-      const iso = value.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i);
-      if (iso) {
-        const hours = Number(iso[1]) || 0;
-        const minutes = Number(iso[2]) || 0;
-        const seconds = Number(iso[3]) || 0;
-        return hours * 60 + minutes + Math.floor(seconds / 60);
-      }
-    }
+  // Shared Question Session Hook
+  const {
+    answers,
+    setAnswers,
+    currentQuestionIndex,
+    setCurrentQuestionIndex,
+    partSummaries,
+    activePartIndex,
+    setActivePartIndex,
+    currentQuestionNumber,
+    focusQuestionNumber,
+    questionNumberToIndexMap,
+    isFullscreen,
+    handleAnswerChange,
+    handleNextQuestion,
+    handlePreviousQuestion,
+    handleSelectQuestion,
+    handlePartSummariesChange,
+    handlePartChangeFromFooter,
+    handleStepPart,
+    handleQuestionSelectFromFooter,
+    handleFullscreen,
+    resetSession,
+    buildAnswersObject,
+  } = useQuestionSession({
+    getMock,
+    getSectionConfig,
+    sectionType: selectedSection,
+  });
 
-    return null;
-  };
+  // Fullscreen handler managed by useQuestionSession
 
   // Fetch exam/task details based on type
   const {
@@ -98,292 +143,214 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
       )
   );
 
-  // Fetch listening mock
-  const { data: listeningMock, isLoading: listeningLoading } = useSWR(
-    exam?.listening_mock
-      ? [`/mocks/listening/${exam.listening_mock}/`, router.locale]
-      : null,
-    ([url, locale]) =>
-      fetcher(
-        url,
-        {
-          headers: { "Accept-Language": locale },
-        },
-        {},
-        true
-      )
-  );
-
-  // Fetch reading mock
-  const { data: readingMock, isLoading: readingLoading } = useSWR(
-    exam?.reading_mock
-      ? [`/mocks/reading/${exam.reading_mock}/`, router.locale]
-      : null,
-    ([url, locale]) =>
-      fetcher(
-        url,
-        {
-          headers: { "Accept-Language": locale },
-        },
-        {},
-        true
-      )
-  );
-
-  // Fetch writing mock
-  const { data: writingMock, isLoading: writingLoading } = useSWR(
-    exam?.writing_mock
-      ? [`/mocks/writing/${exam.writing_mock}/`, router.locale]
-      : null,
-    ([url, locale]) =>
-      fetcher(
-        url,
-        {
-          headers: { "Accept-Language": locale },
-        },
-        {},
-        true
-      )
-  );
-
-  // Set exam started on mount without API call
+  // Initialize section submissions from exam.my_submissions on load
   useEffect(() => {
-    if (examId && !examStarted && exam) {
-      // Only set started when a section is selected (moved to handleSectionChange)
+    if (exam?.my_submissions) {
+      const initialSubmissions = {};
+      Object.entries(exam.my_submissions).forEach(([section, data]) => {
+        if (data?.status) {
+          initialSubmissions[section] = {
+            status: data.status,
+          };
+        }
+      });
+      if (Object.keys(initialSubmissions).length > 0) {
+        setSectionSubmissions((prev) => ({ ...prev, ...initialSubmissions }));
+      }
     }
-  }, [examId, exam]);
+  }, [exam?.my_submissions, setSectionSubmissions]);
 
-  const handleTimeUp = useCallback(() => {
+  // Force submit section if time runs out
+  const handleTimeUp = useCallback(async () => {
+    if (selectedSection && currentSubmissionId) {
+      await submitSection({ force: true });
+    }
     handleSubmitExam();
-  }, []);
+  }, [
+    currentSubmissionId,
+    selectedSection,
+    examResultId,
+    examId,
+    type,
+    router,
+  ]);
 
-  const handleAnswerChange = useCallback((questionId, answer) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: answer,
-    }));
-  }, []);
+  // Answer change handler is now managed by useQuestionSession
 
-  const handleNextQuestion = () => {
-    const currentMock = getMockForSection(selectedSection);
-    const totalQuestions = getTotalQuestionsCount(currentMock);
 
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+  // Navigation handlers are now managed by useQuestionSession
+
+
+  const handleSectionChange = async (section) => {
+    // If switching from another section, submit it first
+    if (selectedSection && selectedSection !== section && currentSubmissionId) {
+      setIsSubmitting(true);
+      const success = await submitSection();
+      setIsSubmitting(false);
+
+      if (!success) {
+        return;
+      }
     }
-  };
 
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    // Get mock details
+    const mockId = getMockIdForSection(exam, section);
+    if (!mockId) return;
+
+    try {
+      const response = await startSection(section, mockId);
+      const failedToStart = !response || response.error;
+      if (failedToStart) {
+        const message =
+          response?.message ||
+          startError ||
+          intl.formatMessage({
+            id: "Failed to start section",
+            defaultMessage: "Failed to start section",
+          });
+        toast.error(message);
+        setStartError(message);
+        return;
+      }
+
+      // If API returns the mock, store it immediately
+      const mockType = getMockTypeString(section);
+      const embeddedMock = response[`${mockType}_mock`] || response.mock;
+      if (embeddedMock) {
+        setMockForSection(section, embeddedMock);
+      } else if (!getMock(section)) {
+        // Fallback: fetch mock if not provided in response and not already cached
+        await fetchMock(section, mockId);
+      }
+
+      // Only after successful start, move into the section
+      setSelectedSection(section);
+      resetSession();
+      setExamStarted(true);
+    } catch (error) {
+      const message =
+        error?.message ||
+        intl.formatMessage({
+          id: "Failed to start section",
+          defaultMessage: "Failed to start section",
+        });
+      toast.error(message);
+      setStartError(message);
     }
-  };
-
-  const handleSelectQuestion = (index) => {
-    const mockForSection = getMockForSection(selectedSection);
-    const total = getTotalQuestionsCount(mockForSection);
-    if (index >= 0 && index < total) {
-      setCurrentQuestionIndex(index);
-    }
-  };
-
-  const handleSectionChange = (section) => {
-    setSelectedSection(section);
-    setCurrentQuestionIndex(0); // Reset to first question
-    setExamStarted(true); // Start timer when section is selected
   };
 
   const handleBackToSections = () => {
     setSelectedSection(null);
   };
 
-  const handleSubmitExam = async () => {
+  // Accepts options: { force: boolean }
+  const submitSection = async (options = {}) => {
+    if (!currentSubmissionId) {
+      setStartError(
+        intl.formatMessage({
+          id: "No active submission",
+          defaultMessage: "No active submission found",
+        })
+      );
+      return false;
+    }
+
     setIsSubmitting(true);
     try {
-      // Submit all answers to backend
-      const submissionData = {
-        exam_task_id: examId,
-        answers: answers,
-      };
+      const currentMock = getMock(selectedSection);
+      const answersObject = buildAnswersObject(currentMock);
+
+
+      // Guard: require at least one answer for submission, unless force is set (e.g. time up)
+      const hasAtLeastOneAnswer = Object.values(answersObject).some(
+        (val) => val && String(val).trim() !== ""
+      );
+      if (!hasAtLeastOneAnswer && !options.force) {
+        toast.error(
+          intl.formatMessage({
+            id: "At least one answer required",
+            defaultMessage:
+              "Please answer at least one question before submitting.",
+          })
+        );
+        setIsSubmitting(false);
+        return false;
+      }
 
       const response = await fetcher(
-        `/submissions/actions/submit/`,
+        `/submissions/${currentSubmissionId}/submit/`,
         {
-          method: "POST",
-          body: JSON.stringify(submissionData),
+          method: "PATCH",
+          body: JSON.stringify({ answers: answersObject }),
         },
         {},
         true
       );
 
       if (response) {
-        router.push(`/dashboard/${type}/${examId}/results`);
+        setSectionSubmissions((prev) => ({
+          ...prev,
+          [selectedSection]: {
+            id: currentSubmissionId,
+            status: response.status,
+            band_score: response.band_score,
+          },
+        }));
+        setCurrentSubmissionId(null);
+        return true;
       }
     } catch (error) {
       setStartError(
         error?.message ||
           intl.formatMessage({
-            id: "Failed to submit exam",
-            defaultMessage: "Failed to submit exam",
+            id: "Failed to submit section",
+            defaultMessage: "Failed to submit section",
           })
       );
-      console.error("Error submitting exam:", error);
+      console.error("Error submitting section:", error);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getMockForSection = (section) => {
-    if (section === SECTION_TYPES.LISTENING) return listeningMock;
-    if (section === SECTION_TYPES.READING) return readingMock;
-    if (section === SECTION_TYPES.WRITING) return writingMock;
-    return null;
+  const handleSectionComplete = async () => {
+    const success = await submitSection();
+    if (success) {
+      // Return to section selection
+      setSelectedSection(null);
+      setCurrentSubmissionId(null);
+      setExamStarted(false);
+    }
   };
 
-  const handlePartSummariesChange = (summaries, activeIdx) => {
-    setPartSummaries(summaries);
-    setActivePartIndex(activeIdx);
+  const handleSubmitExam = async () => {
+    // If currently in a section, submit it first
+    if (selectedSection && currentSubmissionId) {
+      await submitSection();
+    }
+
+    // Navigate to dashboard list page
+    router.push(`/dashboard/${type}`);
   };
 
-  const handlePartChangeFromFooter = useCallback((nextPartIndex) => {
-    setActivePartIndex(nextPartIndex);
-  }, []);
+  const getMockForSection = (section) => getMock(section);
 
-  // Sync currentQuestionIndex when activePartIndex changes
-  useEffect(() => {
-    if (partSummaries.length > 0 && typeof activePartIndex === "number") {
-      const targetPart = partSummaries.find(
-        (summary) => summary.partIndex === activePartIndex
-      );
+  const getLoadingForSection = (section) => isMockLoading(section);
 
-      if (
-        targetPart &&
-        targetPart.startIndex !== null &&
-        targetPart.startIndex !== undefined
-      ) {
-        setCurrentQuestionIndex(targetPart.startIndex);
-      }
-    }
-  }, [activePartIndex, partSummaries]);
+  // Part handlers and getTotalQuestionsCount are now managed by useQuestionSession
 
-  const handleStepPart = (direction) => {
-    const targetIndex = Math.min(
-      partSummaries.length - 1,
-      Math.max(0, activePartIndex + direction)
-    );
 
-    handlePartChangeFromFooter(targetIndex);
-  };
-
-  const handleQuestionSelectFromFooter = useCallback(
-    (targetIndex, partIndex, questionNumber) => {
-      setCurrentQuestionIndex(targetIndex);
-      setActivePartIndex(partIndex);
-      setFocusQuestionNumber(questionNumber);
-      // Reset focus question number after a short delay
-      setTimeout(() => setFocusQuestionNumber(null), 500);
-    },
-    []
-  );
-
-  const getTotalQuestionsCount = (mock) => {
-    if (!mock) return 0;
-
-    if (mock.parts) {
-      // Listening: extract question numbers from templates in question_groups
-      return mock.parts.reduce((total, part) => {
-        const partQuestions =
-          part.question_groups?.reduce((count, group) => {
-            // Count questions by parsing template or using questions array length
-            const questionCount = group.questions?.length || 0;
-            return count + questionCount;
-          }, 0) || 0;
-        return total + partQuestions;
-      }, 0);
-    }
-
-    if (mock.passages) {
-      // Reading: extract question numbers from templates in question_groups
-      return mock.passages.reduce((total, passage) => {
-        const passageQuestions =
-          passage.question_groups?.reduce((count, group) => {
-            const questionCount = group.questions?.length || 0;
-            return count + questionCount;
-          }, 0) || 0;
-        return total + passageQuestions;
-      }, 0);
-    }
-
-    if (mock.tasks) {
-      // Writing: count writing tasks
-      return mock.tasks.length;
-    }
-
-    return 0;
-  };
-
-  const getProgressStats = () => {
-    // Calculate progress based on the section mocks themselves
-    const listeningTotal = getTotalQuestionsCount(listeningMock);
-    const readingTotal = getTotalQuestionsCount(readingMock);
-    const writingTotal = getTotalQuestionsCount(writingMock);
-
-    // Count answered questions per section using question numbers
-    const getAnsweredCount = (mock, sectionType) => {
-      if (!mock) return 0;
-      let count = 0;
-
-      if (sectionType === SECTION_TYPES.LISTENING && mock.parts) {
-        mock.parts.forEach((part) => {
-          part.question_groups?.forEach((group) => {
-            group.questions?.forEach((question) => {
-              // Check by question_number instead of question.id
-              if (answers[question.question_number]) count++;
-            });
-          });
-        });
-      } else if (sectionType === SECTION_TYPES.READING && mock.passages) {
-        mock.passages.forEach((passage) => {
-          passage.question_groups?.forEach((group) => {
-            group.questions?.forEach((question) => {
-              // Check by question_number instead of question.id
-              if (answers[question.question_number]) count++;
-            });
-          });
-        });
-      } else if (sectionType === SECTION_TYPES.WRITING && mock.tasks) {
-        mock.tasks.forEach((task) => {
-          // For writing, check by task_number
-          if (answers[task.task_number]) count++;
-        });
-      }
-
-      return count;
-    };
-
-    return {
-      LISTENING: {
-        answered: getAnsweredCount(listeningMock, SECTION_TYPES.LISTENING),
-        total: listeningTotal,
-      },
-      READING: {
-        answered: getAnsweredCount(readingMock, SECTION_TYPES.READING),
-        total: readingTotal,
-      },
-      WRITING: {
-        answered: getAnsweredCount(writingMock, SECTION_TYPES.WRITING),
-        total: writingTotal,
-      },
-    };
+  const getStatusForSection = (section) => {
+    const submission = sectionSubmissions[section];
+    if (!submission) return "NOT_STARTED";
+    return submission.status || "IN_PROGRESS";
   };
 
   const isLoading =
     loading ||
     examLoading ||
-    (selectedSection &&
-      ((selectedSection === SECTION_TYPES.LISTENING && listeningLoading) ||
-        (selectedSection === SECTION_TYPES.READING && readingLoading) ||
-        (selectedSection === SECTION_TYPES.WRITING && writingLoading)));
+    (selectedSection && getLoadingForSection(selectedSection));
 
   if (isLoading) {
     return (
@@ -433,14 +400,32 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
 
   if (!exam) return null;
 
-  const progress = getProgressStats();
   const examDurationMinutes = parseDurationToMinutes(exam?.duration) ?? 180;
-  const listeningDuration =
-    parseDurationToMinutes(listeningMock?.duration) ?? examDurationMinutes;
-  const readingDuration =
-    parseDurationToMinutes(readingMock?.duration) ?? examDurationMinutes;
-  const writingDuration =
-    parseDurationToMinutes(writingMock?.duration) ?? examDurationMinutes;
+
+  // Get duration from exam-level fields first, fallback to mock, then exam duration
+  const getLibraryDuration = (section) => {
+    const config = getSectionConfig(section);
+    const durationKey = config.mockKey.replace("_mock", "_mock_duration");
+    const examLevelDuration = exam?.[durationKey];
+    if (examLevelDuration) {
+      return parseDurationToMinutes(examLevelDuration) ?? examDurationMinutes;
+    }
+    return (
+      parseDurationToMinutes(getMock(section)?.duration) ?? examDurationMinutes
+    );
+  };
+
+  // Get title from exam object first (new API), fallback to mock title
+  const getExamSectionTitle = (section) => {
+    const config = getSectionConfig(section);
+    const titleKey = config.mockKey.replace("_mock", "_mock_title");
+    return exam?.[titleKey] || getSectionTitle(exam, section);
+  };
+
+  const isSubmitted = (section) => {
+    const status = sectionSubmissions[section]?.status;
+    return status === "GRADED" || status === "SUBMITTED";
+  };
 
   // Show section selection cards
   if (!selectedSection) {
@@ -453,45 +438,34 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
         )}
 
         <div className="flex-1 overflow-y-auto flex items-center justify-center pt-24">
-          <div className="w-full max-w-6xl px-6 pb-40">
+          <div className="w-full max-w-6xl px-6 py-40 sm:pt-0">
             <h1 className="text-3xl font-bold mb-2 text-gray-900">
               {exam.title}
             </h1>
             <p className="text-gray-600 mb-12">{exam.description}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {exam.listening_mock && (
-                <ExamSectionCard
-                  title={exam.listening_mock_title || "Listening"}
-                  duration={listeningDuration}
-                  answered={progress.LISTENING.answered}
-                  total={progress.LISTENING.total}
-                  onClick={() => handleSectionChange(SECTION_TYPES.LISTENING)}
-                  isLoading={listeningLoading}
-                />
-              )}
+              {[
+                SECTION_TYPES.LISTENING,
+                SECTION_TYPES.READING,
+                SECTION_TYPES.WRITING,
+              ].map((section) => {
+                const mockId = getMockIdForSection(exam, section);
+                if (!mockId) return null;
 
-              {exam.reading_mock && (
-                <ExamSectionCard
-                  title={exam.reading_mock_title || "Reading"}
-                  duration={readingDuration}
-                  answered={progress.READING.answered}
-                  total={progress.READING.total}
-                  onClick={() => handleSectionChange(SECTION_TYPES.READING)}
-                  isLoading={readingLoading}
-                />
-              )}
-
-              {exam.writing_mock && (
-                <ExamSectionCard
-                  title={exam.writing_mock_title || "Writing"}
-                  duration={writingDuration}
-                  answered={progress.WRITING.answered}
-                  total={progress.WRITING.total}
-                  onClick={() => handleSectionChange(SECTION_TYPES.WRITING)}
-                  isLoading={writingLoading}
-                />
-              )}
+                return (
+                  <ExamSectionCard
+                    key={section}
+                    title={getExamSectionTitle(section)}
+                    duration={getLibraryDuration(section)}
+                    status={getStatusForSection(section)}
+                    onClick={() => handleSectionChange(section)}
+                    isLoading={getLoadingForSection(section)}
+                    isCompleted={isSubmitted(section)}
+                    bandScore={sectionSubmissions[section]?.band_score}
+                  />
+                );
+              })}
             </div>
 
             <div className="mt-12 flex justify-center">
@@ -506,8 +480,8 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
                       defaultMessage: "Submitting...",
                     })
                   : intl.formatMessage({
-                      id: "Submit Exam",
-                      defaultMessage: "Submit Exam",
+                      id: "Go to Dashboard",
+                      defaultMessage: "Go to Dashboard",
                     })}
               </button>
             </div>
@@ -558,14 +532,23 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleSectionComplete}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 transition-colors text-sm"
+              >
+                {isSubmitting
+                  ? intl.formatMessage({
+                      id: "Submitting...",
+                      defaultMessage: "Submitting...",
+                    })
+                  : intl.formatMessage({
+                      id: "Submit Section",
+                      defaultMessage: "Submit Section",
+                    })}
+              </button>
               <ExamTimer
-                duration={
-                  selectedSection === SECTION_TYPES.LISTENING
-                    ? listeningDuration
-                    : selectedSection === SECTION_TYPES.READING
-                    ? readingDuration
-                    : writingDuration
-                }
+                duration={getLibraryDuration(selectedSection)}
                 onTimeUp={handleTimeUp}
               />
             </div>
@@ -604,22 +587,22 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
           onPartChange={handlePartChangeFromFooter}
           isPractice={type === "mocks"}
           activePartIndex={activePartIndex}
-          onQuestionIndexMapChange={setQuestionIndexMap}
-          onCurrentQuestionNumberChange={setCurrentQuestionNumber}
           focusQuestionNumber={focusQuestionNumber}
         />
       </div>
 
-      {/* Part Switcher Footer - only for Listening with multiple parts */}
+      {/* Part Switcher Footer - for Listening/Reading/Writing */}
       {examStarted &&
-        selectedSection === SECTION_TYPES.LISTENING &&
+        (selectedSection === SECTION_TYPES.LISTENING ||
+          selectedSection === SECTION_TYPES.READING ||
+          selectedSection === SECTION_TYPES.WRITING) &&
         partSummaries.length > 0 && (
           <ListeningFooter
             partSummaries={partSummaries}
             activePartIndex={activePartIndex}
             currentQuestionNumber={currentQuestionNumber}
             answers={answers}
-            questionIndexMap={questionIndexMap}
+            questionNumberToIndexMap={questionNumberToIndexMap}
             onPartChange={handlePartChangeFromFooter}
             onStepPart={handleStepPart}
             onQuestionSelect={handleQuestionSelectFromFooter}
@@ -628,7 +611,9 @@ export default function ExamTaking({ role, loading, taskType, taskId }) {
 
       {/* Add padding when footer is visible to avoid overlap */}
       {examStarted &&
-        selectedSection === SECTION_TYPES.LISTENING &&
+        (selectedSection === SECTION_TYPES.LISTENING ||
+          selectedSection === SECTION_TYPES.READING ||
+          selectedSection === SECTION_TYPES.WRITING) &&
         partSummaries.length > 0 && <div className="h-20" />}
     </div>
   );
