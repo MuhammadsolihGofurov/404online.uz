@@ -59,11 +59,31 @@ export default function UserListItem({ item, role }) {
     );
   };
 
+  const getRoleBadge = (role) => {
+    const roles = {
+      CENTER_ADMIN: "bg-purple-100 text-purple-700 border-purple-200",
+      TEACHER: "bg-blue-100 text-blue-700 border-blue-200",
+      ASSISTANT: "bg-orange-100 text-orange-700 border-orange-200",
+      STUDENT: "bg-gray-100 text-gray-700 border-gray-200",
+    };
+
+    return roles[role] || "bg-gray-100 text-gray-700";
+  };
+
   return (
     <tr className="border-b border-b-dashboardBg last:border-b-transparent relative z-0">
       <td className="text-sm p-5 text-center font-medium">{item?.id}</td>
       <td className="text-sm p-5 font-medium font-poppins">
         {item?.full_name}
+      </td>
+      <td className="text-sm p-5 font-medium font-poppins">
+        <span
+          className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border ${getRoleBadge(
+            item?.role
+          )}`}
+        >
+          {item?.role?.replace("_", " ")}
+        </span>
       </td>
       <td className="text-sm p-5 font-medium">
         <button type="button">
@@ -74,15 +94,15 @@ export default function UserListItem({ item, role }) {
               <span>{intl.formatMessage({ id: "View all" })}</span>
             }
           >
-            {item?.centeradmin_emails?.length > 0 ? (
-              item?.centeradmin_emails?.map((admin) => {
+            {item?.my_groups?.length > 0 ? (
+              item?.my_groups?.map((group) => {
                 return (
                   <div
                     type="button"
-                    key={admin?.email}
+                    key={group?.name}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 text-wrap break-words"
                   >
-                    {admin?.full_name}
+                    {group?.name}
                   </div>
                 );
               })
@@ -108,7 +128,7 @@ export default function UserListItem({ item, role }) {
           </span>
         )}
       </td>
-      <td className="text-sm p-5 font-medium">
+      {/*       <td className="text-sm p-5 font-medium">
         {item?.is_active ? (
           <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
             {intl.formatMessage({ id: "Active" })}
@@ -118,7 +138,7 @@ export default function UserListItem({ item, role }) {
             {intl.formatMessage({ id: "Suspended" })}
           </span>
         )}
-      </td>
+      </td> */}
       <td className="text-sm p-5 font-medium">
         {formatDateToShort(item?.created_at)}
       </td>
