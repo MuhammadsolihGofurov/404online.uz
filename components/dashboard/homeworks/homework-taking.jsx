@@ -119,6 +119,12 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
     setMockForSection,
   } = useLazyMocks(router.locale, intl, setStartError);
 
+  // Fix: Move stableGetMock to top level to avoid Hook Violation
+  const stableGetMock = useCallback(
+    (section) => getMock(section, currentMockId),
+    [getMock, currentMockId]
+  );
+
 
   // --- EFFECTS ---
 
@@ -355,7 +361,7 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
         parentTitle={homework.title}
         sectionType={currentSectionType}
         durationMinutes={homeworkDurationMinutes}
-        getMock={(section) => getMock(section, currentMockId)}
+        getMock={stableGetMock}
         fetchMock={fetchMock}
         mockId={currentMockId}
         currentSubmissionId={currentSubmissionId}

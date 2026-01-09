@@ -237,11 +237,12 @@ export const useQuestionSession = ({
         });
 
         allQuestions.forEach((q) => {
-          if (answers[q.question_number]) {
-            answersObject[q.id] = String(answers[q.question_number]);
+          const answer = answers[q.question_number];
+          if (answer !== undefined && answer !== null && String(answer).trim() !== "") {
+            answersObject[q.id] = String(answer);
           }
         });
-      }
+     }
 
       return answersObject;
     },
@@ -253,7 +254,7 @@ export const useQuestionSession = ({
    */
   const hasAnswers = useCallback(() => {
     return Object.values(answers).some(
-      (val) => val && String(val).trim() !== ""
+      (val) => val !== null && val !== undefined && String(val).trim() !== ""
     );
   }, [answers]);
 

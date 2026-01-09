@@ -108,6 +108,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
     if (!mockId) return;
 
     try {
+      console.log(`[ExamTaking] Starting section ${section} with mock ${mockId}...`);
       const response = await startSection(section, mockId);
       const failedToStart = !response || response.error;
       if (failedToStart) {
@@ -162,7 +163,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
             defaultMessage: "No active submission found",
           })
         );
-        return false;
+        return { success: false, message: "No active submission" };
       }
 
       setIsSubmitting(true);
@@ -173,7 +174,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
         );
         if (!hasAtLeastOneAnswer && !options.force) {
           setIsSubmitting(false);
-          return false;
+          return { success: false, message: "No answers provided" };
         }
 
         const response = await fetcher(
@@ -196,24 +197,30 @@ export default function ExamTaking({ loading, taskType, taskId }) {
             },
           }));
           setCurrentSubmissionId(null);
-          return true;
+          console.log("TaskQuestionRunner submission successful:", response);
+          toast.success(
+            intl.formatMessage({
+              id: "Submitted successfully",
+              defaultMessage: "Submitted successfully!",
+            })
+          );
+          return { success: true };
         }
       } catch (error) {
-        setStartError(
-          error?.message ||
+        const errorMsg = error?.message ||
           intl.formatMessage({
             id: "Failed to submit section",
             defaultMessage: "Failed to submit section",
-          })
-        );
-        console.error("Error submitting section:", error);
-        return false;
+          });
+        setStartError(errorMsg);
+        console.error("TaskQuestionRunner submission failed:", error);
+        return { success: false, message: errorMsg };
       } finally {
         setIsSubmitting(false);
       }
-      return false;
+      return { success: false, message: "Unknown error" };
     },
-    [currentSubmissionId, selectedSection, intl]
+    [currentSubmissionId, selectedSection, intl, setSectionSubmissions, setStartError]
   );
 
   // Wrapper function for TaskQuestionRunner's startFn
@@ -241,6 +248,12 @@ export default function ExamTaking({ loading, taskType, taskId }) {
     [selectedSection, exam, startSection, getMock, fetchMock, setMockForSection]
   );
 
+  const currentMockId = selectedSection ? getMockIdForSection(exam, selectedSection) : null;
+
+  const stableGetMock = useCallback(
+    (section) => getMock(section, currentMockId),
+    [getMock, currentMockId]
+  );
   const handleSectionComplete = () => {
     // Return to section selection after manual submit
     setSelectedSection(null);
@@ -250,6 +263,13 @@ export default function ExamTaking({ loading, taskType, taskId }) {
   const handleTimeUpFinalize = () => {
     // On time up, submit exam and go to dashboard
     handleSubmitExam();
+  };
+
+  // Helper to submit current section from parent state (usually with force/empty if we don't have answers here)
+  const submitSection = async () => {
+    if (!currentSubmissionId) return true;
+    const result = await submitSectionFn({}, { force: true });
+    return result?.success;
   };
 
   const handleSubmitExam = async () => {
@@ -430,7 +450,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
         parentTitle={exam.title}
         sectionType={selectedSection}
         durationMinutes={getLibraryDuration(selectedSection)}
-        getMock={(section) => getMock(section, mockId)}
+        getMock={stableGetMock}
         fetchMock={fetchMock}
         mockId={mockId}
         currentSubmissionId={currentSubmissionId}

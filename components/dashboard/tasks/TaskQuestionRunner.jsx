@@ -70,12 +70,18 @@ export default function TaskQuestionRunner({
     sectionType,
   });
 
-  const currentMock = getMock(sectionType);
+  const currentMock = getMock(sectionType, mockId);
 
   // Load mock and start submission when component mounts or when mock becomes available
   useEffect(() => {
     if (!mockId || !sectionType || isStarted || startError) return;
-    if (isStarting || startedRef.current) return;
+    if (isStarting || startedRef.current || currentSubmissionId) {
+      if (currentSubmissionId && !isStarted) {
+        setIsStarted(true);
+        startedRef.current = true;
+      }
+      return;
+    }
 
     // Set a timeout to prevent infinite loading (30 seconds)
     timeoutRef.current = setTimeout(() => {
@@ -89,10 +95,13 @@ export default function TaskQuestionRunner({
     }, 30000);
 
     const loadAndStart = async () => {
+      if (startedRef.current) return;
+      console.log(`[TaskQuestionRunner] loadAndStart called for ${sectionType} / ${mockId}`);
+      startedRef.current = true;
       setIsStarting(true);
 
       // First, ensure mock is loaded - use return value from fetchMock
-      let mockToUse = getMock(sectionType);
+      let mockToUse = getMock(sectionType, mockId);
       if (!mockToUse && fetchMock) {
         try {
           const fetchedMock = await fetchMock(sectionType, mockId);
@@ -101,25 +110,27 @@ export default function TaskQuestionRunner({
           // If still no mock, wait a bit for state to update and check again
           if (!mockToUse) {
             await new Promise(resolve => setTimeout(resolve, 100));
-            mockToUse = getMock(sectionType);
+            mockToUse = getMock(sectionType, mockId);
           }
         } catch (error) {
           const errorMsg = error?.message || "Failed to load questions";
           toast.error(errorMsg);
           onStartError?.(errorMsg);
           setIsStarting(false);
+          startedRef.current = false; // Allow retry
           return;
         }
       }
 
       // Final check - if still no mock, something went wrong
       if (!mockToUse) {
-        mockToUse = getMock(sectionType);
+        mockToUse = getMock(sectionType, mockId);
         if (!mockToUse) {
           const errorMsg = "Failed to load mock data";
           toast.error(errorMsg);
           onStartError?.(errorMsg);
           setIsStarting(false);
+          startedRef.current = false; // Allow retry
           return;
         }
       }
@@ -172,7 +183,7 @@ export default function TaskQuestionRunner({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [mockId, sectionType, currentMock, fetchMock, startFn, isStarted, isStarting, startError, onStartError, getMock]);
+  }, [mockId, sectionType, currentMock, fetchMock, startFn, startError, onStartError, getMock, currentSubmissionId]);
 
   // Navigation and refresh guards
   useEffect(() => {
@@ -288,12 +299,7 @@ export default function TaskQuestionRunner({
   const handleSubmit = useCallback(async () => {
     if (!currentMock || !currentSubmissionId) return;
 
-    const answersObj = buildAnswersObject(currentMock);
-    const hasAtLeastOneAnswer = Object.values(answersObj).some(
-      (val) => val !== null && val !== undefined && String(val).trim() !== ""
-    );
-
-    if (!hasAtLeastOneAnswer) {
+    if (!hasAnswers()) {
       toast.error(
         intl.formatMessage({
           id: "At least one answer required",
@@ -303,6 +309,7 @@ export default function TaskQuestionRunner({
       return;
     }
 
+    const answersObj = buildAnswersObject(currentMock);
     const result = await submitFn(answersObj, { force: false });
     if (result && result.success) {
       toast.success(
@@ -312,8 +319,10 @@ export default function TaskQuestionRunner({
         })
       );
       onFinalize?.();
+    } else {
+      console.error("Submission failed or success not detected:", result);
     }
-  }, [currentMock, currentSubmissionId, buildAnswersObject, submitFn, onFinalize, intl]);
+  }, [currentMock, currentSubmissionId, buildAnswersObject, submitFn, onFinalize, intl, hasAnswers]);
 
   // Show error state first (before loading)
   if (startError) {

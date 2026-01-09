@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { SECTION_TYPES } from "@/utils/examConstants";
 import fetcher from "@/utils/fetcher";
 
@@ -11,6 +11,10 @@ export const useLazyMocks = (locale, intl, onError) => {
     const [mocks, setMocks] = useState({});
     const [loading, setLoading] = useState({});
     const [failed, setFailed] = useState({});
+    
+    // Refs for immediate checks to avoid dependency churn in useCallback
+    const mocksRef = useRef({});
+    const loadingRef = useRef({});
 
     const getMockTypeString = useCallback((section) => {
         const map = {
@@ -26,12 +30,20 @@ export const useLazyMocks = (locale, intl, onError) => {
         async (section, mockId) => {
             if (!mockId) return null;
             
-            // If already loading or already have it, return existing
-            if (mocks[mockId]) return mocks[mockId];
-            if (loading[mockId]) return null;
+            // Check refs for immediate status to avoid double-firing in same tick
+            if (mocksRef.current[mockId]) {
+                console.log(`[useLazyMocks] Already have mock ${mockId}, skipping fetch.`);
+                return mocksRef.current[mockId];
+            }
+            if (loadingRef.current[mockId]) {
+                console.log(`[useLazyMocks] Already loading mock ${mockId}, skipping fetch.`);
+                return null;
+            }
 
             const mockType = getMockTypeString(section);
+            console.log(`[useLazyMocks] Fetching ${mockType} mock (${mockId})...`);
             
+            loadingRef.current[mockId] = true;
             setLoading(prev => ({ ...prev, [mockId]: true }));
             setFailed(prev => ({ ...prev, [mockId]: false }));
 
@@ -49,10 +61,12 @@ export const useLazyMocks = (locale, intl, onError) => {
                     true
                 );
                 
+                console.log(`[useLazyMocks] Successfully fetched mock ${mockId}`);
+                mocksRef.current[mockId] = response;
                 setMocks((prev) => ({ ...prev, [mockId]: response }));
                 return response;
             } catch (error) {
-                console.error(`Error fetching ${mockType} mock (${mockId}):`, error);
+                console.error(`[useLazyMocks] Error fetching ${mockType} mock (${mockId}):`, error);
                 setFailed((prev) => ({ ...prev, [mockId]: true }));
                 onError?.(
                     intl.formatMessage({
@@ -62,10 +76,11 @@ export const useLazyMocks = (locale, intl, onError) => {
                 );
                 return null;
             } finally {
+                loadingRef.current[mockId] = false;
                 setLoading((prev) => ({ ...prev, [mockId]: false }));
             }
         },
-        [locale, intl, mocks, loading, getMockTypeString, onError]
+        [locale, intl, getMockTypeString, onError] // Stable identity
     );
 
     const getMockById = useCallback(
@@ -97,6 +112,7 @@ export const useLazyMocks = (locale, intl, onError) => {
         isIdFailed,
         setMockForSection: (section, mockData, id) => {
             if (id) {
+                mocksRef.current[id] = mockData;
                 setMocks((prev) => ({ ...prev, [id]: mockData }));
             }
         },

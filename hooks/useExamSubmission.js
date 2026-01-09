@@ -31,6 +31,7 @@ export const useExamSubmission = (examId, intl) => {
                 );
 
                 if (response) {
+                    console.log(`[useExamSubmission] Successfully started section ${section} (ID: ${response.id})`);
                     setCurrentSubmissionId(response.id);
                     setExamResultId(response.exam_result_id);
                     setSectionSubmissions((prev) => ({
