@@ -55,7 +55,7 @@ export default function UsersListTable({ loading, role }) {
   if (loading || isLoading) {
     return <CentersTableSkeleton />;
   }
-  
+
   return (
     <>
       <div className="bg-white rounded-2xl overflow-x-auto sm:w-full">
@@ -73,7 +73,7 @@ export default function UsersListTable({ loading, role }) {
                 {intl.formatMessage({ id: "Groups" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
-                {intl.formatMessage({ id: "Approve" })}
+                {intl.formatMessage({ id: "Status" })}
               </th>
               {/* <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Status" })}

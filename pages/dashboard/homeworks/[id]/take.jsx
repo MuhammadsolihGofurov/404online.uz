@@ -30,4 +30,4 @@ export async function getServerSideProps() {
   return { props: { info } };
 }
 
-export default withAuthGuard(HomeworkTakePage, ["STUDENT"]);
+export default withAuthGuard(HomeworkTakePage, ["STUDENT", "GUEST"]);

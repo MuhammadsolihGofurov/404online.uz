@@ -138,7 +138,7 @@ const UserListCard = ({ title, users, viewAllLink, intl }) => (
               <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border border-buttonGrey">
                 {item?.avatar ? (
                   <img
-                    src={item?.center_avatar || item?.avatar}
+                    src={item?.avatar || item?.center_avatar}
                     loading="lazy"
                     role="img"
                     alt="avatar"
@@ -146,7 +146,7 @@ const UserListCard = ({ title, users, viewAllLink, intl }) => (
                   />
                 ) : (
                   <span className="text-menu text-lg">
-                    {(item?.center_name || item?.full_name)?.[0]}
+                    {item?.full_name?.[0]}
                   </span>
                 )}
               </div>

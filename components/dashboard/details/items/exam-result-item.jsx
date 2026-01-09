@@ -171,7 +171,7 @@ export default function ExamResultItem({ item, role }) {
             )}
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
               {student?.full_name}
             </h3>
             <p className="text-[11px] text-gray-400">{student?.email}</p>
