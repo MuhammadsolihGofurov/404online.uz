@@ -99,13 +99,13 @@ const menuItems = [
     title: "Exams",
     href: EXAMS_URL,
     icon: Mail,
-    roles: ["STUDENT", "CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+    roles: ["STUDENT"],
   },
   {
     title: "Homeworks",
     href: HOMEWORKS_URL,
     icon: ClipboardCheck,
-    roles: ["STUDENT", "CENTER_ADMIN", "TEACHER", "ASSISTANT"],
+    roles: ["STUDENT"],
   },
   {
     title: "My results",

@@ -30,8 +30,5 @@ export async function getServerSideProps() {
 }
 
 export default withAuthGuard(ExamTakePage, [
-  "CENTER_ADMIN",
-  "TEACHER",
-  "ASSISTANT",
   "STUDENT",
 ]);

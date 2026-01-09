@@ -39,8 +39,5 @@ export async function getServerSideProps() {
 }
 
 export default withAuthGuard(HomeworkDetailPage, [
-  "CENTER_ADMIN",
-  "TEACHER",
-  "ASSISTANT",
   "STUDENT",
 ]);

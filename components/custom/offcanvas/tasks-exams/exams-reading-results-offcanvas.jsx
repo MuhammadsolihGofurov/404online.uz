@@ -42,10 +42,22 @@ export default function ExamResultsReview({ submission_id }) {
     used_duration,
     status,
     type,
+    started_at,
+    finished_at,
   } = data;
 
-  // Sekundni minutga o'tkazish
+  const calculateDuration = (start, end) => {
+    if (!start || !end) return 0;
+    const startTime = new Date(start).getTime();
+    const endTime = new Date(end).getTime();
+    return Math.floor((endTime - startTime) / 1000);
+  };
+
+  // Davomiylikni hisoblaymiz
+  const totalSeconds = calculateDuration(started_at, finished_at);
+
   const formatDuration = (seconds) => {
+    if (seconds < 0) return "0m 0s";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
@@ -106,7 +118,7 @@ export default function ExamResultsReview({ submission_id }) {
                     Time Used
                   </p>
                   <p className="text-xl font-bold text-slate-800">
-                    {formatDuration(used_duration)}
+                    {formatDuration(totalSeconds)}
                   </p>
                 </div>
               </div>
