@@ -158,11 +158,20 @@ export default function ExamResultItem({ item, role }) {
       {/* --- Student Info --- */}
       <div className="mb-4">
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="p-2 bg-blue-50 rounded-lg text-blue-600 font-bold">
-            {student?.full_name?.charAt(0)}
+          <div className="p-2 w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden text-blue-600 font-bold">
+            {student?.avatar ? (
+              <img
+                src={student?.avatar}
+                alt=""
+                title={student?.full_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              student?.full_name?.charAt(0)
+            )}
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
               {student?.full_name}
             </h3>
             <p className="text-[11px] text-gray-400">{student?.email}</p>

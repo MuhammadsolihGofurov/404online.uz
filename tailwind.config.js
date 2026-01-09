@@ -19,8 +19,8 @@ module.exports = {
         },
       },
       animation: {
-        slideInRight: "slideInRight 0.3s ease-out",
-        slideInLeft: "slideInLeft 0.3s ease-out",
+        slideInRight: "slideInRight 0.25s cubic-bezier(0, 0, 0.2, 1)",
+        slideInLeft: "slideInLeft 0.25s cubic-bezier(0, 0, 0.2, 1)",
       },
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],

@@ -207,22 +207,30 @@ const MyResultItem = ({ data, role }) => {
             width="w-44"
             buttonContent={<span className="text-sm">View details</span>}
           >
-            <DropdownBtn
-              title={"Writing result"}
-              icon={<CheckSquare size={14} className={``} />}
-              onClick={() => handleCheckWriting()}
-            />
+            {data?.overall_band_score ? (
+              <>
+                <DropdownBtn
+                  title={"Writing result"}
+                  icon={<CheckSquare size={14} className={``} />}
+                  onClick={() => handleCheckWriting()}
+                />
 
-            <DropdownBtn
-              title="Reading result"
-              icon={<BookOpen size={14} />}
-              onClick={() => handleCheckReading()}
-            />
-            <DropdownBtn
-              title="Listening result"
-              icon={<Headphones size={14} />}
-              onClick={() => handleCheckListening()}
-            />
+                <DropdownBtn
+                  title="Reading result"
+                  icon={<BookOpen size={14} />}
+                  onClick={() => handleCheckReading()}
+                />
+                <DropdownBtn
+                  title="Listening result"
+                  icon={<Headphones size={14} />}
+                  onClick={() => handleCheckListening()}
+                />
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 p-2 italic">
+                Results are not available yet.
+              </p>
+            )}
           </Dropdown>
         </div>
       </div>

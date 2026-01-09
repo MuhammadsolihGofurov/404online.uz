@@ -103,7 +103,7 @@ export default function AddStudentsToGroupModal({ group_id, userType }) {
         <div className="flex flex-col w-full">
           <button
             type="submit"
-            className="rounded-xl bg-main flex items-center justify-center text-white p-4 hover:bg-blue-800 transition-colors duration-200"
+            className="rounded-xl bg-main flex gap-2 items-center justify-center text-white p-4 hover:bg-blue-800 transition-colors duration-200"
           >
             {reqLoading && <ButtonSpinner />}{" "}
             {intl.formatMessage({ id: "Add" })}
