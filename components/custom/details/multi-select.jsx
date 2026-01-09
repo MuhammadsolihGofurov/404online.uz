@@ -56,7 +56,7 @@ const MultiSelect = forwardRef(function MultiSelect(
         }`}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="text-sm text-inputPlaceholder flex-1">
+        <span className="text-sm text-inputPlaceholder flex-1 line-clamp-1">
           {value.length > 0
             ? value.map((v) => v.full_name || v.name || v?.title).join(", ")
             : placeholder}

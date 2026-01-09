@@ -7,7 +7,11 @@ import { useForm } from "react-hook-form";
 import axios from "@/utils/axios";
 import { ButtonSpinner } from "../loading";
 import { toast } from "react-toastify";
-import { DASHBOARD_URL, FORGOTPASSWORDUSERNAME_URL } from "@/mock/router";
+import {
+  DASHBOARD_URL,
+  FORGOTPASSWORDUSERNAME_URL,
+  HOMEWORKS_URL,
+} from "@/mock/router";
 import {
   PRIVATEAUTHKEY,
   PRIVATEREFRESHKEY,
@@ -50,7 +54,11 @@ export default function LoginForm() {
       toast.success(intl.formatMessage({ id: "Login is successfully" }));
 
       setTimeout(() => {
-        router.push(`${DASHBOARD_URL}`);
+        if (response?.data?.user?.role === "GUEST") {
+          router.push(`${HOMEWORKS_URL}`);
+        } else {
+          router.push(`${DASHBOARD_URL}`);
+        }
       }, 500);
     } catch (e) {
       toast.error(e?.response?.data?.error?.detail?.[0]);

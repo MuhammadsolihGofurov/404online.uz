@@ -12,8 +12,16 @@ const LeaderboardItem = ({ item }) => {
       {/* 1. Name & Avatar */}
       <td className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-main/10 text-main rounded-full flex items-center justify-center font-bold text-sm">
-            {item?.user_name?.charAt(0)}
+          <div className="w-9 h-9 bg-blue-300 bg-opacity-20 text-main rounded-full flex items-center overflow-hidden justify-center font-bold text-sm">
+            {item?.avatar ? (
+              <img
+                src={img?.avatar}
+                title={item?.user_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              item?.user_name?.charAt(0)
+            )}
           </div>
           <div className="flex flex-col">
             <span className="font-semibold text-slate-800 text-sm">
