@@ -143,7 +143,10 @@ export default function HomeworkDetail({ role, loading }) {
               {homework.title}
             </h1>
             {homework.description && (
-              <p className="text-gray-600">{homework.description}</p>
+              <div
+                className="text-gray-600 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: homework.description }}
+              />
             )}
           </div>
           <div className="flex items-center gap-2 ml-4">
@@ -262,9 +265,8 @@ export default function HomeworkDetail({ role, loading }) {
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <div
-            className={`w-12 h-12 rounded-lg ${
-              homework.is_published ? "bg-green-50" : "bg-gray-50"
-            } flex items-center justify-center`}
+            className={`w-12 h-12 rounded-lg ${homework.is_published ? "bg-green-50" : "bg-gray-50"
+              } flex items-center justify-center`}
           >
             {homework.is_published ? (
               <CheckCircle size={24} className="text-green-600" />
@@ -276,24 +278,24 @@ export default function HomeworkDetail({ role, loading }) {
             <p className="text-sm font-medium text-gray-900">
               {homework.is_published
                 ? intl.formatMessage({
-                    id: "Published",
-                    defaultMessage: "Published",
-                  })
+                  id: "Published",
+                  defaultMessage: "Published",
+                })
                 : intl.formatMessage({
-                    id: "Not Published",
-                    defaultMessage: "Not Published",
-                  })}
+                  id: "Not Published",
+                  defaultMessage: "Not Published",
+                })}
             </p>
             <p className="text-xs text-gray-500">
               {homework.is_published
                 ? intl.formatMessage({
-                    id: "Scores are visible to students",
-                    defaultMessage: "Scores are visible to students",
-                  })
+                  id: "Scores are visible to students",
+                  defaultMessage: "Scores are visible to students",
+                })
                 : intl.formatMessage({
-                    id: "Scores are hidden from students",
-                    defaultMessage: "Scores are hidden from students",
-                  })}
+                  id: "Scores are hidden from students",
+                  defaultMessage: "Scores are hidden from students",
+                })}
             </p>
           </div>
         </div>

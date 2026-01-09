@@ -280,7 +280,7 @@ export default function ExamQuestion({
 
   if (!currentGroup) {
     return (
-      <div className="flex flex-col h-full bg-white">
+      <div className="flex flex-col min-h-full bg-white">
         {sectionType === SECTION_TYPES.LISTENING && (
           <AudioPlayer
             audioSrc={audioSrc}
@@ -326,7 +326,7 @@ export default function ExamQuestion({
     // If current group doesn't belong to active part, show empty state
     if (!currentGroupInActivePart) {
       return (
-        <div className="flex flex-col h-full bg-white">
+        <div className="flex flex-col min-h-full bg-white">
           <AudioPlayer
             audioSrc={audioSrc}
             allowControls={isPractice}
@@ -370,7 +370,7 @@ export default function ExamQuestion({
     }
 
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col min-h-full">
         <AudioPlayer
           audioSrc={audioSrc}
           allowControls={isPractice}

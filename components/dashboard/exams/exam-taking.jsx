@@ -13,12 +13,9 @@ import {
 } from "@/utils/sectionConfig";
 import { useExamSubmission } from "@/hooks/useExamSubmission";
 import { useLazyMocks } from "@/hooks/useLazyMocks";
-import { useQuestionSession } from "@/hooks/useQuestionSession";
-import ExamTimer from "./exam-timer";
 import ExamSectionCard from "./exam-section-card";
-import ExamQuestion from "./exam-question";
-import ListeningFooter from "./listening-footer";
-import { AlertCircle, Loader, Maximize } from "lucide-react";
+import TaskQuestionRunner from "@/components/dashboard/tasks/TaskQuestionRunner";
+import { AlertCircle, Loader } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function ExamTaking({ loading, taskType, taskId }) {
@@ -30,8 +27,6 @@ export default function ExamTaking({ loading, taskType, taskId }) {
   const type = taskType || "exams"; // Default to exams
 
   // State
-  // State
-  const [examStarted, setExamStarted] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,44 +42,6 @@ export default function ExamTaking({ loading, taskType, taskId }) {
     startSection,
   } = useExamSubmission(examId, intl);
 
-  // Block Ctrl+R and F5 refresh with confirmation if in an active section
-  useEffect(() => {
-    // Handler for keyboard-based refresh (F5, Ctrl+R, Cmd+R)
-    const handleKeyDown = (e) => {
-      if (selectedSection && !isSubmitting) {
-        // F5
-        if (e.key === "F5") {
-          e.preventDefault();
-        }
-        // Ctrl+R or Cmd+R
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r") {
-          e.preventDefault();
-        }
-      }
-    };
-
-    // Handler for all forms of refresh/navigation away
-    const handleBeforeUnload = (e) => {
-      if (selectedSection && !isSubmitting) {
-        const message = intl.formatMessage({
-          id: "refresh.confirm",
-          defaultMessage:
-            "Are you sure you want to leave or refresh? Your progress may be lost.",
-        });
-        e.preventDefault();
-        e.returnValue = message;
-        return message;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [selectedSection, isSubmitting, intl]);
-
   const {
     fetchMock,
     getMock,
@@ -93,45 +50,13 @@ export default function ExamTaking({ loading, taskType, taskId }) {
     mockData,
   } = useLazyMocks(router.locale, intl, setStartError);
 
-  // Shared Question Session Hook
-  const {
-    answers,
-    setAnswers,
-    currentQuestionIndex,
-    setCurrentQuestionIndex,
-    partSummaries,
-    activePartIndex,
-    setActivePartIndex,
-    currentQuestionNumber,
-    focusQuestionNumber,
-    questionNumberToIndexMap,
-    isFullscreen,
-    handleAnswerChange,
-    handleNextQuestion,
-    handlePreviousQuestion,
-    handleSelectQuestion,
-    handlePartSummariesChange,
-    handlePartChangeFromFooter,
-    handleStepPart,
-    handleQuestionSelectFromFooter,
-    handleFullscreen,
-    resetSession,
-    buildAnswersObject,
-  } = useQuestionSession({
-    getMock,
-    getSectionConfig,
-    sectionType: selectedSection,
-  });
-
-  // Fullscreen handler managed by useQuestionSession
-
   // Fetch exam/task details based on type
   const {
     data: exam,
     isLoading: examLoading,
     error: examError,
   } = useSWR(
-    examId ? [`/tasks/${type}/${examId}/`, router.locale] : null,
+    router.isReady && examId ? [`/tasks/${type}/${examId}/`, router.locale] : null,
     ([url, locale]) =>
       fetcher(
         url,
@@ -140,7 +65,13 @@ export default function ExamTaking({ loading, taskType, taskId }) {
         },
         {},
         true
-      )
+      ),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+      dedupingInterval: 5000,
+    }
   );
 
   // Initialize section submissions from exam.my_submissions on load
@@ -159,27 +90,6 @@ export default function ExamTaking({ loading, taskType, taskId }) {
       }
     }
   }, [exam?.my_submissions, setSectionSubmissions]);
-
-  // Force submit section if time runs out
-  const handleTimeUp = useCallback(async () => {
-    if (selectedSection && currentSubmissionId) {
-      await submitSection({ force: true });
-    }
-    handleSubmitExam();
-  }, [
-    currentSubmissionId,
-    selectedSection,
-    examResultId,
-    examId,
-    type,
-    router,
-  ]);
-
-  // Answer change handler is now managed by useQuestionSession
-
-
-  // Navigation handlers are now managed by useQuestionSession
-
 
   const handleSectionChange = async (section) => {
     // If switching from another section, submit it first
@@ -217,16 +127,14 @@ export default function ExamTaking({ loading, taskType, taskId }) {
       const mockType = getMockTypeString(section);
       const embeddedMock = response[`${mockType}_mock`] || response.mock;
       if (embeddedMock) {
-        setMockForSection(section, embeddedMock);
-      } else if (!getMock(section)) {
+        setMockForSection(section, embeddedMock, mockId);
+      } else if (!getMock(section, mockId)) {
         // Fallback: fetch mock if not provided in response and not already cached
         await fetchMock(section, mockId);
       }
 
       // Only after successful start, move into the section
       setSelectedSection(section);
-      resetSession();
-      setExamStarted(true);
     } catch (error) {
       const message =
         error?.message ||
@@ -241,87 +149,107 @@ export default function ExamTaking({ loading, taskType, taskId }) {
 
   const handleBackToSections = () => {
     setSelectedSection(null);
+    setCurrentSubmissionId(null);
   };
 
-  // Accepts options: { force: boolean }
-  const submitSection = async (options = {}) => {
-    if (!currentSubmissionId) {
-      setStartError(
-        intl.formatMessage({
-          id: "No active submission",
-          defaultMessage: "No active submission found",
-        })
-      );
-      return false;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const currentMock = getMock(selectedSection);
-      const answersObject = buildAnswersObject(currentMock);
-
-
-      // Guard: require at least one answer for submission, unless force is set (e.g. time up)
-      const hasAtLeastOneAnswer = Object.values(answersObject).some(
-        (val) => val && String(val).trim() !== ""
-      );
-      if (!hasAtLeastOneAnswer && !options.force) {
-        toast.error(
+  // Wrapper function for TaskQuestionRunner's submitFn
+  const submitSectionFn = useCallback(
+    async (answersObject, options = {}) => {
+      if (!currentSubmissionId) {
+        setStartError(
           intl.formatMessage({
-            id: "At least one answer required",
-            defaultMessage:
-              "Please answer at least one question before submitting.",
+            id: "No active submission",
+            defaultMessage: "No active submission found",
           })
         );
-        setIsSubmitting(false);
         return false;
       }
 
-      const response = await fetcher(
-        `/submissions/${currentSubmissionId}/submit/`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ answers: answersObject }),
-        },
-        {},
-        true
-      );
+      setIsSubmitting(true);
+      try {
+        // Guard: require at least one answer for submission, unless force is set (e.g. time up)
+        const hasAtLeastOneAnswer = Object.values(answersObject).some(
+          (val) => val && String(val).trim() !== ""
+        );
+        if (!hasAtLeastOneAnswer && !options.force) {
+          setIsSubmitting(false);
+          return false;
+        }
 
-      if (response) {
-        setSectionSubmissions((prev) => ({
-          ...prev,
-          [selectedSection]: {
-            id: currentSubmissionId,
-            status: response.status,
-            band_score: response.band_score,
+        const response = await fetcher(
+          `/submissions/${currentSubmissionId}/submit/`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ answers: answersObject }),
           },
-        }));
-        setCurrentSubmissionId(null);
-        return true;
-      }
-    } catch (error) {
-      setStartError(
-        error?.message ||
+          {},
+          true
+        );
+
+        if (response) {
+          setSectionSubmissions((prev) => ({
+            ...prev,
+            [selectedSection]: {
+              id: currentSubmissionId,
+              status: response.status,
+              band_score: response.band_score,
+            },
+          }));
+          setCurrentSubmissionId(null);
+          return true;
+        }
+      } catch (error) {
+        setStartError(
+          error?.message ||
           intl.formatMessage({
             id: "Failed to submit section",
             defaultMessage: "Failed to submit section",
           })
-      );
-      console.error("Error submitting section:", error);
+        );
+        console.error("Error submitting section:", error);
+        return false;
+      } finally {
+        setIsSubmitting(false);
+      }
       return false;
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+    [currentSubmissionId, selectedSection, intl]
+  );
+
+  // Wrapper function for TaskQuestionRunner's startFn
+  const startSectionFn = useCallback(
+    async () => {
+      if (!selectedSection) return null;
+      const mockId = getMockIdForSection(exam, selectedSection);
+      if (!mockId) return null;
+
+      const response = await startSection(selectedSection, mockId);
+      if (response && !response.error) {
+        // If API returns the mock, store it immediately
+        const mockType = getMockTypeString(selectedSection);
+        const embeddedMock = response[`${mockType}_mock`] || response.mock;
+        if (embeddedMock) {
+          setMockForSection(selectedSection, embeddedMock, mockId);
+        } else if (!getMock(selectedSection, mockId)) {
+          // Fallback: fetch mock if not provided in response and not already cached
+          await fetchMock(selectedSection, mockId);
+        }
+        return response;
+      }
+      return response;
+    },
+    [selectedSection, exam, startSection, getMock, fetchMock, setMockForSection]
+  );
+
+  const handleSectionComplete = () => {
+    // Return to section selection after manual submit
+    setSelectedSection(null);
+    setCurrentSubmissionId(null);
   };
 
-  const handleSectionComplete = async () => {
-    const success = await submitSection();
-    if (success) {
-      // Return to section selection
-      setSelectedSection(null);
-      setCurrentSubmissionId(null);
-      setExamStarted(false);
-    }
+  const handleTimeUpFinalize = () => {
+    // On time up, submit exam and go to dashboard
+    handleSubmitExam();
   };
 
   const handleSubmitExam = async () => {
@@ -334,9 +262,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
     router.push(`/dashboard/${type}`);
   };
 
-  const getMockForSection = (section) => getMock(section);
-
-  const getLoadingForSection = (section) => isMockLoading(section);
+  const getLoadingForSection = (section) => isMockLoading(section, getMockIdForSection(exam, section));
 
   // Part handlers and getTotalQuestionsCount are now managed by useQuestionSession
 
@@ -411,7 +337,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
       return parseDurationToMinutes(examLevelDuration) ?? examDurationMinutes;
     }
     return (
-      parseDurationToMinutes(getMock(section)?.duration) ?? examDurationMinutes
+      parseDurationToMinutes(getMock(section, getMockIdForSection(exam, section))?.duration) ?? examDurationMinutes
     );
   };
 
@@ -442,7 +368,10 @@ export default function ExamTaking({ loading, taskType, taskId }) {
             <h1 className="text-3xl font-bold mb-2 text-gray-900">
               {exam.title}
             </h1>
-            <p className="text-gray-600 mb-12">{exam.description}</p>
+            <div
+              className="text-gray-600 mb-12 prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: exam.description }}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -476,13 +405,13 @@ export default function ExamTaking({ loading, taskType, taskId }) {
               >
                 {isSubmitting
                   ? intl.formatMessage({
-                      id: "Submitting...",
-                      defaultMessage: "Submitting...",
-                    })
+                    id: "Submitting...",
+                    defaultMessage: "Submitting...",
+                  })
                   : intl.formatMessage({
-                      id: "Go to Dashboard",
-                      defaultMessage: "Go to Dashboard",
-                    })}
+                    id: "Go to Dashboard",
+                    defaultMessage: "Go to Dashboard",
+                  })}
               </button>
             </div>
           </div>
@@ -491,130 +420,32 @@ export default function ExamTaking({ loading, taskType, taskId }) {
     );
   }
 
-  // Show question view for selected section
-  const currentMock = getMockForSection(selectedSection);
-
-  if (!currentMock) {
+  // Show question view for selected section using TaskQuestionRunner
+  if (selectedSection) {
+    const mockId = getMockIdForSection(exam, selectedSection);
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <p className="text-gray-600">Mock data not loaded</p>
-          <button
-            onClick={handleBackToSections}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
+      <TaskQuestionRunner
+        mode="exam"
+        title={getExamSectionTitle(selectedSection)}
+        parentTitle={exam.title}
+        sectionType={selectedSection}
+        durationMinutes={getLibraryDuration(selectedSection)}
+        getMock={(section) => getMock(section, mockId)}
+        fetchMock={fetchMock}
+        mockId={mockId}
+        currentSubmissionId={currentSubmissionId}
+        startFn={startSectionFn}
+        submitFn={submitSectionFn}
+        onFinalize={handleSectionComplete}
+        onTimeUpFinalize={handleTimeUpFinalize}
+        onExit={handleBackToSections}
+        isLoadingMock={isMockLoading(selectedSection, mockId)}
+        isSubmitting={isSubmitting}
+        startError={startError}
+        onStartError={setStartError}
+      />
     );
   }
 
-  return (
-    <div className="h-screen bg-gray-100 overflow-auto flex flex-col">
-      {/* Custom Header with Title, Timer, and Fullscreen Button */}
-      {examStarted && selectedSection && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 md:px-6 py-4">
-          <div className="flex justify-between">
-            <div className="text-center leading-tight">
-              <h2 className="text-lg font-bold text-gray-900">
-                {selectedSection === SECTION_TYPES.LISTENING && "Listening"}
-                {selectedSection === SECTION_TYPES.READING && "Reading"}
-                {selectedSection === SECTION_TYPES.WRITING && "Writing"}
-              </h2>
-              <p className="text-xs text-gray-500">
-                {intl.formatMessage({
-                  id: "Section",
-                  defaultMessage: "Section",
-                })}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSectionComplete}
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 transition-colors text-sm"
-              >
-                {isSubmitting
-                  ? intl.formatMessage({
-                      id: "Submitting...",
-                      defaultMessage: "Submitting...",
-                    })
-                  : intl.formatMessage({
-                      id: "Submit Section",
-                      defaultMessage: "Submit Section",
-                    })}
-              </button>
-              <ExamTimer
-                duration={getLibraryDuration(selectedSection)}
-                onTimeUp={handleTimeUp}
-              />
-            </div>
-            <button
-              onClick={handleFullscreen}
-              className="p-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
-              title={intl.formatMessage({
-                id: "Toggle Fullscreen",
-                defaultMessage: "Toggle Fullscreen",
-              })}
-            >
-              <Maximize size={20} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {startError && (
-        <div className="bg-red-50 border-b border-red-200 px-6 py-3 text-red-700 text-sm">
-          {startError}
-        </div>
-      )}
-
-      <div className={`flex-1 flex flex-col px-3 md:px-6 pb-48`}>
-        <ExamQuestion
-          mock={currentMock}
-          sectionType={selectedSection}
-          currentQuestionIndex={currentQuestionIndex}
-          answers={answers}
-          onAnswerChange={handleAnswerChange}
-          onNext={handleNextQuestion}
-          onPrevious={handlePreviousQuestion}
-          onSelectQuestion={handleSelectQuestion}
-          onBackToSections={handleBackToSections}
-          onPartSummariesChange={handlePartSummariesChange}
-          onPartChange={handlePartChangeFromFooter}
-          isPractice={type === "mocks"}
-          activePartIndex={activePartIndex}
-          focusQuestionNumber={focusQuestionNumber}
-        />
-      </div>
-
-      {/* Part Switcher Footer - for Listening/Reading/Writing */}
-      {examStarted &&
-        (selectedSection === SECTION_TYPES.LISTENING ||
-          selectedSection === SECTION_TYPES.READING ||
-          selectedSection === SECTION_TYPES.WRITING) &&
-        partSummaries.length > 0 && (
-          <ListeningFooter
-            partSummaries={partSummaries}
-            activePartIndex={activePartIndex}
-            currentQuestionNumber={currentQuestionNumber}
-            answers={answers}
-            questionNumberToIndexMap={questionNumberToIndexMap}
-            onPartChange={handlePartChangeFromFooter}
-            onStepPart={handleStepPart}
-            onQuestionSelect={handleQuestionSelectFromFooter}
-          />
-        )}
-
-      {/* Add padding when footer is visible to avoid overlap */}
-      {examStarted &&
-        (selectedSection === SECTION_TYPES.LISTENING ||
-          selectedSection === SECTION_TYPES.READING ||
-          selectedSection === SECTION_TYPES.WRITING) &&
-        partSummaries.length > 0 && <div className="h-20" />}
-    </div>
-  );
+  return null;
 }

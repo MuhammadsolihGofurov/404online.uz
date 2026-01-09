@@ -21,14 +21,11 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
             try {
                 setStartError(null);
                 const response = await fetcher(
-                    `/submissions/actions/start-homework/`,
+                    `/submissions/start_homework/`,
                     {
                         method: "POST",
                         body: JSON.stringify({
-                            homework_task_id: homeworkId,
-                            item_id: itemId,
-                            content_type: contentType,
-                            content_id: mockId,
+                            homework_item_id: itemId,
                         }),
                     },
                     {},
@@ -104,10 +101,10 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
 
             // Don't save empty drafts
             const hasAtLeastOneAnswer = Object.values(answersObject).some(
-                (val) => val && String(val).trim() !== ""
+                (val) => val !== null && val !== undefined && String(val).trim() !== ""
             );
             if (!hasAtLeastOneAnswer) {
-                return false;
+                return { success: false, message: "No answers provided" };
             }
 
             setIsSavingDraft(true);
@@ -131,11 +128,11 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                             status: response.status || "SAVED",
                         },
                     }));
-                    return true;
+                    return { success: true, data: response };
                 }
             } catch (error) {
                 console.error("Error saving draft:", error);
-                return false;
+                return { success: false, message: error?.message };
             } finally {
                 setIsSavingDraft(false);
             }
@@ -155,15 +152,16 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                         defaultMessage: "No active submission found",
                     })
                 );
-                return false;
+                return { success: false, message: "No active submission" };
             }
 
             // Guard: require at least one answer unless force is set
+            // Note: Use != null to allow 0 as a valid answer index for quizzes
             const hasAtLeastOneAnswer = Object.values(answersObject).some(
-                (val) => val && String(val).trim() !== ""
+                (val) => val !== null && val !== undefined && String(val).trim() !== ""
             );
             if (!hasAtLeastOneAnswer && !options.force) {
-                return false;
+                return { success: false, message: "No answers provided" };
             }
 
             setIsSubmitting(true);
@@ -188,18 +186,17 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                         },
                     }));
                     setCurrentSubmissionId(null);
-                    return true;
+                    return { success: true, data: response };
                 }
             } catch (error) {
-                setStartError(
-                    error?.message ||
+                const errorMsg = error?.message ||
                     intl.formatMessage({
                         id: "Failed to submit homework item",
                         defaultMessage: "Failed to submit homework item",
-                    })
-                );
+                    });
+                setStartError(errorMsg);
                 console.error("Error submitting homework item:", error);
-                return false;
+                return { success: false, message: errorMsg };
             } finally {
                 setIsSubmitting(false);
             }

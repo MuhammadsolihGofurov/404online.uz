@@ -7,47 +7,53 @@ import fetcher from "@/utils/fetcher";
  * Fetches mock content on-demand when a section is accessed
  */
 export const useLazyMocks = (locale, intl, onError) => {
-    const [mocks, setMocks] = useState({
-        [SECTION_TYPES.LISTENING]: null,
-        [SECTION_TYPES.READING]: null,
-        [SECTION_TYPES.WRITING]: null,
-    });
-
-    const [loading, setLoading] = useState({
-        [SECTION_TYPES.LISTENING]: false,
-        [SECTION_TYPES.READING]: false,
-        [SECTION_TYPES.WRITING]: false,
-    });
+    // Cache keyed by mockId
+    const [mocks, setMocks] = useState({});
+    const [loading, setLoading] = useState({});
+    const [failed, setFailed] = useState({});
 
     const getMockTypeString = useCallback((section) => {
         const map = {
             [SECTION_TYPES.LISTENING]: "listening",
             [SECTION_TYPES.READING]: "reading",
             [SECTION_TYPES.WRITING]: "writing",
+            [SECTION_TYPES.QUIZ]: "quizzes",
         };
         return map[section];
     }, []);
 
     const fetchMock = useCallback(
         async (section, mockId) => {
-            if (!mockId || mocks[section]) return mocks[section];
+            if (!mockId) return null;
+            
+            // If already loading or already have it, return existing
+            if (mocks[mockId]) return mocks[mockId];
+            if (loading[mockId]) return null;
 
             const mockType = getMockTypeString(section);
-            setLoading((prev) => ({ ...prev, [section]: true }));
+            
+            setLoading(prev => ({ ...prev, [mockId]: true }));
+            setFailed(prev => ({ ...prev, [mockId]: false }));
+
+            const url = section === SECTION_TYPES.QUIZ 
+                ? `/quizzes/${mockId}/`
+                : `/mocks/${mockType}/${mockId}/`;
 
             try {
                 const response = await fetcher(
-                    `/mocks/${mockType}/${mockId}/`,
+                    url,
                     {
                         headers: { "Accept-Language": locale },
                     },
                     {},
                     true
                 );
-                setMocks((prev) => ({ ...prev, [section]: response }));
+                
+                setMocks((prev) => ({ ...prev, [mockId]: response }));
                 return response;
             } catch (error) {
-                console.error(`Error fetching ${mockType} mock:`, error);
+                console.error(`Error fetching ${mockType} mock (${mockId}):`, error);
+                setFailed((prev) => ({ ...prev, [mockId]: true }));
                 onError?.(
                     intl.formatMessage({
                         id: "Failed to load mock",
@@ -56,29 +62,43 @@ export const useLazyMocks = (locale, intl, onError) => {
                 );
                 return null;
             } finally {
-                setLoading((prev) => ({ ...prev, [section]: false }));
+                setLoading((prev) => ({ ...prev, [mockId]: false }));
             }
         },
-        [locale, intl, mocks, getMockTypeString, onError]
+        [locale, intl, mocks, loading, getMockTypeString, onError]
     );
 
-    const getMock = useCallback(
-        (section) => mocks[section],
+    const getMockById = useCallback(
+        (id) => mocks[id] || null,
         [mocks]
     );
 
-    const isLoading = useCallback(
-        (section) => loading[section],
+    const isIdLoading = useCallback(
+        (id) => !!loading[id],
         [loading]
+    );
+
+    const isIdFailed = useCallback(
+        (id) => !!failed[id],
+        [failed]
     );
 
     return {
         mocks,
-        loading: loading,
+        loading,
+        failed,
         fetchMock,
-        getMock,
-        isLoading,
-        setMockForSection: (section, mockData) =>
-            setMocks((prev) => ({ ...prev, [section]: mockData })),
+        // Legacy support/helper for current section
+        getMock: (section, id) => id ? mocks[id] : null,
+        isLoading: (section, id) => id ? !!loading[id] : false,
+        isFailed: (section, id) => id ? !!failed[id] : false,
+        getMockById,
+        isIdLoading,
+        isIdFailed,
+        setMockForSection: (section, mockData, id) => {
+            if (id) {
+                setMocks((prev) => ({ ...prev, [id]: mockData }));
+            }
+        },
     };
 };

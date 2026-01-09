@@ -12,4 +12,5 @@ export const SECTION_TYPES = {
     LISTENING: "LISTENING",
     READING: "READING",
     WRITING: "WRITING",
+    QUIZ: "QUIZ",
 };
