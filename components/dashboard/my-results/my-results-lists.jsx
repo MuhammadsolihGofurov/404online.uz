@@ -19,15 +19,24 @@ export default function MyResultsLists({ role }) {
   const { findParams } = useParams();
 
   const currentPage = findParams("page") || 1;
-  const currentType =
-    findParams("type") == "exams" ? "exam_task_id" : "homework_task_id";
+  const type = findParams("type");
+  const currentType = type == "EXAM" ? "exam_task_id" : "homework_task_id";
   const currentTypeId = findParams("task_id");
 
   const { data: datas, isLoading } = useSWR(
-    ["/my-results", router.locale, currentPage, currentType, currentTypeId],
-    ([url, locale, page, t, tId]) =>
+    [
+      "/my-results",
+      router.locale,
+      type,
+      currentPage,
+      currentType,
+      currentTypeId,
+    ],
+    ([url, locale, tp, page, t, tId]) =>
       fetcher(
-        `${url}?page=${page}${tId ? `&${t}=${tId}` : ""}&page_size=12`,
+        `${url}?type=${tp}&page=${page}${
+          tId ? `&${t}=${tId}` : ""
+        }&page_size=12`,
         {
           headers: {
             "Accept-Language": locale,

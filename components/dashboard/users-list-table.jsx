@@ -67,14 +67,17 @@ export default function UsersListTable({ loading, role }) {
                 {intl.formatMessage({ id: "Name" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
+                {intl.formatMessage({ id: "Role" })}
+              </th>
+              <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Groups" })}
               </th>
               <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Approve" })}
               </th>
-              <th className="text-sm font-bold p-4 w-[15%] text-start">
+              {/* <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Status" })}
-              </th>
+              </th> */}
               <th className="text-sm font-bold p-4 w-[15%] text-start">
                 {intl.formatMessage({ id: "Date" })}
               </th>

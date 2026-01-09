@@ -112,7 +112,7 @@ const menuItems = [
     href: MY_RESULTS_URL,
     icon: GraduationCap,
     roles: ["STUDENT"],
-    query: `?type=exams`,
+    query: `?type=EXAM`,
   },
   {
     title: "Leaderboard",

@@ -85,23 +85,26 @@ export default function SectionViewModal({ data, onClose }) {
       </div>
 
       {/* Action Buttons */}
-      <div className=" bg-gray-50 flex gap-3">
-        <button
-          onClick={() => editHandler(data?.id)}
-          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm"
-        >
-          <Edit size={16} />
-          Edit Section
-        </button>
 
-        <button
-          onClick={() => questionHandler(data?.id)}
-          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 active:scale-95 transition-all text-sm shadow-lg shadow-indigo-100"
-        >
-          <ListOrdered size={16} />
-          Questions
-        </button>
-      </div>
+      {data?.status == "DRAFT" && (
+        <div className=" bg-gray-50 flex gap-3">
+          <button
+            onClick={() => editHandler(data?.id)}
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm"
+          >
+            <Edit size={16} />
+            Edit Section
+          </button>
+
+          <button
+            onClick={() => questionHandler(data?.id)}
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 active:scale-95 transition-all text-sm shadow-lg shadow-indigo-100"
+          >
+            <ListOrdered size={16} />
+            Questions
+          </button>
+        </div>
+      )}
     </div>
   );
 }

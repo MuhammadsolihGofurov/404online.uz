@@ -139,25 +139,20 @@ export default function ExamResultsReview({ submission_id }) {
                 <tbody className="divide-y divide-slate-100">
                   {user_answers.map((ans, index) => {
                     // correct_answer ma'lumotini mock ichidan qidirib topish (agar user_answer ichida kelmasa)
-                    const questionData = mock?.parts
-                      ?.flatMap((p) =>
-                        p.question_groups.flatMap((g) => g.questions)
-                      )
-                      .find(
-                        (q) =>
-                          q.id === ans.question_id ||
-                          q.question_number === index + 1
-                      );
+                    const rawCorrect = ans?.correct_answer;
 
-                    const correctAnswer = Array.isArray(
-                      questionData?.correct_answer
-                    )
-                      ? questionData.correct_answer.join(" / ")
-                      : questionData?.correct_answer || "N/A";
+                    // Massiv bo'lsa join qiladi, aks holda o'zini oladi, agar yo'q bo'lsa "N/A"
+                    const correctAnswer = Array.isArray(ans?.correct_answer)
+                      ? rawCorrect.length > 0
+                        ? rawCorrect.join(" / ")
+                        : "N/A"
+                      : rawCorrect || "N/A";
 
                     const userAnswer = Array.isArray(ans.answer_value)
-                      ? ans.answer_value.join(", ")
-                      : ans.answer_value;
+                      ? ans.answer_value.length > 0
+                        ? ans.answer_value.join(", ")
+                        : "No answer"
+                      : ans.answer_value || "No answer";
 
                     return (
                       <tr
