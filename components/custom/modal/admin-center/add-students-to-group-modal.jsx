@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 import Select from "../../details/select";
 import useSWR from "swr";
 import MultiSelect from "../../details/multi-select";
+import MultiSelectWithSearch from "../../details/multi-select-with-search";
 
 export default function AddStudentsToGroupModal({ group_id, userType }) {
   const intl = useIntl();
@@ -89,7 +90,7 @@ export default function AddStudentsToGroupModal({ group_id, userType }) {
             name="members"
             control={control}
             render={({ field }) => (
-              <MultiSelect
+              <MultiSelectWithSearch
                 {...field}
                 title={intl.formatMessage({ id: "Users" })}
                 options={users || []}

@@ -478,8 +478,8 @@ const CompletionQGenerator = forwardRef(
             </div>
 
             {/* Guruh: Complex Layouts */}
-            {/* <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1">
-              <ToolbarButton
+            <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1">
+              {/* <ToolbarButton
                 onClick={() =>
                   editor
                     .chain()
@@ -493,7 +493,7 @@ const CompletionQGenerator = forwardRef(
                 title="Diagram Labeling"
               >
                 <MapPin size={18} className="text-red-600" />
-              </ToolbarButton>
+              </ToolbarButton> */}
               <ToolbarButton
                 onClick={() => {
                   editor
@@ -534,7 +534,7 @@ const CompletionQGenerator = forwardRef(
                   />
                 </div>
               </ToolbarButton>
-            </div> */}
+            </div>
 
             {/* <button
             type="button"

@@ -87,7 +87,6 @@ const DragDropComponent = ({ node, updateAttributes }) => {
           <div className="flex gap-2">
             <input
               value={newWord}
-              required
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={(e) =>
                 e.key === "Enter" && (e.preventDefault(), addWord())
