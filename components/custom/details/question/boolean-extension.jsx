@@ -16,6 +16,7 @@ const BooleanQuestionComponent = ({ node, updateAttributes, deleteNode }) => {
       <input
         className="w-10 h-10 text-center font-bold text-slate-700 bg-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
         value={node.attrs.number}
+        required
         onChange={(e) => updateAttributes({ number: e.target.value })}
         placeholder="№"
       />
@@ -126,6 +127,7 @@ export const BooleanBlock = Node.create({
                 <input
                   className="font-semibold text-slate-600 bg-transparent outline-none border-b border-transparent focus:border-slate-400 min-w-[400px]"
                   value={node.attrs.title}
+                  required
                   onChange={(e) => updateAttributes({ title: e.target.value })}
                 />
               </div>

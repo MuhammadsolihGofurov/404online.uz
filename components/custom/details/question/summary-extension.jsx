@@ -38,6 +38,7 @@ export const SummaryBlock = Node.create({
               <input
                 className="bg-transparent font-bold text-xs uppercase tracking-widest outline-none border-b border-transparent focus:border-blue-400 min-w-[200px]"
                 value={node.attrs.title}
+                required
                 onChange={(e) => updateAttributes({ title: e.target.value })}
               />
             </div>
@@ -58,7 +59,8 @@ export const SummaryBlock = Node.create({
           </div>
 
           <div className="mt-4 text-[10px] text-slate-400 font-medium">
-            💡 Tip: To create a blank space within the Summary section, simply click the "Gap Fill" (Plus) button located above the text editor.
+            💡 Tip: To create a blank space within the Summary section, simply
+            click the "Gap Fill" (Plus) button located above the text editor.
           </div>
         </NodeViewWrapper>
       );

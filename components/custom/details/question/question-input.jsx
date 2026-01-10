@@ -11,12 +11,14 @@ const QuestionComponent = ({ node, updateAttributes, deleteNode }) => {
           type="text"
           className="w-7 h-7 bg-white border border-blue-100 text-main text-[10px] font-bold rounded-md text-center outline-none focus:ring-2 focus:ring-main focus:border-transparent"
           value={node.attrs.number}
+          required
           onChange={(e) => updateAttributes({ number: e.target.value })}
           title="Question Number"
         />
 
         {/* To'g'ri javob */}
         <input
+          required
           className="bg-transparent border-none outline-none text-sm font-semibold text-gray-800 w-28 placeholder:text-blue-300 px-1"
           placeholder="Correct answer"
           value={node.attrs.answer}

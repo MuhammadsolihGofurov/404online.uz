@@ -14,6 +14,7 @@ const MatchingQuestionComponent = ({ node, updateAttributes, deleteNode }) => {
     <NodeViewWrapper className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-100 group transition-all hover:border-amber-200">
       <input
         className="w-8 h-8 text-center font-bold text-slate-700 bg-slate-100 rounded-md outline-none text-xs focus:ring-2 focus:ring-amber-400"
+        required
         value={node.attrs.number}
         onChange={(e) => updateAttributes({ number: e.target.value })}
         placeholder="№"
@@ -24,6 +25,7 @@ const MatchingQuestionComponent = ({ node, updateAttributes, deleteNode }) => {
       <div className="flex items-center gap-2">
         <span className="text-[10px] font-bold text-slate-400">Answer:</span>
         <input
+          required
           className="w-12 h-8 text-center border-2 border-emerald-100 rounded-md font-bold text-emerald-600 outline-none focus:border-emerald-500 bg-emerald-50/30"
           maxLength={5}
           value={node.attrs.answer}
@@ -106,6 +108,7 @@ const MatchingBlockComponent = ({
             className="font-bold text-slate-800 outline-none border-b-2 border-transparent focus:border-main min-w-[250px] transition-colors"
             placeholder="Sarlavha (masalan: List of Headings)"
             value={node.attrs.title}
+            required
             onChange={(e) => updateAttributes({ title: e.target.value })}
           />
         </div>

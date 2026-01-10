@@ -53,6 +53,7 @@ const ChoiceGroupComponent = ({
             <input
               className="w-8 bg-transparent text-center font-bold text-main outline-none text-xs"
               value={node.attrs.questionNumber}
+              required
               onChange={(e) =>
                 updateAttributes({ questionNumber: e.target.value })
               }
@@ -73,6 +74,7 @@ const ChoiceGroupComponent = ({
         className="w-full mb-4 text-lg font-bold text-slate-800 placeholder:text-slate-300 border-none outline-none focus:placeholder:opacity-0 transition-all"
         placeholder="Savol matnini yozing..."
         value={node.attrs.title}
+        required
         onChange={(e) => updateAttributes({ title: e.target.value })}
       />
 
