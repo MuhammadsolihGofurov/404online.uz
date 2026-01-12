@@ -132,19 +132,29 @@ export default function GradingWritingModal({ submission_id, initialData }) {
             <Input
               key={field.name}
               type="text"
-              step="0.1"
-              min="0"
-              max="9"
+              inputMode="decimal"
               register={register}
               name={field.name}
               title={intl.formatMessage({ id: field.label })}
               required
               validation={{
                 required: intl.formatMessage({ id: "Required" }),
-                min: { value: 0, message: "Min 0" },
-                max: { value: 9, message: "Max 9" },
+                validate: (value) => {
+                  const num = parseFloat(value);
+                  if (isNaN(num)) return "Faqat son kiriting";
+                  if (num < 0 || num > 9)
+                    return "0 va 9 orasida bo'lishi kerak";
+                  return true;
+                },
+                onChange: (e) => {
+                  const val = e.target.value;
+                  e.target.value = val
+                    .replace(/[^0-9.]/g, "")
+                    .replace(/(\..*?)\..*/g, "$1");
+                },
               }}
               error={errors[field.name]?.message}
+              placeholder="0.0"
             />
           ))}
         </div>

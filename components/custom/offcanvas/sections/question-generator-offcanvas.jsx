@@ -14,7 +14,7 @@ import { GeminiScanner } from "./generators/gemini-scanner";
 export default function QuestionGeneratorOffcanvas({ id, initialData }) {
   const { closeOffcanvas } = useOffcanvas();
   const generatorRef = useRef(null);
-  const { findParams } = useParams();
+  const { findParams, updateParams } = useParams();
   const [reqLoading, setReqLoading] = useState(false);
 
   const sectionType = findParams("section") || "listening";
@@ -199,6 +199,10 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
                 {...field}
                 title="Question Type"
                 options={filterQuestionTypes(sectionType, partNumber)}
+                onChange={(val) => {
+                  field.onChange(val);
+                  updateParams("questionType", val);
+                }}
               />
             )}
           />
@@ -212,8 +216,8 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
               <RichTextEditor
                 name="text_content"
                 control={control}
-                label="Passage Body"
-                placeholder="Paste or write your IELTS passage here..."
+                label="Second passage body"
+                placeholder="if second passage body is needed, you may write there..."
                 error={errors.text_content}
               />
             </div>

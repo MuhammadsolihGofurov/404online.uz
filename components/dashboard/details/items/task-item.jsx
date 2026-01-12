@@ -119,7 +119,7 @@ export default function TaskItem({ item }) {
         description: description,
         deadline: deadline,
       },
-      "short"
+      "big"
     );
   };
 

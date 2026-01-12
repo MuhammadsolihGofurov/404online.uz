@@ -88,10 +88,10 @@ export default function InviteCodeListItem({ item }) {
 
       <td className="relative z-0">
         {/* 🔹 Dropdown menyu */}
-        {item?.status == "PENDING" && (
-          <Dropdown
-            buttonContent={<MoreVertical className="h-5 w-5 text-gray-500" />}
-          >
+        <Dropdown
+          buttonContent={<MoreVertical className="h-5 w-5 text-gray-500" />}
+        >
+          {item?.status == "PENDING" ? (
             <DropdownBtn
               title="Activate"
               icon={<Check className="text-green-500" />}
@@ -108,8 +108,12 @@ export default function InviteCodeListItem({ item }) {
                 }
               }}
             />
-          </Dropdown>
-        )}
+          ) : (
+            <p className="text-[10px] text-textSecondary p-1">
+              There isn't anything
+            </p>
+          )}
+        </Dropdown>
       </td>
     </tr>
   );

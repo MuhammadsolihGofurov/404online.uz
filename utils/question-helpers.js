@@ -233,9 +233,9 @@ export const transformEditorData = (json) => {
       const answerArray =
         typeof answer === "string"
           ? answer
-            .split(",")
-            .map((s) => s.trim())
-            .filter((s) => s !== "")
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s !== "")
           : [answer];
 
       correctAnswers.push({
@@ -365,11 +365,11 @@ export const transformEditorData = (json) => {
           ? `
     <div class="drag-drop-words-pool">
       ${words
-            .map(
-              (word) =>
-                `<span class="draggable-word" draggable="true">${word}</span>`
-            )
-            .join("")}
+        .map(
+          (word) =>
+            `<span class="draggable-word" draggable="true">${word}</span>`
+        )
+        .join("")}
     </div>
   `
           : "";
@@ -403,16 +403,16 @@ export const transformEditorData = (json) => {
     <div class="diagram-container" style="position: relative; margin: 30px 0;">
       <img src="${src}" style="width: 100%; border-radius: 12px;" />
       ${labels
-          .map(
-            (l) => `
+        .map(
+          (l) => `
         <diagram-marker 
           number="${l.number}" 
           answer="${l.answer || ""}" 
           style="position: absolute; left: ${l.x}%; top: ${l.y}%;"
         ></diagram-marker>
       `
-          )
-          .join("")}
+        )
+        .join("")}
     </div>`;
     }
 
@@ -522,7 +522,10 @@ export const prepareInitialData = (html) => {
     newNode.setAttribute("data-type", "choice-group");
 
     // Atributlarni ko'chiramiz
-    const questionNumber = oldNode.getAttribute("number") || "1";
+    const questionNumber =
+      oldNode.getAttribute("data-number") ||
+      oldNode.getAttribute("number") ||
+      "1";
     const title = oldNode.getAttribute("title") || "";
     const type = oldNode.getAttribute("type") || "single";
     const answerAttr = oldNode.getAttribute("answer") || ""; // "A" yoki "A,C" ko'rinishida
@@ -705,7 +708,9 @@ export const prepareInitialData = (html) => {
       if (bodyEl) {
         // Clone body and remove word bank items from content
         const bodyClone = bodyEl.cloneNode(true);
-        bodyClone.querySelectorAll(".draggable-word, .drag-item").forEach((item) => item.remove());
+        bodyClone
+          .querySelectorAll(".draggable-word, .drag-item")
+          .forEach((item) => item.remove());
         newNode.innerHTML = bodyClone.innerHTML;
       } else {
         // Agar maxsus body bo'lmasa, elementning o'zini (lekin banklarsiz) olamiz
@@ -724,4 +729,35 @@ export const prepareInitialData = (html) => {
   // chunki extensioningiz "question-input" tegini taniydi
 
   return doc.body.innerHTML;
+};
+
+export const EDITOR_TOOLS_CONFIG = {
+  MCQ: ["history", "format", "choice_group"],
+  GAP_FILL: ["history", "format", "gap_fill", "table"],
+  TFNG: ["history", "boolean_group"],
+  YNNG: ["history", "boolean_group"],
+  COMPLETION: ["gap_fill"],
+  SENTENCE: ["gap_fill"],
+  SHORT_ANSWER: ["gap_fill"],
+  MATCHING: ["gap_fill", "matching_group"],
+  MATCH_HEADINGS: ["gap_fill", "matching_group"],
+  MATCH_INFO: ["gap_fill", "matching_group"],
+  MATCH_ENDINGS: ["gap_fill", "matching_group"],
+  MATCH_FEATURES: ["gap_fill", "matching_group"],
+  MAP_DIAGRAM: ["gap_full"],
+  TABLE_FLOWCHART: ["gap_full"],
+  DIAGRAM: ["gap_full"],
+  SUMMARY: ["history", "format", "summary_group", "drag_drop_summary"],
+  ALL: [
+    "history",
+    "format",
+    "lists",
+    "elements",
+    "gap_fill",
+    "choice_group",
+    "matching_group",
+    "boolean_group",
+    "summary_group",
+    "drag_drop_summary",
+  ],
 };

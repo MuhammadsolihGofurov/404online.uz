@@ -102,7 +102,13 @@ export const ChoiceGroup = Node.create({
   draggable: true,
   addAttributes() {
     return {
-      questionNumber: { default: "1" },
+      questionNumber: {
+        default: "1",
+        parseHTML: (el) => el.getAttribute("data-number"),
+        renderHTML: (attrs) => ({
+          "data-number": attrs.questionNumber,
+        }),
+      },
       title: { default: "" },
       type: { default: "single" },
     };
@@ -151,7 +157,10 @@ export const ChoiceGroup = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      mergeAttributes(HTMLAttributes, { "data-type": "choice-group" }),
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "choice-group",
+        "data-number": HTMLAttributes.questionNumber,
+      }),
       0,
     ];
   },

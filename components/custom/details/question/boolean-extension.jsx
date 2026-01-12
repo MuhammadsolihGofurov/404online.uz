@@ -15,9 +15,12 @@ const BooleanQuestionComponent = ({ node, updateAttributes, deleteNode }) => {
     <NodeViewWrapper className="flex items-start gap-3 bg-white p-3 rounded-xl border border-slate-200 group mb-2 shadow-sm">
       <input
         className="w-10 h-10 text-center font-bold text-slate-700 bg-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
-        value={node.attrs.number}
+        defaultValue={node.attrs.number}
         required
-        onChange={(e) => updateAttributes({ number: e.target.value })}
+        onBlur={(e) => {
+          const val = e.target.value.replace(/\D/g, "");
+          updateAttributes({ number: val });
+        }}
         placeholder="№"
       />
       <div className="flex-1 pt-2">
@@ -80,17 +83,18 @@ export const BooleanBlock = Node.create({
     ReactNodeViewRenderer(
       ({ node, updateAttributes, deleteNode, editor, getPos }) => {
         const addQuestion = () => {
-          // 1. Ushbu blok ichidagi eng katta raqamni topamiz
           let maxNumber = 0;
-          node.content.forEach((child) => {
-            const num = parseInt(child.attrs.number);
-            if (!isNaN(num) && num > maxNumber) {
-              maxNumber = num;
+
+          editor.state.doc.descendants((childNode) => {
+            if (childNode.type.name === "booleanQuestion") {
+              const num = Number(childNode.attrs.number);
+              if (Number.isInteger(num)) {
+                maxNumber = Math.max(maxNumber, num);
+              }
             }
           });
 
-          // 2. Keyingi raqamni aniqlaymiz (agar bo'sh bo'lsa 1 dan boshlaydi)
-          const nextNumber = (maxNumber > 0 ? maxNumber + 1 : 1).toString();
+          const nextNumber = String(maxNumber + 1);
 
           const pos = getPos();
           const insertPos = pos + node.nodeSize - 1;
@@ -101,12 +105,35 @@ export const BooleanBlock = Node.create({
             .insertContentAt(insertPos, {
               type: "booleanQuestion",
               attrs: {
-                number: nextNumber, // <--- Dinamik raqam
+                number: nextNumber,
                 type: node.attrs.type,
-                answer: "", // Yangi savol bo'sh javob bilan
+                answer: "",
               },
             })
             .run();
+        };
+
+        const reindexQuestions = () => {
+          let currentCount = 1;
+          const transactions = [];
+
+          editor.state.doc.descendants((node, pos) => {
+            if (
+              node.type.name === "booleanQuestion" ||
+              node.type.name === "choiceGroup"
+            ) {
+              // Agar raqam hozirgi tartibdan farq qilsa, uni yangilaymiz
+              if (node.attrs.number !== currentCount.toString()) {
+                editor.view.dispatch(
+                  editor.state.tr.setNodeMarkup(pos, undefined, {
+                    ...node.attrs,
+                    number: currentCount.toString(),
+                  })
+                );
+              }
+              currentCount++;
+            }
+          });
         };
 
         return (
@@ -161,7 +188,11 @@ export const BooleanQuestion = Node.create({
   content: "inline*",
   addAttributes() {
     return {
-      number: { default: "1" },
+      number: {
+        default: "1",
+        parseHTML: (element) => element.getAttribute("data-number"),
+        renderHTML: (attributes) => ({ "data-number": attributes.number }),
+      },
       answer: { default: "" },
       type: { default: "tfng" },
     };

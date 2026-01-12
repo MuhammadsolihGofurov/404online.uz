@@ -44,7 +44,6 @@ export default function UserFilter() {
             param="role"
           />
         ))}
-        <FilterButtonItem value="GUEST" label="Guest" param="role" />
       </Dropdown>
 
       {/* STATUS FILTER */}

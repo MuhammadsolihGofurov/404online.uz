@@ -162,13 +162,13 @@ export default function ExamResultsOffcanvas({ submission_id, role }) {
 
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all group-hover:shadow-md">
                   {/* Prompt */}
-                  <div className="p-6 bg-slate-50 border-b border-slate-100 text-slate-600 text-sm leading-relaxed italic">
+                  <div className="p-6 bg-slate-50 border-b border-slate-100 text-slate-600 text-sm leading-relaxed italic break-words">
                     <div dangerouslySetInnerHTML={{ __html: task?.prompt }} />
                   </div>
 
                   {/* Essay Content */}
                   <div className="p-8 sm:p-10">
-                    <div className="text-[17px] leading-[1.8] text-slate-800 font-serif whitespace-pre-wrap">
+                    <div className="text-[17px] leading-[1.8] text-slate-800 font-serif whitespace-pre-wrap break-words">
                       {rawText || (
                         <span className="text-slate-300 italic">
                           No response submitted.

@@ -57,7 +57,10 @@ import {
 import { QuestionInput } from "@/components/custom/details/question/question-input";
 import { ChoiceGroup } from "@/components/custom/details/question/choice-group";
 import { ChoiceItem } from "@/components/custom/details/question/choice-item";
-import { transformEditorData } from "@/utils/question-helpers";
+import {
+  EDITOR_TOOLS_CONFIG,
+  transformEditorData,
+} from "@/utils/question-helpers";
 import {
   MatchingBlock,
   MatchingQuestion,
@@ -69,6 +72,7 @@ import {
 import { SummaryBlock } from "@/components/custom/details/question/summary-extension";
 import { DiagramBlock } from "@/components/custom/details/question/diagram-extension";
 import { DragDropSummaryBlock } from "@/components/custom/details/question/drag-drop-summary";
+import { useParams } from "@/hooks/useParams";
 
 const CompletionQGenerator = forwardRef(
   ({ initialData, diagramImage }, ref) => {
@@ -77,6 +81,9 @@ const CompletionQGenerator = forwardRef(
       () => setUpdateTick((tick) => tick + 1),
       []
     );
+
+    const { findParams } = useParams();
+    const currentQuestionType = findParams("questionType");
 
     const editor = useEditor({
       extensions: [
@@ -117,16 +124,20 @@ const CompletionQGenerator = forwardRef(
 
     // Get next question number
     const getNextQuestionNumber = () => {
-      let max = 0;
-      editor.state.doc.descendants((n) => {
-        if (n.type.name === "questionInput") {
-          max = Math.max(max, parseInt(n.attrs.number) || 0);
+      let maxNumber = 0;
+
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "booleanQuestion") {
+          const num = parseInt(node.attrs.number, 10);
+          if (!isNaN(num) && num > maxNumber) maxNumber = num;
         }
-        if (n.type.name === "choiceBlock") {
-          max = Math.max(max, parseInt(n.attrs.questionNumber) || 0);
+        if (node.type.name === "choiceGroup") {
+          const num = parseInt(node.attrs.questionNumber, 10);
+          if (!isNaN(num) && num > maxNumber) maxNumber = num;
         }
       });
-      return (max + 1).toString();
+
+      return (maxNumber + 1).toString();
     };
 
     useImperativeHandle(ref, () => ({
@@ -170,6 +181,11 @@ const CompletionQGenerator = forwardRef(
     }, [diagramImage, editor]);
 
     if (!editor) return null;
+
+    const activeTools =
+      EDITOR_TOOLS_CONFIG[currentQuestionType] || EDITOR_TOOLS_CONFIG["ALL"];
+
+    const shouldShow = (toolName) => activeTools.includes(toolName);
 
     return (
       <div className="w-full border border-slate-200 rounded-xl bg-white shadow-xl flex flex-col min-h-[700px]">
@@ -279,163 +295,174 @@ const CompletionQGenerator = forwardRef(
                 <PlusCircle size={18} className="text-emerald-600" />
               </ToolbarButton>
 
-              <ToolbarButton
-                onClick={() => {
-                  editor;
-                  editor.chain().focus().insertChoiceGroup().run();
-                }}
-                title="Add Choice Block"
-              >
-                <CheckSquare size={18} className="text-blue-600" />
-              </ToolbarButton>
+              {shouldShow("choice_group") && (
+                <ToolbarButton
+                  onClick={() => {
+                    editor;
+                    editor.chain().focus().insertChoiceGroup().run();
+                  }}
+                  title="Add Choice Block"
+                >
+                  <CheckSquare size={18} className="text-blue-600" />
+                </ToolbarButton>
+              )}
             </div>
+            {shouldShow("matching_group") && (
+              <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
+                <>
+                  {/* Matching Headings */}
+                  <ToolbarButton
+                    onClick={() => {
+                      editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                          type: "matchingBlock",
+                          attrs: {
+                            type: "matching-headings",
+                            title: "List of Headings",
+                          },
+                          content: [
+                            {
+                              type: "matchingQuestion",
+                              attrs: { number: getNextQuestionNumber() },
+                            },
+                          ],
+                        })
+                        .run();
+                    }}
+                    title="Matching Headings and Endings"
+                  >
+                    <Layers size={18} className="text-amber-600" />
+                  </ToolbarButton>
 
-            <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
-              {/* Matching Headings */}
-              <ToolbarButton
-                onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                      type: "matchingBlock",
-                      attrs: {
-                        type: "matching-headings",
-                        title: "List of Headings",
-                      },
-                      content: [
-                        {
-                          type: "matchingQuestion",
-                          attrs: { number: getNextQuestionNumber() },
-                        },
-                      ],
-                    })
-                    .run();
-                }}
-                title="Matching Headings and Endings"
-              >
-                <Layers size={18} className="text-amber-600" />
-              </ToolbarButton>
+                  {/* Matching Information */}
+                  <ToolbarButton
+                    onClick={() => {
+                      editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                          type: "matchingBlock",
+                          attrs: {
+                            type: "matching-info",
+                            title:
+                              "Which paragraph contains the following information?",
+                          },
+                          content: [
+                            {
+                              type: "matchingQuestion",
+                              attrs: { number: getNextQuestionNumber() },
+                            },
+                          ],
+                        })
+                        .run();
+                    }}
+                    title="Matching Info"
+                  >
+                    <ListTodo size={18} className="text-purple-600" />
+                  </ToolbarButton>
 
-              {/* Matching Information */}
-              <ToolbarButton
-                onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                      type: "matchingBlock",
-                      attrs: {
-                        type: "matching-info",
-                        title:
-                          "Which paragraph contains the following information?",
-                      },
-                      content: [
-                        {
-                          type: "matchingQuestion",
-                          attrs: { number: getNextQuestionNumber() },
-                        },
-                      ],
-                    })
-                    .run();
-                }}
-                title="Matching Info"
-              >
-                <ListTodo size={18} className="text-purple-600" />
-              </ToolbarButton>
-
-              {/* Matching Features/Names */}
-              <ToolbarButton
-                onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                      type: "matchingBlock",
-                      attrs: {
-                        type: "matching-features",
-                        title:
-                          "Look at the following statements and the list of people below",
-                      },
-                      content: [
-                        {
-                          type: "matchingQuestion",
-                          attrs: { number: getNextQuestionNumber() },
-                        },
-                      ],
-                    })
-                    .run();
-                }}
-                title="Matching Features"
-              >
-                <UserCheck size={18} className="text-blue-600" />
-              </ToolbarButton>
-            </div>
+                  {/* Matching Features/Names */}
+                  <ToolbarButton
+                    onClick={() => {
+                      editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                          type: "matchingBlock",
+                          attrs: {
+                            type: "matching-features",
+                            title:
+                              "Look at the following statements and the list of people below",
+                          },
+                          content: [
+                            {
+                              type: "matchingQuestion",
+                              attrs: { number: getNextQuestionNumber() },
+                            },
+                          ],
+                        })
+                        .run();
+                    }}
+                    title="Matching Features"
+                  >
+                    <UserCheck size={18} className="text-blue-600" />
+                  </ToolbarButton>
+                </>
+              </div>
+            )}
 
             {/* True/False/Not Given */}
             {/* Yes/No/Not Given */}
-            <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
-              <ToolbarButton
-                onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                      type: "booleanBlock",
-                      attrs: {
-                        type: "tfng",
-                        title:
-                          "TRUE if the statement agrees with the information...",
-                      },
-                      content: [
-                        {
-                          type: "booleanQuestion",
+            {shouldShow("boolean_group") && (
+              <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
+                {currentQuestionType === "TFNG" && (
+                  <ToolbarButton
+                    onClick={() => {
+                      editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                          type: "booleanBlock",
                           attrs: {
-                            number: getNextQuestionNumber(),
                             type: "tfng",
+                            title:
+                              "TRUE if the statement agrees with the information...",
                           },
-                        },
-                      ],
-                    })
-                    .run();
-                }}
-                title="True False Not Given"
-              >
-                <CheckCircle2 size={18} className="text-emerald-600" />
-              </ToolbarButton>
+                          content: [
+                            {
+                              type: "booleanQuestion",
+                              attrs: {
+                                number: getNextQuestionNumber(),
+                                type: "tfng",
+                              },
+                            },
+                          ],
+                        })
+                        .run();
+                    }}
+                    title="True False Not Given"
+                  >
+                    <CheckCircle2 size={18} className="text-emerald-600" />
+                  </ToolbarButton>
+                )}
 
-              <ToolbarButton
-                onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                      type: "booleanBlock",
-                      attrs: {
-                        type: "ynng",
-                        title:
-                          "YES if the statement agrees with the claims of the writer...",
-                      },
-                      content: [
-                        {
-                          type: "booleanQuestion",
+                {currentQuestionType === "YNNG" && (
+                  <ToolbarButton
+                    onClick={() => {
+                      editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                          type: "booleanBlock",
                           attrs: {
-                            number: getNextQuestionNumber(),
                             type: "ynng",
+                            title:
+                              "YES if the statement agrees with the claims of the writer...",
                           },
-                        },
-                      ],
-                    })
-                    .run();
-                }}
-                title="Yes No Not Given"
-              >
-                <HelpCircle size={18} className="text-orange-600" />
-              </ToolbarButton>
-            </div>
+                          content: [
+                            {
+                              type: "booleanQuestion",
+                              attrs: {
+                                number: getNextQuestionNumber(),
+                                type: "ynng",
+                              },
+                            },
+                          ],
+                        })
+                        .run();
+                    }}
+                    title="Yes No Not Given"
+                  >
+                    <HelpCircle size={18} className="text-orange-600" />
+                  </ToolbarButton>
+                )}
+              </div>
+            )}
 
             {/* Summary completion */}
-            <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
+            {/* <div className="flex bg-white rounded border border-slate-200 p-1 shadow-sm">
               <ToolbarButton
                 onClick={() => {
                   editor
@@ -475,11 +502,12 @@ const CompletionQGenerator = forwardRef(
                   />
                 </div>
               </ToolbarButton>
-            </div>
+            </div> */}
 
             {/* Guruh: Complex Layouts */}
-            <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1">
-              {/* <ToolbarButton
+            {shouldShow("drag_drop_summary") && (
+              <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm gap-1">
+                {/* <ToolbarButton
                 onClick={() =>
                   editor
                     .chain()
@@ -494,47 +522,51 @@ const CompletionQGenerator = forwardRef(
               >
                 <MapPin size={18} className="text-red-600" />
               </ToolbarButton> */}
-              <ToolbarButton
-                onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                      type: "dragDropSummary",
-                      attrs: {
-                        title: "Summary Completion",
-                        options: ["Option 1", "Option 2"],
-                      },
-                      content: [
-                        {
-                          type: "paragraph",
-                          content: [
-                            { type: "text", text: "Write your text and add " },
-                            {
-                              type: "questionInput",
-                              attrs: {
-                                number: getNextQuestionNumber(),
-                                answer: "",
-                              },
-                            },
-                            { type: "text", text: " gap here." },
-                          ],
+                <ToolbarButton
+                  onClick={() => {
+                    editor
+                      .chain()
+                      .focus()
+                      .insertContent({
+                        type: "dragDropSummary",
+                        attrs: {
+                          title: "Summary Completion",
+                          options: ["Option 1", "Option 2"],
                         },
-                      ],
-                    })
-                    .run();
-                }}
-                title="Drag & Drop Summary"
-              >
-                <div className="relative">
-                  <MousePointerClick size={18} className="text-indigo-600" />
-                  <PlusCircle
-                    size={10}
-                    className="absolute -top-1 -right-1 text-indigo-600 fill-white"
-                  />
-                </div>
-              </ToolbarButton>
-            </div>
+                        content: [
+                          {
+                            type: "paragraph",
+                            content: [
+                              {
+                                type: "text",
+                                text: "Write your text and add ",
+                              },
+                              {
+                                type: "questionInput",
+                                attrs: {
+                                  number: getNextQuestionNumber(),
+                                  answer: "",
+                                },
+                              },
+                              { type: "text", text: " gap here." },
+                            ],
+                          },
+                        ],
+                      })
+                      .run();
+                  }}
+                  title="Drag & Drop Summary"
+                >
+                  <div className="relative">
+                    <MousePointerClick size={18} className="text-indigo-600" />
+                    <PlusCircle
+                      size={10}
+                      className="absolute -top-1 -right-1 text-indigo-600 fill-white"
+                    />
+                  </div>
+                </ToolbarButton>
+              </div>
+            )}
 
             {/* <button
             type="button"

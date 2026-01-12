@@ -71,6 +71,24 @@ export default function UserListItem({ item, role }) {
     return roles[role] || "bg-gray-100 text-gray-700";
   };
 
+  const handleUpgradeGuestToStudent = (id) => {
+    openModal(
+      "confirmModal",
+      {
+        title: "Upgrade guest",
+        description:
+          "Are you sure you want to upgrate this guest to student? This action cannot be undone.",
+        onConfirm: async () => {
+          await authAxios.post(`/centers/guests/upgrade/`, { user_id: id });
+          toast.success(
+            intl.formatMessage({ id: "User upgraded successfully!" })
+          );
+        },
+      },
+      "short"
+    );
+  };
+
   return (
     <tr className="border-b border-b-dashboardBg last:border-b-transparent relative z-0">
       <td className="text-sm p-5 text-center font-medium">{item?.id}</td>
@@ -195,6 +213,14 @@ export default function UserListItem({ item, role }) {
                 />
               )}
             </>
+          )}
+
+          {item?.role === "GUEST" && role == "CENTER_ADMIN" && (
+            <DropdownBtn
+              title="Upgrade"
+              icon={<UserPlus className="text-blue-500" />}
+              onClick={() => handleUpgradeGuestToStudent(item?.id)}
+            />
           )}
         </Dropdown>
       </td>
