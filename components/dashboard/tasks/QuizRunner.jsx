@@ -11,6 +11,8 @@ export default function QuizRunner({
     startFn,
     submitFn,
     onFinalize,
+    onExit,
+    autoSaveConfig = null, // { onAutoSave, isSaving }
     fetchMock,
     sectionType,
     isLoadingMock,
@@ -65,12 +67,19 @@ export default function QuizRunner({
         setSelectedOption(index);
     };
 
+    const getQuestionKey = (question) =>
+        question?.id ?? question?.question_id ?? question?.questionId ?? null;
+
     const handleNext = () => {
         if (selectedOption === null || isSubmitting) return;
 
         // Save answer locally using question ID if available, otherwise index
         const currentQuestion = questions[currentQuestionIndex];
-        const questionKey = currentQuestion.id || currentQuestionIndex;
+        const questionKey = getQuestionKey(currentQuestion);
+        if (!questionKey) {
+            console.warn("[QuizRunner] Missing question id for answer save:", currentQuestion);
+            return;
+        }
 
         setAnswers(prev => ({
             ...prev,
@@ -85,19 +94,62 @@ export default function QuizRunner({
         }
     };
 
+    const buildDraftAnswers = () => {
+        const draftAnswers = { ...answers };
+        const currentQuestion = questions[currentQuestionIndex];
+        if (!currentQuestion) return draftAnswers;
+        const questionKey = getQuestionKey(currentQuestion);
+        if (!questionKey) {
+            console.warn("[QuizRunner] Missing question id for draft save:", currentQuestion);
+            return draftAnswers;
+        }
+        if (selectedOption !== null && selectedOption !== undefined) {
+            draftAnswers[questionKey] = selectedOption;
+        }
+        return draftAnswers;
+    };
+
+    const handleSaveAndExit = async () => {
+        if (!autoSaveConfig?.onAutoSave) return;
+        const draftAnswers = buildDraftAnswers();
+        const result = await autoSaveConfig.onAutoSave(draftAnswers);
+        const failed = result === false || result?.success === false;
+        if (failed) {
+            toast.error(
+                result?.message ||
+                intl.formatMessage({
+                    id: "Failed to save",
+                    defaultMessage: "Failed to save draft",
+                })
+            );
+            return;
+        }
+        toast.success(
+            intl.formatMessage({
+                id: "Saved",
+                defaultMessage: "Saved",
+            })
+        );
+        onExit?.();
+    };
+
     const finishQuiz = async () => {
         if (isSubmitting) return;
         setError(null);
 
         // Construct final answers object for submission
         const currentQuestion = questions[currentQuestionIndex];
-        const lastQuestionKey = currentQuestion.id || currentQuestionIndex;
+        const lastQuestionKey = getQuestionKey(currentQuestion);
+        if (!lastQuestionKey) {
+            setError(intl.formatMessage({ id: "Missing question id", defaultMessage: "Missing question id." }));
+            return;
+        }
         const finalAnswersMap = { ...answers, [lastQuestionKey]: selectedOption };
 
         // Calculate score locally for immediate display
         let localScore = 0;
         questions.forEach((q, idx) => {
-            const questionKey = q.id || idx;
+            const questionKey = getQuestionKey(q) ?? idx;
             const userAnswer = finalAnswersMap[questionKey];
             if (userAnswer === q.correct) {
                 localScore++;
@@ -192,7 +244,18 @@ export default function QuizRunner({
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
                 <div className="flex items-center justify-between text-sm text-gray-500">
                     <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-                    <span>Duration: {durationMinutes} min</span>
+                    <div className="flex items-center gap-3">
+                        <span>Duration: {durationMinutes} min</span>
+                        {autoSaveConfig?.onAutoSave && (
+                            <button
+                                onClick={handleSaveAndExit}
+                                disabled={isSubmitting || autoSaveConfig.isSaving}
+                                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            >
+                                {autoSaveConfig.isSaving ? "Saving..." : "Save and Exit"}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {error && (
@@ -245,7 +308,7 @@ export default function QuizRunner({
                         disabled={selectedOption === null || isSubmitting}
                         className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-white transition-all ${selectedOption === null || isSubmitting
                             ? "bg-gray-200 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20 active:scale-95"
+                            : "bg-main hover:bg-blue-800 shadow-lg shadow-main/20 active:scale-95"
                             }`}
                     >
                         {isSubmitting ? (

@@ -53,7 +53,7 @@ const ReadingQuestionLayout = memo(function ReadingQuestionLayout({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 bg-white px-6 md:px-10 py-8 flex justify-center">
+      <div className="flex-1 bg-white px-4 sm:px-6 md:px-10 py-8 flex justify-center">
         <div className="max-w-6xl w-full">
           {currentGroup?.groupInstruction && (
             <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
@@ -63,15 +63,13 @@ const ReadingQuestionLayout = memo(function ReadingQuestionLayout({
             </div>
           )}
 
-          <div className="flex items-stretch gap-4">
+          <div
+            className="flex flex-col gap-6 lg:flex-row lg:items-stretch"
+            style={{ "--split-left-width": `${leftWidth}%` }}
+          >
             {/* Passage / reading text on the left */}
             <div
-              className="space-y-4"
-              style={{
-                width: `${leftWidth}%`,
-                minWidth: "25%",
-                maxWidth: "75%",
-              }}
+              className="space-y-4 w-full lg:w-[var(--split-left-width)] lg:min-w-[25%] lg:max-w-[75%]"
             >
               {currentGroup?.passageText && (
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-h-[18rem] overflow-y-auto">
@@ -95,14 +93,14 @@ const ReadingQuestionLayout = memo(function ReadingQuestionLayout({
             {/* Drag handle */}
             <div
               onMouseDown={handleDragStart}
-              className="self-stretch w-2 bg-gray-300 hover:bg-blue-400 cursor-col-resize rounded"
+              className="hidden lg:block self-stretch w-2 bg-gray-300 hover:bg-blue-400 cursor-col-resize rounded"
               role="separator"
               aria-orientation="vertical"
               aria-label="Resize panels"
             />
 
             {/* Questions / template on the right */}
-            <div className="space-y-4 flex-1 min-w-[30%]">
+            <div className="space-y-4 w-full lg:flex-1 lg:min-w-[30%]">
               {currentGroup?.groupImage && (
                 <div>
                   <img

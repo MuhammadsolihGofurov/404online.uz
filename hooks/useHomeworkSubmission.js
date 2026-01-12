@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import fetcher from "@/utils/fetcher";
+import { buildUserAnswersPayload } from "@/utils/submission-answers";
 
 /**
  * Custom hook for managing homework submission workflow
@@ -11,7 +12,6 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
     const [startError, setStartError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
-    const [lastSavedAt, setLastSavedAt] = useState(null);
 
     /**
      * Start a homework item (mock) submission
@@ -41,6 +41,12 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                     return response;
                 }
             } catch (error) {
+                console.error("[useHomeworkSubmission] startItem error:", {
+                    message: error.message,
+                    status: error.status,
+                    data: error.data
+                });
+
                 const errorMsgArray = Array.isArray(error?.error) ? error.error : null;
                 const primaryErrorMsg = errorMsgArray?.length ? errorMsgArray[0] : null;
                 const errorMsg = primaryErrorMsg || error?.message || "";
@@ -55,10 +61,11 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                             true
                         );
 
+                        // Find the submission for this item that is still active
                         const existingSubmission =
                             resultResponse?.results?.[0]?.submissions?.find(
                                 (sub) =>
-                                    sub.item_id === itemId && sub.status === "STARTED"
+                                    sub.item_id === itemId && (sub.status === "STARTED" || sub.status === "SAVED")
                             );
 
                         if (existingSubmission) {
@@ -67,13 +74,15 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                                 ...prev,
                                 [itemId]: {
                                     id: existingSubmission.id,
-                                    status: "STARTED",
+                                    status: existingSubmission.status,
                                 },
                             }));
                             return { id: existingSubmission.id, resumed: true };
+                        } else {
+                            console.warn("[useHomeworkSubmission] API said 'in progress' but no matching active submission found in results.");
                         }
                     } catch (resumeError) {
-                        console.error("Error resuming homework submission:", resumeError);
+                        console.error("[useHomeworkSubmission] Error during resume attempt:", resumeError);
                     }
                 }
 
@@ -113,14 +122,16 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                     `/submissions/${currentSubmissionId}/save_draft/`,
                     {
                         method: "PATCH",
-                        body: JSON.stringify({ answers: answersObject }),
+                        body: JSON.stringify({
+                            answers: answersObject,
+                            user_answers: buildUserAnswersPayload(answersObject),
+                        }),
                     },
                     {},
                     true
                 );
 
                 if (response) {
-                    setLastSavedAt(new Date());
                     setItemSubmissions((prev) => ({
                         ...prev,
                         [itemId]: {
@@ -131,7 +142,11 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                     return { success: true, data: response };
                 }
             } catch (error) {
-                console.error("Error saving draft:", error);
+                console.error("[useHomeworkSubmission] saveDraft error:", {
+                    message: error.message,
+                    status: error.status,
+                    data: error.data
+                });
                 return { success: false, message: error?.message };
             } finally {
                 setIsSavingDraft(false);
@@ -156,11 +171,10 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
             }
 
             // Guard: require at least one answer unless force is set
-            // Note: Use != null to allow 0 as a valid answer index for quizzes
-            const hasAtLeastOneAnswer = Object.values(answersObject).some(
-                (val) => val !== null && val !== undefined && String(val).trim() !== ""
-            );
-            if (!hasAtLeastOneAnswer && !options.force) {
+            const finalAnswersCount = answersObject ? Object.keys(answersObject).length : 0;
+
+            if (finalAnswersCount === 0 && !options.force) {
+                console.warn("[useHomeworkSubmission] submitItem BLOCKED: No answers to submit (harvester found 0).", { answersObject });
                 return { success: false, message: "No answers provided" };
             }
 
@@ -170,7 +184,10 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                     `/submissions/${currentSubmissionId}/submit/`,
                     {
                         method: "PATCH",
-                        body: JSON.stringify({ answers: answersObject }),
+                        body: JSON.stringify({
+                            answers: answersObject,
+                            user_answers: buildUserAnswersPayload(answersObject),
+                        }),
                     },
                     {},
                     true
@@ -189,13 +206,17 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
                     return { success: true, data: response };
                 }
             } catch (error) {
+                console.error("[useHomeworkSubmission] submitItem error:", {
+                    message: error.message,
+                    status: error.status,
+                    data: error.data
+                });
                 const errorMsg = error?.message ||
                     intl.formatMessage({
                         id: "Failed to submit homework item",
                         defaultMessage: "Failed to submit homework item",
                     });
                 setStartError(errorMsg);
-                console.error("Error submitting homework item:", error);
                 return { success: false, message: errorMsg };
             } finally {
                 setIsSubmitting(false);
@@ -220,6 +241,11 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
             );
             return response;
         } catch (error) {
+            console.error("[useHomeworkSubmission] submitHomework error:", {
+                message: error.message,
+                status: error.status,
+                data: error.data
+            });
             setStartError(
                 error?.message ||
                 intl.formatMessage({
@@ -242,7 +268,6 @@ export const useHomeworkSubmission = (homeworkId, intl) => {
         setStartError,
         isSubmitting,
         isSavingDraft,
-        lastSavedAt,
         startItem,
         saveDraft,
         submitItem,

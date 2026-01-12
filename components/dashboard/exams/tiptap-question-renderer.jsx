@@ -6,7 +6,6 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import Image from "@tiptap/extension-image";
-import Underline from "@tiptap/extension-underline";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -74,7 +73,6 @@ const TiptapQuestionRenderer = forwardRef(function TiptapQuestionRenderer(
       TableCell,
       TableHeader,
       Image,
-      Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Highlight,
       TextStyle,

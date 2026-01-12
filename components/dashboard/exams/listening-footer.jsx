@@ -75,90 +75,98 @@ export default function ListeningFooter({
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <div className="flex items-stretch gap-2 min-w-0">
-            {partSummaries.map((part) => {
-              const isActive = part.partIndex === activePartIndex;
+          <div className="flex-1 min-w-0 overflow-x-auto">
+            <div className="flex items-stretch gap-2 min-w-max pr-2">
+              {partSummaries.map((part) => {
+                const isActive = part.partIndex === activePartIndex;
 
-              const partLabel = intl.formatMessage(
-                { id: "Part {num}", defaultMessage: "Part {num}" },
-                { num: part.partNumber }
-              );
+                const partLabel = intl.formatMessage(
+                  { id: "Part {num}", defaultMessage: "Part {num}" },
+                  { num: part.partNumber }
+                );
 
-              const showTitle =
-                part.title && part.title.trim() && part.title !== partLabel;
+                const showTitle =
+                  part.title && part.title.trim() && part.title !== partLabel;
 
-              return (
-                <div
-                  key={part.partIndex}
-                  className={`flex flex-col min-w-[160px] px-3 py-2 rounded-lg border shadow-sm transition-all ${
-                    isActive
-                      ? "bg-blue-600 text-white border-blue-600 shadow-md scale-[1.02]"
-                      : "bg-gray-50 text-gray-800 border-buttonGrey hover:bg-gray-100"
-                  }`}
-                >
-                  <button
+                return (
+                  <div
+                    key={part.partIndex}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onPartChange(part.partIndex)}
-                    className="w-full text-left"
-                    title={part.title}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onPartChange(part.partIndex);
+                      }
+                    }}
+                    className={`flex flex-col min-w-[140px] sm:min-w-[160px] px-3 py-2 rounded-lg border shadow-sm transition-all ${
+                      isActive
+                        ? "bg-blue-600 text-white border-blue-600 shadow-md scale-[1.02]"
+                        : "bg-gray-50 text-gray-800 border-buttonGrey hover:bg-gray-100"
+                    }`}
                   >
-                    <div className="text-[11px] font-semibold uppercase tracking-wide">
-                      {partLabel}
+                    <div className="w-full text-left" title={part.title}>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide">
+                        {partLabel}
+                      </div>
+
+                      {showTitle && (
+                        <p className="text-xs font-semibold truncate mt-0.5">
+                          {part.title}
+                        </p>
+                      )}
                     </div>
 
-                    {showTitle && (
-                      <p className="text-xs font-semibold truncate mt-0.5">
-                        {part.title}
-                      </p>
+                    {isActive && part.questionNumbers && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {part.questionNumbers.map((qNum) => {
+                          const answerValue =
+                            answers[qNum] || answers[String(qNum)];
+                          const isAnswered = Boolean(
+                            answerValue && String(answerValue).trim()
+                          );
+                          const targetIndex = getTargetIndexForQuestion(qNum);
+
+                          return (
+                            <button
+                              key={qNum}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                if (typeof targetIndex === "number") {
+                                  onQuestionSelect(
+                                    targetIndex,
+                                    part.partIndex,
+                                    qNum
+                                  );
+                                }
+                              }}
+                              className={`px-2 py-1 rounded-md border text-xs font-semibold transition relative ${
+                                isAnswered
+                                  ? "bg-green-500 text-white border-green-500 hover:bg-green-600"
+                                  : "bg-white/10 text-white border-white/30 hover:bg-white/20"
+                              }`}
+                              aria-label={intl.formatMessage(
+                                {
+                                  id: "Question {num}",
+                                  defaultMessage: "Question {num}",
+                                },
+                                { num: qNum }
+                              )}
+                            >
+                              {qNum}
+                              {isAnswered && (
+                                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-white rounded-full"></span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
-                  </button>
-
-                  {isActive && part.questionNumbers && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {part.questionNumbers.map((qNum) => {
-                        const answerValue =
-                          answers[qNum] || answers[String(qNum)];
-                        const isAnswered = Boolean(
-                          answerValue && String(answerValue).trim()
-                        );
-                        const targetIndex = getTargetIndexForQuestion(qNum);
-
-                        return (
-                          <button
-                            key={qNum}
-                            onClick={() => {
-                              if (typeof targetIndex === "number") {
-                                onQuestionSelect(
-                                  targetIndex,
-                                  part.partIndex,
-                                  qNum
-                                );
-                              }
-                            }}
-                            className={`px-2 py-1 rounded-md border text-xs font-semibold transition relative ${
-                              isAnswered
-                                ? "bg-green-500 text-white border-green-500 hover:bg-green-600"
-                                : "bg-white/10 text-white border-white/30 hover:bg-white/20"
-                            }`}
-                            aria-label={intl.formatMessage(
-                              {
-                                id: "Question {num}",
-                                defaultMessage: "Question {num}",
-                              },
-                              { num: qNum }
-                            )}
-                          >
-                            {qNum}
-                            {isAnswered && (
-                              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-white rounded-full"></span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <button

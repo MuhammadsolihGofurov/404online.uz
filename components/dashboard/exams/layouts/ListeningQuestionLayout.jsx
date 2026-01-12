@@ -41,7 +41,7 @@ const ListeningQuestionLayout = memo(function ListeningQuestionLayout({
 
   return (
     <div className="flex flex-col min-h-full py-4">
-      <div className="flex-1 bg-white px-6 md:px-10 py-8 flex justify-center">
+      <div className="flex-1 bg-white px-4 sm:px-6 md:px-10 py-8 flex justify-center">
         <div className="max-w-6xl w-full">
           {/* Render all question groups in the active part */}
           {groupsInActivePart.map((group, index) => {

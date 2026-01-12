@@ -28,7 +28,7 @@ export default function DefaultQuestionLayout({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white border-b border-gray-100 px-5 py-3 flex justify-between items-center">
+      <div className="bg-white border-b border-gray-100 px-5 py-3 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <div>
           <div className="flex items-center gap-2.5">
             <h2 className="text-lg font-bold text-gray-900">
@@ -62,7 +62,7 @@ export default function DefaultQuestionLayout({
         </div>
         <button
           onClick={onBackToSections}
-          className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-md transition text-sm font-medium text-gray-700"
+          className="w-full sm:w-auto flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-md transition text-sm font-medium text-gray-700 justify-center"
           aria-label={intl.formatMessage({
             id: "Back to sections",
             defaultMessage: "Back to sections",
@@ -75,13 +75,14 @@ export default function DefaultQuestionLayout({
 
       <div
         ref={splitRef}
-        className="flex-1 overflow-hidden flex items-stretch relative"
+        className="flex-1 overflow-hidden flex flex-col lg:flex-row items-stretch relative"
+        style={{ "--answer-width": `${answerWidth}px` }}
       >
         <div
-          className={`flex-1 bg-white p-5 overflow-y-auto ${
+          className={`flex-1 bg-white p-5 overflow-y-auto order-1 border-b border-gray-100 lg:border-b-0 ${
             isReading
-              ? "border-l border-gray-100 order-3"
-              : "border-r border-gray-100 order-1"
+              ? "lg:border-l lg:border-gray-100 lg:order-3"
+              : "lg:border-r lg:border-gray-100 lg:order-1"
           }`}
         >
           {currentGroup?.groupImage && (
@@ -142,7 +143,7 @@ export default function DefaultQuestionLayout({
 
         <div
           onMouseDown={handleDragStart}
-          className={`w-1 cursor-col-resize bg-gray-200 hover:bg-gray-300 transition-colors order-2`}
+          className="hidden lg:block w-1 cursor-col-resize bg-gray-200 hover:bg-gray-300 transition-colors order-2"
           aria-label={intl.formatMessage({
             id: "Resize answer panel",
             defaultMessage: "Resize answer panel",
@@ -150,12 +151,11 @@ export default function DefaultQuestionLayout({
         />
 
         <div
-          className={`bg-gray-50 p-5 flex-shrink-0 min-w-[200px] max-w-[900px] overflow-y-auto ${
+          className={`bg-gray-50 p-5 w-full overflow-y-auto order-2 border-t border-gray-100 lg:border-t-0 lg:flex-shrink-0 lg:min-w-[200px] lg:max-w-[900px] lg:w-[var(--answer-width)] ${
             isReading
-              ? "border-r border-gray-100 order-1"
-              : "border-l border-gray-100 order-3"
+              ? "lg:border-r lg:border-gray-100 lg:order-1"
+              : "lg:border-l lg:border-gray-100 lg:order-3"
           }`}
-          style={{ width: `${answerWidth}px` }}
         >
           <h4 className="font-semibold text-gray-900 mb-4 text-sm">
             {intl.formatMessage({
@@ -216,17 +216,17 @@ export default function DefaultQuestionLayout({
         </div>
       </div>
 
-      <div className="bg-white border-t border-gray-100 px-5 py-3 flex justify-between items-center">
+      <div className="bg-white border-t border-gray-100 px-5 py-3 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <button
           onClick={onPrevious}
           disabled={currentQuestionIndex === 0}
-          className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+          className="w-full sm:w-auto flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium justify-center"
         >
           <ChevronLeft className="w-4 h-4" />
           {intl.formatMessage({ id: "Previous", defaultMessage: "Previous" })}
         </button>
 
-        <div className="text-xs font-medium text-gray-600">
+        <div className="text-xs font-medium text-gray-600 text-center">
           {intl.formatMessage(
             { id: "Group {num}", defaultMessage: "Group {num}" },
             { num: currentQuestionIndex + 1 }
@@ -235,7 +235,7 @@ export default function DefaultQuestionLayout({
 
         <button
           onClick={onNext}
-          className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+          className="w-full sm:w-auto flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium justify-center"
         >
           {intl.formatMessage({ id: "Next", defaultMessage: "Next" })}
           <ChevronRight className="w-4 h-4" />

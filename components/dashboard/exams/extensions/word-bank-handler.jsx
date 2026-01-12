@@ -47,6 +47,59 @@ const escapeHtml = (str) =>
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const mergeRomanFragments = (lines) => {
+  const merged = [];
+  let romanBuffer = "";
+  const romanOnly = /^[ivxlcdm]+$/i;
+  const romanWithDot = /^([ivxlcdm]+)\s*\.\s*(.*)$/i;
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    if (romanOnly.test(trimmed)) {
+      romanBuffer += trimmed;
+      return;
+    }
+
+    if (romanBuffer) {
+      const match = trimmed.match(romanWithDot);
+      if (match) {
+        const combinedMarker = `${romanBuffer}${match[1]}`;
+        const rest = match[2]?.trim();
+        merged.push(rest ? `${combinedMarker}. ${rest}` : `${combinedMarker}.`);
+        romanBuffer = "";
+        return;
+      }
+
+      merged.push(`${romanBuffer}. ${trimmed}`.trim());
+      romanBuffer = "";
+      return;
+    }
+
+    merged.push(trimmed);
+  });
+
+  return merged;
+};
+
+const splitMatchingOptions = (raw) => {
+  const normalized = raw.replace(/\r/g, "\n");
+  let lines = normalized
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (lines.length <= 1) {
+    lines = normalized
+      .split(/(?=\s*(?:\d+|[ivxlcdm]+|[A-Z])\s*\.)/i)
+      .map((l) => l.trim())
+      .filter(Boolean);
+  }
+
+  return mergeRomanFragments(lines);
+};
+
 export const WordBankHandler = () => {
   useEffect(() => {
     const wrapDragItems = () => {
@@ -172,18 +225,7 @@ export const WordBankHandler = () => {
         const container = box.closest(".matching-container");
         if (container) {
           const raw = text || "";
-          let lines = raw
-            .split(/\n+/)
-            .map((l) => l.trim())
-            .filter(Boolean);
-
-          // If no explicit newlines survived, try splitting on option markers like "A." / "B." / "C." with optional spaces
-          if (lines.length <= 1) {
-            lines = raw
-              .split(/(?=\s*[A-Z]\s*\.)/)
-              .map((l) => l.trim())
-              .filter(Boolean);
-          }
+          const lines = splitMatchingOptions(raw);
 
           if (lines.length === 0) {
             box.setAttribute("data-drag-processed", "true");

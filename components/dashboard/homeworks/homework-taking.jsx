@@ -37,6 +37,90 @@ const mapContentTypeToSection = (contentType) => {
   return typeMap[normalizedType] || null;
 };
 
+const hasQuestionIds = (mock) => {
+  if (!mock) return false;
+
+  const isUuid = (value) =>
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value
+    );
+
+  const getQuestionId = (obj) =>
+    obj?.id ??
+    obj?.pk ??
+    obj?.uuid ??
+    obj?.question_id ??
+    obj?.questionId ??
+    obj?.question?.id ??
+    obj?.question?.pk ??
+    obj?.question?.uuid ??
+    obj?.question?.question_id ??
+    obj?.question?.questionId;
+
+  const groupHasIds = (group) => {
+    if (!group) return false;
+    if (Array.isArray(group.questions)) {
+      return group.questions.some((question) => {
+        const id = getQuestionId(question);
+        return !!id && isUuid(id);
+      });
+    }
+    const mapLike =
+      group.question_ids ||
+      group.questionIds ||
+      group.question_id_map ||
+      group.questionIdMap ||
+      group.questions_by_number ||
+      group.questionsByNumber ||
+      group.question_map ||
+      group.questionMap ||
+      group.questions_map ||
+      group.questions_list;
+    if (Array.isArray(mapLike)) {
+      return mapLike.some((entry) => {
+        const id = getQuestionId(entry);
+        return !!id && isUuid(id);
+      });
+    }
+    if (mapLike && typeof mapLike === "object") {
+      return Object.values(mapLike).some((entry) => {
+        const id = getQuestionId(entry ?? {});
+        if (id && isUuid(id)) return true;
+        return isUuid(entry);
+      });
+    }
+    return false;
+  };
+
+  const containerHasIds = (container) =>
+    Array.isArray(container?.question_groups) &&
+    container.question_groups.some(groupHasIds);
+
+  if (Array.isArray(mock.parts)) return mock.parts.some(containerHasIds);
+  if (Array.isArray(mock.passages)) return mock.passages.some(containerHasIds);
+  if (Array.isArray(mock.question_groups)) {
+    return mock.question_groups.some(groupHasIds);
+  }
+  return false;
+};
+
+const shouldReplaceMock = (existingMock, nextMock, sectionType) => {
+  if (!nextMock) return false;
+  if (!existingMock) return true;
+  if (
+    sectionType === SECTION_TYPES.WRITING ||
+    sectionType === SECTION_TYPES.QUIZ
+  ) {
+    return true;
+  }
+  const existingHasIds = hasQuestionIds(existingMock);
+  const nextHasIds = hasQuestionIds(nextMock);
+  if (existingHasIds && !nextHasIds) return false;
+  if (!existingHasIds && nextHasIds) return true;
+  return false;
+};
+
 const HomeworkTaking = ({ loading: pageLoading }) => {
   const router = useRouter();
   const intl = useIntl();
@@ -71,6 +155,12 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
     return homework?.items || homework?.homework_items || [];
   }, [homework]);
 
+  const getLatestSubmission = (item) => {
+    const submissions = item?.submissions;
+    if (!Array.isArray(submissions) || submissions.length === 0) return null;
+    return submissions[submissions.length - 1];
+  };
+
   // Derived based on currentItemIndex
   const currentItem = currentItemIndex !== null ? items[currentItemIndex] : null;
   const currentSectionType = useMemo(() =>
@@ -98,6 +188,7 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
   // --- HOOKS ---
   const {
     currentSubmissionId,
+    setCurrentSubmissionId,
     itemSubmissions,
     setItemSubmissions,
     startError,
@@ -108,7 +199,6 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
     submitItem,
     submitHomework,
     saveDraft,
-    lastSavedAt,
   } = useHomeworkSubmission(homeworkId, intl);
 
   const {
@@ -143,11 +233,14 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
     }
   }, [homework?.my_submissions, setItemSubmissions]);
 
-
-
   // --- ACTIONS ---
 
   const handleStartItem = (index) => {
+    const item = items[index];
+    // Force a fresh start call; startItem handles in-progress resumes.
+    setCurrentSubmissionId(null);
+    setStartError(null);
+
     setCurrentItemIndex(index);
     setViewMode('TAKING');
     loadedItemRef.current = null;
@@ -157,6 +250,7 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
   const handleReturnToList = () => {
     setViewMode('LIST');
     setCurrentItemIndex(null);
+    setCurrentSubmissionId(null);
     loadedItemRef.current = null;
     startedItemRef.current = null;
     mutateHomework(); // Refresh statuses
@@ -164,7 +258,10 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
 
   // Wrapper function for TaskQuestionRunner's startFn
   const startItemFn = useCallback(async () => {
-    if (!currentItem || !currentSectionType) return null;
+    if (!currentItem || !currentSectionType) {
+      console.warn("[HomeworkTaking] startItemFn aborted: missing currentItem or type");
+      return null;
+    }
 
     const itemKey = `${currentItem.id}`;
     // Don't restart if already started this session
@@ -172,9 +269,10 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
       return { id: currentSubmissionId, resumed: true };
     }
 
-    const existingStatus = itemSubmissions[currentItem.id]?.status;
+    const existingStatus =
+      itemSubmissions[currentItem.id]?.status ||
+      getLatestSubmission(currentItem)?.status;
     if (existingStatus === 'SUBMITTED' || existingStatus === 'GRADED') {
-      // Already done, don't restart
       return null;
     }
 
@@ -184,32 +282,79 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
         startedItemRef.current = itemKey;
         const mockKey = `${currentItem.id}-${currentSectionType}`;
         loadedItemRef.current = mockKey;
+        const embeddedMock =
+          response?.listening_mock ||
+          response?.reading_mock ||
+          response?.writing_mock ||
+          response?.quiz_mock ||
+          response?.mock ||
+          response?.content ||
+          null;
+        if (embeddedMock && currentMockId) {
+          const existingMock = getMock(currentSectionType, currentMockId);
+          if (shouldReplaceMock(existingMock, embeddedMock, currentSectionType)) {
+            setMockForSection(currentSectionType, embeddedMock, currentMockId);
+          }
+        }
+        const submissionId = response?.id || response?.submission_id;
+        if (submissionId && currentMockId) {
+          try {
+            const submissionData = await fetcher(
+              `/submissions/${submissionId}/`,
+              {
+                headers: { "Accept-Language": router.locale },
+              },
+              {},
+              true
+            );
+            const submissionMock =
+              submissionData?.mock ||
+              submissionData?.content ||
+              submissionData?.listening_mock ||
+              submissionData?.reading_mock ||
+              submissionData?.writing_mock ||
+              submissionData?.quiz_mock ||
+              null;
+            if (submissionMock) {
+              const existingMock = getMock(currentSectionType, currentMockId);
+              if (shouldReplaceMock(existingMock, submissionMock, currentSectionType)) {
+                setMockForSection(currentSectionType, submissionMock, currentMockId);
+              }
+            }
+          } catch (error) {
+            console.warn("[HomeworkTaking] Failed to hydrate mock from submission:", error);
+          }
+        }
       }
       return response;
     } catch (err) {
-      console.error("Failed to start item:", err);
+      console.error("[HomeworkTaking] Failed to start item:", err);
       return { error: true, message: err?.message };
     }
-  }, [currentItem, currentSectionType, currentSubmissionId, itemSubmissions, startItem, currentMockId]);
+  }, [
+    currentItem,
+    currentSectionType,
+    currentSubmissionId,
+    itemSubmissions,
+    startItem,
+    currentMockId,
+    getMock,
+    setMockForSection,
+    router.locale,
+  ]);
 
   // Wrapper function for TaskQuestionRunner's submitFn
   const submitItemFn = useCallback(async (answersObject, options = {}) => {
     if (!currentItem) return false;
-    return await submitItem(currentItem.id, answersObject, options);
+    const result = await submitItem(currentItem.id, answersObject, options);
+    return result;
   }, [currentItem, submitItem]);
 
   // Wrapper function for TaskQuestionRunner's autoSave
   const handleAutoSave = useCallback(async (answersObject) => {
-    if (!currentItem || !currentSubmissionId) return;
-    await saveDraft(currentItem.id, answersObject);
+    if (!currentItem || !currentSubmissionId) return false;
+    return saveDraft(currentItem.id, answersObject);
   }, [currentItem, currentSubmissionId, saveDraft]);
-
-  const isItemCompleted = (itemId) => {
-    const s = itemSubmissions[itemId]?.status;
-    return s === "GRADED" || s === "SUBMITTED";
-  };
-
-
 
   // --- RENDER ---
 
@@ -225,8 +370,8 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
   if (viewMode === 'LIST') {
     return (
       <div className="bg-gray-50 flex flex-col max-h-full overflow-y-auto">
-        <div className="max-w-4xl min-h-screen mx-auto">
-          <div className="mb-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div className="max-w-4xl min-h-screen mx-auto w-full px-4 sm:px-6 py-6 sm:py-10">
+          <div className="mb-8 bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm">
             <button onClick={() => router.push("/dashboard/homeworks")} className="flex items-center text-gray-500 mb-6 hover:text-gray-900 transition-colors">
               <ArrowLeft size={18} className="mr-2" />
               {intl.formatMessage({ id: "Back to Homeworks", defaultMessage: "Back to Homeworks" })}
@@ -234,10 +379,10 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
 
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{homework.title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{homework.title}</h1>
                 {homework.description && (
                   <div
-                    className="text-gray-600 max-w-2xl prose prose-sm"
+                    className="text-gray-600 max-w-2xl prose prose-sm break-words"
                     dangerouslySetInnerHTML={{ __html: homework.description }}
                   />
                 )}
@@ -256,9 +401,9 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
                     </span>
                   </div>
                 )}
-                <div className="flex items-center text-sm text-gray-500 px-1">
+                <div className="flex flex-wrap items-center text-sm text-gray-500 gap-2 px-1">
                   <span>{items.length} {intl.formatMessage({ id: "tasks", defaultMessage: "tasks" })}</span>
-                  <span className="mx-2">•</span>
+                  <span className="hidden sm:inline mx-2">•</span>
                   <span>
                     {intl.formatMessage({ id: "Created by", defaultMessage: "Created by" })} {homework.created_by_name}
                   </span>
@@ -270,14 +415,19 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
           {/* Cards Grid - Exam Style */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {items.map((item, idx) => {
-              const status = itemSubmissions[item.id]?.status || 'NOT_STARTED';
+              const latestSubmission = getLatestSubmission(item);
+              const status =
+                itemSubmissions[item.id]?.status ||
+                latestSubmission?.status ||
+                'NOT_STARTED';
               const isCompleted = status === 'SUBMITTED' || status === 'GRADED';
-              const isStarted = status === 'STARTED';
 
               // Map status to styling (similar to ExamSectionCard)
               const statusConfig = {
                 NOT_STARTED: { bg: "bg-gray-100", text: "text-gray-800", label: intl.formatMessage({ id: "Not Started", defaultMessage: "Not Started" }) },
                 STARTED: { bg: "bg-yellow-100", text: "text-yellow-800", label: intl.formatMessage({ id: "In Progress", defaultMessage: "In Progress" }) },
+                SAVED: { bg: "bg-yellow-100", text: "text-yellow-800", label: intl.formatMessage({ id: "Saved", defaultMessage: "Saved" }) },
+                IN_PROGRESS: { bg: "bg-yellow-100", text: "text-yellow-800", label: intl.formatMessage({ id: "In Progress", defaultMessage: "In Progress" }) },
                 SUBMITTED: { bg: "bg-blue-100", text: "text-blue-800", label: intl.formatMessage({ id: "Submitted", defaultMessage: "Submitted" }) },
                 GRADED: { bg: "bg-green-100", text: "text-green-800", label: intl.formatMessage({ id: "Graded", defaultMessage: "Graded" }) },
               };
@@ -288,7 +438,7 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
                   key={item.id}
                   onClick={() => handleStartItem(idx)}
                   disabled={isCompleted}
-                  className={`group relative bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-xl hover:border-gray-300 transition-all duration-300 text-left flex flex-col items-start h-full
+                  className={`group relative bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 hover:shadow-xl hover:border-gray-300 transition-all duration-300 text-left flex flex-col items-start h-full
                         ${isCompleted ? 'opacity-75' : ''}
                       `}
                 >
@@ -308,7 +458,7 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
                     )}
                   </div>
 
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2" title={item.content_title || item.title}>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 line-clamp-2" title={item.content_title || item.title}>
                     {item.content_title || item.title || `Task ${idx + 1}`}
                   </h3>
 
@@ -345,6 +495,11 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
           startFn={startItemFn}
           submitFn={submitItemFn}
           onFinalize={handleReturnToList}
+          onExit={handleReturnToList}
+          autoSaveConfig={{
+            onAutoSave: handleAutoSave,
+            isSaving: isSavingDraft,
+          }}
           fetchMock={fetchMock}
           sectionType={currentSectionType}
           isLoadingMock={isMockLoading(currentSectionType, currentMockId)}
@@ -363,6 +518,7 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
         durationMinutes={homeworkDurationMinutes}
         getMock={stableGetMock}
         fetchMock={fetchMock}
+        setMockForSection={setMockForSection}
         mockId={currentMockId}
         currentSubmissionId={currentSubmissionId}
         startFn={startItemFn}
@@ -372,7 +528,6 @@ const HomeworkTaking = ({ loading: pageLoading }) => {
         autoSaveConfig={{
           onAutoSave: handleAutoSave,
           isSaving: isSavingDraft,
-          lastSavedAt: lastSavedAt,
         }}
         isLoadingMock={isMockLoading(currentSectionType, currentMockId)}
         isSubmitting={isSubmitting}

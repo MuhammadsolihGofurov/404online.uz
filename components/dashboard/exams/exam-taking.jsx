@@ -5,6 +5,7 @@ import useSWR from "swr";
 import fetcher from "@/utils/fetcher";
 import { SECTION_TYPES } from "@/utils/examConstants";
 import { parseDurationToMinutes } from "@/utils/durationParser";
+import { buildUserAnswersPayload } from "@/utils/submission-answers";
 import {
   getSectionConfig,
   getMockIdForSection,
@@ -108,7 +109,6 @@ export default function ExamTaking({ loading, taskType, taskId }) {
     if (!mockId) return;
 
     try {
-      console.log(`[ExamTaking] Starting section ${section} with mock ${mockId}...`);
       const response = await startSection(section, mockId);
       const failedToStart = !response || response.error;
       if (failedToStart) {
@@ -181,7 +181,10 @@ export default function ExamTaking({ loading, taskType, taskId }) {
           `/submissions/${currentSubmissionId}/submit/`,
           {
             method: "PATCH",
-            body: JSON.stringify({ answers: answersObject }),
+            body: JSON.stringify({
+              answers: answersObject,
+              user_answers: buildUserAnswersPayload(answersObject),
+            }),
           },
           {},
           true
@@ -197,7 +200,6 @@ export default function ExamTaking({ loading, taskType, taskId }) {
             },
           }));
           setCurrentSubmissionId(null);
-          console.log("TaskQuestionRunner submission successful:", response);
           toast.success(
             intl.formatMessage({
               id: "Submitted successfully",
@@ -383,13 +385,13 @@ export default function ExamTaking({ loading, taskType, taskId }) {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto flex items-center justify-center pt-24">
-          <div className="w-full max-w-6xl px-6 py-40 sm:pt-0">
-            <h1 className="text-3xl font-bold mb-2 text-gray-900">
+        <div className="flex-1 overflow-y-auto flex items-start justify-center pt-6 sm:pt-10 md:pt-16">
+          <div className="w-full max-w-6xl px-4 sm:px-6 pb-16">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-900">
               {exam.title}
             </h1>
             <div
-              className="text-gray-600 mb-12 prose prose-sm max-w-none"
+              className="text-gray-600 mb-8 sm:mb-12 prose prose-sm max-w-none break-words"
               dangerouslySetInnerHTML={{ __html: exam.description }}
             />
 
@@ -421,7 +423,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
               <button
                 onClick={handleSubmitExam}
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400"
+                className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400"
               >
                 {isSubmitting
                   ? intl.formatMessage({
@@ -452,6 +454,7 @@ export default function ExamTaking({ loading, taskType, taskId }) {
         durationMinutes={getLibraryDuration(selectedSection)}
         getMock={stableGetMock}
         fetchMock={fetchMock}
+        setMockForSection={setMockForSection}
         mockId={mockId}
         currentSubmissionId={currentSubmissionId}
         startFn={startSectionFn}

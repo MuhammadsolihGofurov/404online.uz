@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { extractQuestionNumbers } from "@/utils/templateRenderer";
 
 /**
  * Shared hook for managing question session state and navigation.
@@ -32,6 +33,7 @@ export const useQuestionSession = ({
    * Handle answer change
    */
   const handleAnswerChange = useCallback((questionId, answer) => {
+    // console.log(`[useQuestionSession] handleAnswerChange: Question#${questionId} = "${answer}"`);
     setAnswers((prev) => ({
       ...prev,
       [questionId]: answer,
@@ -219,30 +221,206 @@ export const useQuestionSession = ({
     (mock) => {
       if (!mock || !sectionType) return {};
 
-      const config = getSectionConfig(sectionType);
-      let answersObject = {};
+      const answersObject = {};
+
+      const isUuid = (value) =>
+        typeof value === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          value
+        );
 
       if (sectionType === "WRITING") {
         (mock?.tasks || []).forEach((task) => {
-          answersObject[task.id] = answers[task.task_number] || "";
-        });
-      } else {
-        const allQuestions = [];
-        const dataArray = mock?.[config.dataKey] || [];
-
-        dataArray.forEach((item) => {
-          item[config.groupKey]?.forEach((group) => {
-            allQuestions.push(...(group.questions || []));
-          });
-        });
-
-        allQuestions.forEach((q) => {
-          const answer = answers[q.question_number];
-          if (answer !== undefined && answer !== null && String(answer).trim() !== "") {
-            answersObject[q.id] = String(answer);
+          const ans = answers[task.task_number];
+          if (ans !== undefined && ans !== null) {
+            answersObject[task.id] = String(ans);
           }
         });
-     }
+      } else {
+        const questionIdByKey = {};
+
+        const getQuestionKey = (obj) =>
+          obj?.placeholder_key ??
+          obj?.placeholderKey ??
+          obj?.placeholder ??
+          obj?.key ??
+          obj?.question?.placeholder_key ??
+          obj?.question?.placeholderKey ??
+          obj?.question?.placeholder ??
+          obj?.question?.key;
+        const deriveQuestionNumber = (value) => {
+          if (value === undefined || value === null) return null;
+          const match = String(value).match(/\d+/);
+          return match ? Number(match[0]) : null;
+        };
+        const getQuestionNumber = (obj) => {
+          const direct =
+            obj?.question_number ??
+            obj?.number ??
+            obj?.questionNumber ??
+            obj?.question_no ??
+            obj?.question?.question_number ??
+            obj?.question?.number ??
+            obj?.question?.questionNumber ??
+            obj?.question?.question_no;
+          if (direct !== undefined && direct !== null) return direct;
+          return deriveQuestionNumber(getQuestionKey(obj));
+        };
+        const getQuestionId = (obj) => {
+          if (typeof obj === "string") return obj;
+          return (
+            obj?.id ??
+            obj?.pk ??
+            obj?.uuid ??
+            obj?.question_uuid ??
+            obj?.question_id ??
+            obj?.questionId ??
+            obj?.question?.id ??
+            obj?.question?.pk ??
+            obj?.question?.uuid ??
+            obj?.question?.question_uuid ??
+            obj?.question?.question_id ??
+            obj?.question?.questionId
+          );
+        };
+
+        const recordQuestionKey = (qKey, qId) => {
+          if (qKey === undefined || qKey === null || qId === undefined || qId === null) {
+            return;
+          }
+          const key = String(qKey);
+          if (!questionIdByKey[key]) {
+            questionIdByKey[key] = qId;
+          }
+        };
+
+        
+        // Even MORE robust recursive harvester
+        const findQuestionsRecursively = (obj, depth = 0) => {
+          if (!obj || depth > 10) return;
+          
+          if (Array.isArray(obj)) {
+            obj.forEach(item => findQuestionsRecursively(item, depth + 1));
+            return;
+          }
+          
+          if (typeof obj === 'object') {
+            const qNum = getQuestionNumber(obj);
+            const qId = getQuestionId(obj);
+            recordQuestionKey(qNum, qId);
+
+            const qKey = getQuestionKey(obj);
+            if (qKey !== undefined && qKey !== null) {
+              recordQuestionKey(qKey, qId);
+            }
+
+            Object.entries(obj).forEach(([key, value]) => {
+              const keyNum = Number(key);
+              const derivedKeyNumber = deriveQuestionNumber(key);
+              if (!Number.isFinite(keyNum) && derivedKeyNumber === null) return;
+              const valueId = getQuestionId(value);
+              if (valueId) {
+                recordQuestionKey(
+                  Number.isFinite(keyNum) ? keyNum : derivedKeyNumber,
+                  valueId
+                );
+              }
+            });
+            
+            // Recurse into all object keys
+            Object.values(obj).forEach(val => {
+                if (val && typeof val === 'object') {
+                   findQuestionsRecursively(val, depth + 1);
+                }
+            });
+          }
+        };
+
+        // Run deep structural search
+        findQuestionsRecursively(mock);
+
+        const mapGroupQuestions = (group) => {
+          const extractedNumbers = extractQuestionNumbers(group?.template || "");
+          const fallbackNumbers = Array.isArray(group?.question_numbers)
+            ? group.question_numbers
+            : extractedNumbers;
+          const questionNumbers =
+            fallbackNumbers.length > 0 ? fallbackNumbers : extractedNumbers;
+
+          const rawQuestions =
+            group?.questions ??
+            group?.question_ids ??
+            group?.questionIds ??
+            group?.question_id_map ??
+            group?.questionIdMap ??
+            group?.questions_by_number ??
+            group?.questionsByNumber ??
+            group?.question_map ??
+            group?.questionMap ??
+            group?.questions_map ??
+            group?.questions_list ??
+            null;
+
+          if (Array.isArray(rawQuestions)) {
+            rawQuestions.forEach((question, index) => {
+              const qNum = getQuestionNumber(question) ?? questionNumbers[index];
+              const qId = getQuestionId(question);
+              recordQuestionKey(qNum, qId);
+              const qKey = getQuestionKey(question);
+              if (qKey !== undefined && qKey !== null) {
+                recordQuestionKey(qKey, qId);
+              }
+            });
+            return;
+          }
+
+          if (rawQuestions && typeof rawQuestions === "object") {
+            Object.entries(rawQuestions).forEach(([key, value], index) => {
+              const keyAsNumber = Number(key);
+              const derivedKeyNumber = deriveQuestionNumber(key);
+              const qNum =
+                getQuestionNumber(value) ??
+                (Number.isFinite(keyAsNumber) ? keyAsNumber : null) ??
+                derivedKeyNumber ??
+                questionNumbers[index];
+              const qId = getQuestionId(value) ?? getQuestionId(key);
+              recordQuestionKey(qNum, qId);
+              const qKey = getQuestionKey(value);
+              if (qKey !== undefined && qKey !== null) {
+                recordQuestionKey(qKey, qId);
+              }
+            });
+          }
+        };
+
+        const mapQuestionGroups = (container) => {
+          (container?.question_groups || []).forEach((group) => {
+            mapGroupQuestions(group);
+          });
+        };
+
+        if (mock?.parts) {
+          mock.parts.forEach((part) => mapQuestionGroups(part));
+        }
+        if (mock?.passages) {
+          mock.passages.forEach((passage) => mapQuestionGroups(passage));
+        }
+        if (mock?.question_groups) {
+          mapQuestionGroups(mock);
+        }
+
+        Object.entries(answers).forEach(([questionNumber, answer]) => {
+          if (answer === undefined || answer === null || String(answer).trim() === "") {
+            return;
+          }
+          const key = String(questionNumber);
+          const questionId = isUuid(key) ? key : questionIdByKey[key];
+          if (questionId) {
+            answersObject[questionId] = String(answer);
+            return;
+          }
+        });
+      }
 
       return answersObject;
     },
@@ -253,9 +431,10 @@ export const useQuestionSession = ({
    * Check if at least one answer has been provided
    */
   const hasAnswers = useCallback(() => {
-    return Object.values(answers).some(
+    const hasAny = Object.values(answers).some(
       (val) => val !== null && val !== undefined && String(val).trim() !== ""
     );
+    return hasAny;
   }, [answers]);
 
   // Sync currentQuestionIndex when activePartIndex changes

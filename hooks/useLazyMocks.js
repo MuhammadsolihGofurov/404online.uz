@@ -27,21 +27,19 @@ export const useLazyMocks = (locale, intl, onError) => {
     }, []);
 
     const fetchMock = useCallback(
-        async (section, mockId) => {
+        async (section, mockId, options = {}) => {
             if (!mockId) return null;
+            const shouldForce = options?.force === true;
             
             // Check refs for immediate status to avoid double-firing in same tick
-            if (mocksRef.current[mockId]) {
-                console.log(`[useLazyMocks] Already have mock ${mockId}, skipping fetch.`);
+            if (mocksRef.current[mockId] && !shouldForce) {
                 return mocksRef.current[mockId];
             }
-            if (loadingRef.current[mockId]) {
-                console.log(`[useLazyMocks] Already loading mock ${mockId}, skipping fetch.`);
+            if (loadingRef.current[mockId] && !shouldForce) {
                 return null;
             }
 
             const mockType = getMockTypeString(section);
-            console.log(`[useLazyMocks] Fetching ${mockType} mock (${mockId})...`);
             
             loadingRef.current[mockId] = true;
             setLoading(prev => ({ ...prev, [mockId]: true }));
@@ -61,7 +59,6 @@ export const useLazyMocks = (locale, intl, onError) => {
                     true
                 );
                 
-                console.log(`[useLazyMocks] Successfully fetched mock ${mockId}`);
                 mocksRef.current[mockId] = response;
                 setMocks((prev) => ({ ...prev, [mockId]: response }));
                 return response;
