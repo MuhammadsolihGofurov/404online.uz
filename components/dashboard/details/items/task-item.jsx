@@ -119,7 +119,7 @@ export default function TaskItem({ item }) {
         description: description,
         deadline: deadline,
       },
-      "short"
+      "big"
     );
   };
 
@@ -308,7 +308,7 @@ export default function TaskItem({ item }) {
           {/* Assigned Groups */}
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Users size={15} className="text-gray-400" />
-            <span className="flex gap-1">
+            <span className="flex gap-1 flex-1">
               {assigned_groups?.length > 0
                 ? assigned_groups.map((g) => g.name).join(", ")
                 : `${assigned_groups_count || 0} groups`}

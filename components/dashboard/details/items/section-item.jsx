@@ -40,18 +40,15 @@ const SectionItem = ({ data }) => {
     });
   };
 
-  // Davomiylikni aniqlash uchun universal funksiya
   const getDuration = () => {
     if (isQuiz) {
       return data?.default_duration_minutes
         ? `${data.default_duration_minutes} min`
         : "10 min";
     }
-    // Agar mock section bo'lsa (duration: "00:40:00")
     return data?.duration ? data.duration.substring(0, 5) : "00:00";
   };
 
-  // Savollar yoki topshiriqlar sonini aniqlash
   const getCountInfo = () => {
     if (isQuiz) {
       return `Q: ${data?.content?.length || 0}`;
@@ -63,7 +60,6 @@ const SectionItem = ({ data }) => {
   };
 
   const handleViewFunction = (d) => {
-    // Quiz uchun alohida modal yoki logika kerak bo'lsa shu yerda tekshiring
     openModal("sectionView", { data: d, isQuiz }, "small");
   };
 
@@ -76,19 +72,35 @@ const SectionItem = ({ data }) => {
   };
 
   const handleDelete = (i) => {
-    openModal(
-      "confirmModal",
-      {
-        title: "Remove quiz",
-        description:
-          "Are you sure you want to delete this quiz? This action cannot be undone.",
-        onConfirm: async () => {
-          await authAxios.delete(`/quizzes/${i}/`);
-          toast.success(intl.formatMessage({ id: "Quiz deleted!" }));
+    if (currentSectionType === "quiz") {
+      openModal(
+        "confirmModal",
+        {
+          title: "Remove quiz",
+          description:
+            "Are you sure you want to delete this quiz? This action cannot be undone.",
+          onConfirm: async () => {
+            await authAxios.delete(`/quizzes/${i}/`);
+            toast.success(intl.formatMessage({ id: "Quiz deleted!" }));
+          },
         },
-      },
-      "short"
-    );
+        "short"
+      );
+    } else {
+      openModal(
+        "confirmModal",
+        {
+          title: "Remove section",
+          description:
+            "Are you sure you want to delete this section? This action cannot be undone.",
+          onConfirm: async () => {
+            await authAxios.delete(`/mocks/${currentSectionType}/${i}/`);
+            toast.success(intl.formatMessage({ id: "Section deleted!" }));
+          },
+        },
+        "short"
+      );
+    }
   };
 
   return (
@@ -126,7 +138,7 @@ const SectionItem = ({ data }) => {
           <Calendar size={13} className="mr-1" />
           {formatDate(data?.created_at)}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           {currentSectionType !== "quiz" ? (
             <>
               <button
@@ -155,14 +167,17 @@ const SectionItem = ({ data }) => {
               >
                 <Edit size={16} />
               </Link>
-              <button
-                onClick={() => handleDelete(data?.id)}
-                type="button"
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-slate-400 hover:text-orange-500"
-              >
-                <Trash size={16} />
-              </button>
             </>
+          )}
+
+          {(data?.status == "DRAFT" || currentSectionType == "quiz") && (
+            <button
+              onClick={() => handleDelete(data?.id)}
+              type="button"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-slate-400 hover:text-orange-500"
+            >
+              <Trash size={16} />
+            </button>
           )}
         </div>
       </div>

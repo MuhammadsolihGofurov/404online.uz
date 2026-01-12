@@ -126,10 +126,12 @@ const MockSelectorField = ({ title, type, value, onChange, locale }) => {
                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
                   <FileText size={14} className="text-gray-400" />
                   <span>
-                    {mock.title === "Writing"
+                    {mock.tasks_count
                       ? mock.tasks_count
                       : mock.questions_count}{" "}
-                    {intl.formatMessage({ id: "questions" })}
+                    {!mock?.tasks_count
+                      ? intl.formatMessage({ id: "questions" })
+                      : intl.formatMessage({ id: "tasks" })}
                   </span>
                 </div>
               </div>

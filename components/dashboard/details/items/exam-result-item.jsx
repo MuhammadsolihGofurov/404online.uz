@@ -16,6 +16,7 @@ import {
   Headphones,
   PenTool,
   CheckSquare,
+  LucideCircleQuestionMark,
 } from "lucide-react";
 import { formatDate } from "@/utils/funcs";
 import { useRouter } from "next/router";
@@ -35,6 +36,8 @@ export default function ExamResultItem({ item, role }) {
 
   // Writing submisson-ni topish va holatini aniqlash
   const writingTask = submissions.find((s) => s.content_type === "WRITING");
+  const listeningTask = submissions.find((s) => s.content_type === "LISTENING");
+  const readingTask = submissions.find((s) => s.content_type === "READING");
   const isWritingPending = writingTask?.status !== "GRADED";
 
   // Ball rangini aniqlash
@@ -55,6 +58,8 @@ export default function ExamResultItem({ item, role }) {
         return <BookOpen size={12} className="text-emerald-500" />;
       case "WRITING":
         return <PenTool size={12} className="text-purple-500" />;
+      case "QUIZ":
+        return <LucideCircleQuestionMark size={12} className="text-pink-500" />;
       default:
         return null;
     }
@@ -135,16 +140,20 @@ export default function ExamResultItem({ item, role }) {
             onClick={() => handleCheckWriting(id)}
           />
 
-          <DropdownBtn
-            title="Reading result"
-            icon={<BookOpen size={14} />}
-            onClick={() => handleCheckReading()}
-          />
-          <DropdownBtn
-            title="Listening result"
-            icon={<Headphones size={14} />}
-            onClick={() => handleCheckListening()}
-          />
+          {readingTask && (
+            <DropdownBtn
+              title="Reading result"
+              icon={<BookOpen size={14} />}
+              onClick={() => handleCheckReading()}
+            />
+          )}
+          {listeningTask && (
+            <DropdownBtn
+              title="Listening result"
+              icon={<Headphones size={14} />}
+              onClick={() => handleCheckListening()}
+            />
+          )}
           {/* <DropdownBtn
             title="Delete Result"
             icon={<Trash size={14} className="text-red-500" />}
@@ -181,24 +190,35 @@ export default function ExamResultItem({ item, role }) {
 
       {/* --- Submissions Scores Grid --- */}
       <div className="grid grid-cols-3 gap-2 mb-5">
-        {submissions.map((sub) => (
-          <div
-            key={sub.id}
-            className="flex flex-col min-h-11 items-center p-2 bg-gray-50 rounded-xl border border-gray-100"
-          >
-            <div className="mb-1">{getSectionIcon(sub.content_type)}</div>
-            <span className="text-[9px] uppercase font-bold text-gray-400">
-              {sub.content_type}
-            </span>
-            <span
-              className={`text-xs font-bold ${
-                sub.status === "PENDING" ? "text-orange-500" : "text-gray-700"
-              }`}
+        {submissions.map((sub) => {
+          // Agar quiz bo'lsa natijani hisoblaymiz
+          let displayScore = sub.band_score;
+
+          if (sub.content_type === "QUIZ" && sub.user_answers) {
+            const correct = sub.user_answers.filter((a) => a.is_correct).length;
+            const total = sub.user_answers.length;
+            displayScore = `${correct}/${total}`;
+          }
+
+          return (
+            <div
+              key={sub.id}
+              className="flex flex-col min-h-11 items-center p-2 bg-gray-50 rounded-xl border border-gray-100"
             >
-              {sub.status === "PENDING" ? "???" : sub.band_score}
-            </span>
-          </div>
-        ))}
+              <div className="mb-1">{getSectionIcon(sub.content_type)}</div>
+              <span className="text-[9px] uppercase font-bold text-gray-400">
+                {sub.content_type}
+              </span>
+              <span
+                className={`text-xs font-bold ${
+                  sub.status === "PENDING" ? "text-orange-500" : "text-gray-700"
+                }`}
+              >
+                {sub.status === "PENDING" ? "???" : displayScore}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* --- Footer --- */}

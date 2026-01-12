@@ -6,7 +6,7 @@ import { authAxios } from "@/utils/axios";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/modal-context";
 import { useRouter } from "next/router";
-import { Input, Textarea } from "../../details";
+import { Input, RichTextEditor, Textarea } from "../../details";
 import { DateTimePickerField } from "../../details/date-picker-custom";
 import { useParams } from "@/hooks/useParams";
 
@@ -97,17 +97,13 @@ export default function TaskEditModal({ id, title, description, deadline }) {
             error={errors?.title?.message}
           />
           {/* Description */}
-          <Textarea
-            type="text"
-            register={register}
+          <RichTextEditor
             name="description"
-            title={intl.formatMessage({ id: "Description" })}
-            placeholder="description"
+            control={control}
+            label="Description"
+            placeholder="Describe it..."
+            error={errors.description}
             required
-            validation={{
-              required: intl.formatMessage({ id: "Description is required" }),
-            }}
-            error={errors?.description?.message}
           />
           {/* Deadline */}
           {deadline && (

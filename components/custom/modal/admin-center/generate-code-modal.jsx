@@ -29,13 +29,12 @@ export default function GenerateCodeModal() {
     mode: "onChange",
     defaultValues: {
       role: "",
-      is_guest: "",
       count: 1, // Default 1 ta kod
     },
   });
 
   const watchedRole = watch("role");
-  const showIsGuest = watchedRole === "STUDENT";
+  // const showIsGuest = watchedRole === "STUDENT";
 
   const submitFn = async (data) => {
     try {
@@ -45,7 +44,7 @@ export default function GenerateCodeModal() {
 
       const payload = {
         role: data?.role,
-        is_guest: data?.is_guest === "Yes",
+        // is_guest: data?.is_guest === "Yes",
       };
 
       for (let i = 0; i < count; i++) {
@@ -133,6 +132,7 @@ export default function GenerateCodeModal() {
               }}
             />
 
+            {/* 
             {showIsGuest && (
               <>
                 <Controller
@@ -148,7 +148,7 @@ export default function GenerateCodeModal() {
                     />
                   )}
                 />
-                {/* <Controller
+                <Controller
                   name="group"
                   control={control}
                   rules={{ required: intl.formatMessage({ id: "Required" }) }}
@@ -160,9 +160,9 @@ export default function GenerateCodeModal() {
                       error={errors.group?.message}
                     />
                   )}
-                /> */}
+                /> 
               </>
-            )}
+            )}*/}
           </div>
 
           <button

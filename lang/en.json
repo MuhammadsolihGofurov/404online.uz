@@ -287,5 +287,12 @@
   "Select a exam from filter": "Select a exam from filter",
   "Remove quiz": "Remove quiz",
   "Are you sure you want to delete this quiz? This action cannot be undone.": "Are you sure you want to delete this quiz? This action cannot be undone.",
-  "Quiz deleted!": "Quiz deleted!"
+  "Quiz deleted!": "Quiz deleted!",
+  "Remove section": "Remove section",
+  "Are you sure you want to delete this section? This action cannot be undone.": "Are you sure you want to delete this section? This action cannot be undone.",
+  "Section deleted!": "Section deleted!",
+  "Upgrade guest": "Upgrade guest",
+  "Are you sure you want to upgrate this guest to student? This action cannot be undone.": "Are you sure you want to upgrate this guest to student? This action cannot be undone.",
+  "User upgraded successfully!": "User upgraded successfully!",
+  "This notification is read.": "This notification is read."
 }

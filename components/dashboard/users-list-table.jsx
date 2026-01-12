@@ -62,7 +62,7 @@ export default function UsersListTable({ loading, role }) {
         <table className="w-[700px] sm:w-full text-textPrimary rounded-2xl">
           <thead>
             <tr className="border-b border-dashboard-bg">
-              <th className="text-sm font-bold text-center p-4 w-[5%]">#</th>
+              {/* <th className="text-sm font-bold text-center p-4 w-[5%]">#</th> */}
               <th className="text-sm font-bold p-4 w-[30%] text-start">
                 {intl.formatMessage({ id: "Name" })}
               </th>

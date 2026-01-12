@@ -39,14 +39,16 @@ const RichTextEditor = ({
   required = false,
 }) => {
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col items-start gap-2 w-full">
       {label && (
         <label className="text-textSecondary font-semibold text-sm">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
 
-      <div className={`rich-text-wrapper ${error ? "border-red-500" : ""}`}>
+      <div
+        className={`w-full rich-text-wrapper ${error ? "border-red-500" : ""}`}
+      >
         <Controller
           name={name}
           control={control}

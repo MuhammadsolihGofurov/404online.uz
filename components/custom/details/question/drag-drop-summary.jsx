@@ -43,6 +43,7 @@ const DragDropComponent = ({ node, updateAttributes }) => {
         <div className="bg-indigo-600 text-white px-4 py-2 flex items-center gap-2">
           <input
             value={title}
+            required
             onChange={(e) => updateAttributes({ title: e.target.value })}
             className="bg-transparent border-none outline-none font-bold w-full text-white placeholder:text-indigo-300"
             placeholder="Enter Summary Title..."

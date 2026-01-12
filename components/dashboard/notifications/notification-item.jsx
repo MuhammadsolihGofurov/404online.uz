@@ -80,12 +80,20 @@ export default function NotificationItem({ item }) {
   const Icon = meta.icon;
   const intl = useIntl();
 
-  const handleClick = async (id) => {
-    try {
-      const response = await authAxios.post(`/notifications/${id}/mark_read/`);
-      toast.success(intl.formatMessage({ id: "Notification marked as read" }));
-    } catch (error) {
-      toast.error(intl.formatMessage({ id: "Failed to mark notification" }));
+  const handleClick = async (id, is_read) => {
+    if (!is_read) {
+      try {
+        const response = await authAxios.post(
+          `/notifications/${id}/mark_read/`
+        );
+        toast.success(
+          intl.formatMessage({ id: "Notification marked as read" })
+        );
+      } catch (error) {
+        toast.error(intl.formatMessage({ id: "Failed to mark notification" }));
+      }
+    } else {
+      toast.warning(intl.formatMessage({ id: "This notification is read." }));
     }
   };
 
@@ -97,7 +105,7 @@ export default function NotificationItem({ item }) {
         hover:bg-gray-50
         ${!item.is_read ? "border-l-4 border border-main" : ""}
       `}
-      onClick={() => handleClick(item?.id)}
+      onClick={() => handleClick(item?.id, item?.is_read)}
     >
       {/* Icon */}
       <div

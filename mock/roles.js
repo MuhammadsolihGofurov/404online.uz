@@ -11,6 +11,10 @@ export const ForCenterAdmin = [
     name: "Assistant",
     value: "ASSISTANT",
   },
+  {
+    name: "Guest",
+    value: "GUEST",
+  },
 ];
 
 export const YesOrNo = [

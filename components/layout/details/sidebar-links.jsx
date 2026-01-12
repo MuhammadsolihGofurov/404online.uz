@@ -75,7 +75,7 @@ const menuItems = [
   ...OwnerMenuItems,
   ...CenterAdminMenuItems,
   {
-    title: "Mocks",
+    title: "Sections",
     href: SECTIONS_URL,
     icon: Grid2X2,
     roles: ["CENTER_ADMIN", "TEACHER", "ASSISTANT"],
