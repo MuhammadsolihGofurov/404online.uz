@@ -86,7 +86,7 @@ export default function SectionViewModal({ data, onClose }) {
 
       {/* Action Buttons */}
 
-      {data?.status == "DRAFT" && (
+      {/* {data?.status == "DRAFT" && ( */}
         <div className=" bg-gray-50 flex gap-3">
           <button
             onClick={() => editHandler(data?.id)}
@@ -104,7 +104,7 @@ export default function SectionViewModal({ data, onClose }) {
             Questions
           </button>
         </div>
-      )}
+      {/* )} */}
     </div>
   );
 }

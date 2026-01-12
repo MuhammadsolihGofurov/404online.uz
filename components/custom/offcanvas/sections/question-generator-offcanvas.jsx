@@ -48,6 +48,7 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
 
   useEffect(() => {
     if (initialData) {
+      updateParams("questionType", initialData?.group_type);
       reset({
         ...initialData,
       });
@@ -129,12 +130,13 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
 
       // Xatolik xabarini chiroyli ko'rsatish
       let errorMsg = "Error, please wait a bit";
-      if (typeof errorData === "object") {
-        // Backenddan kelgan obyekt ko'rinishidagi xatolarni yig'ish
-        errorMsg = JSON.stringify(errorData);
-      }
+      const errors = errorData?.detail;
+      // if (typeof errorData === "object") {
+      //   // Backenddan kelgan obyekt ko'rinishidagi xatolarni yig'ish
+      //   errorMsg = JSON.stringify(errorData);
+      // }
 
-      toast.error(errorMsg);
+      toast.error(errors);
     } finally {
       setReqLoading(false);
     }

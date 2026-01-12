@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useModal } from "@/context/modal-context";
 import { ButtonSpinner } from "../../loading";
 import { useIntl } from "react-intl";
+import { toast } from "react-toastify";
 
 export default function ConfirmModal({ title, description, onConfirm }) {
   const { closeModal } = useModal();
@@ -16,6 +17,7 @@ export default function ConfirmModal({ title, description, onConfirm }) {
         closeModal("confirmModal", "confirm");
       }, 300);
     } catch (err) {
+      toast.error(err?.response?.data?.error?.[0]);
       console.error(err);
     } finally {
       setLoading(false);
