@@ -67,7 +67,7 @@ export default function sectionStatusChangeModal({ id, status, sectionType }) {
     } catch (e) {
       const errorData = e?.response?.data;
       const errorMsg = errorData?.error
-        ? `Status Error: ${errorData.error[0]}`
+        ? `${errorData.error[0]}`
         : errorData?.detail || "An error occurred";
 
       toast.error(errorMsg);

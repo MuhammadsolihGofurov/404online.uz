@@ -46,7 +46,7 @@ export const QuestionInput = Node.create({
   addAttributes() {
     return {
       answer: { default: "" },
-      number: { default: "1" },
+      number: { default: null },
     };
   },
 
@@ -58,5 +58,39 @@ export const QuestionInput = Node.create({
   },
   addNodeView() {
     return ReactNodeViewRenderer(QuestionComponent);
+  },
+  addCommands() {
+    return {
+      insertQuestionInput:
+        () =>
+        ({ editor, tr }) => {
+          let maxNumber = 0;
+
+          // Editor ichidagi barcha questionInput larni aylanamiz
+          editor.state.doc.descendants((node) => {
+            if (node.type.name === "questionInput") {
+              const num = parseInt(node.attrs.number);
+              if (!isNaN(num)) {
+                maxNumber = Math.max(maxNumber, num);
+              }
+            }
+          });
+
+          const nextNumber = maxNumber + 1;
+
+          editor
+            .chain()
+            .insertContent({
+              type: "questionInput",
+              attrs: {
+                number: String(nextNumber),
+                answer: "",
+              },
+            })
+            .run();
+
+          return true;
+        },
+    };
   },
 });

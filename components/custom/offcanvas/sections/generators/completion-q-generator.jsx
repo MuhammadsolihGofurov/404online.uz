@@ -127,6 +127,10 @@ const CompletionQGenerator = forwardRef(
       let maxNumber = 0;
 
       editor.state.doc.descendants((node) => {
+        if (node.type.name === "questionInput") {
+          const num = parseInt(node.attrs.number, 10);
+          if (!isNaN(num)) maxNumber = Math.max(maxNumber, num);
+        }
         if (node.type.name === "booleanQuestion") {
           const num = parseInt(node.attrs.number, 10);
           if (!isNaN(num) && num > maxNumber) maxNumber = num;
@@ -134,6 +138,18 @@ const CompletionQGenerator = forwardRef(
         if (node.type.name === "choiceGroup") {
           const num = parseInt(node.attrs.questionNumber, 10);
           if (!isNaN(num) && num > maxNumber) maxNumber = num;
+        }
+        // Matching
+        if (node.type.name === "matchingQuestion") {
+          const num = parseInt(node.attrs.number, 10);
+          if (!isNaN(num)) maxNumber = Math.max(maxNumber, num);
+        }
+        // Diagram labels (agar ishlatsangiz)
+        if (node.type.name === "diagramBlock") {
+          node.attrs.labels?.forEach((l) => {
+            const num = parseInt(l.number, 10);
+            if (!isNaN(num)) maxNumber = Math.max(maxNumber, num);
+          });
         }
       });
 

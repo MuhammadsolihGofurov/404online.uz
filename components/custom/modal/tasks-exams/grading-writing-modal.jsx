@@ -92,7 +92,7 @@ export default function GradingWritingModal({ submission_id, initialData }) {
       }, 500);
     } catch (e) {
       const errorMsg =
-        e.response?.data?.message ||
+        e.response?.data?.error?.[0] ||
         intl.formatMessage({ id: "Something went wrong" });
       toast.error(errorMsg);
     } finally {

@@ -91,7 +91,7 @@ export default function UserListItem({ item, role }) {
 
   return (
     <tr className="border-b border-b-dashboardBg last:border-b-transparent relative z-0">
-      <td className="text-sm p-5 text-center font-medium">{item?.id}</td>
+      {/* <td className="text-sm p-5 text-center font-medium">{item?.id}</td> */}
       <td className="text-sm p-5 font-medium font-poppins">
         {item?.full_name}
       </td>

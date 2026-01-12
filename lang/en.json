@@ -293,5 +293,6 @@
   "Section deleted!": "Section deleted!",
   "Upgrade guest": "Upgrade guest",
   "Are you sure you want to upgrate this guest to student? This action cannot be undone.": "Are you sure you want to upgrate this guest to student? This action cannot be undone.",
-  "User upgraded successfully!": "User upgraded successfully!"
+  "User upgraded successfully!": "User upgraded successfully!",
+  "This notification is read.": "This notification is read."
 }
