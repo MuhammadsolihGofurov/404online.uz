@@ -11,7 +11,7 @@ export const scanIELTSWithGemini = async (images, question_type) => {
   try {
     const model = genAI.getGenerativeModel({
       // model: "gemini-3-flash-preview", // Hozircha barqaror versiya tavsiya etiladi
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,

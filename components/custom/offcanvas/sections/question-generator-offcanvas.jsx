@@ -238,12 +238,12 @@ export default function QuestionGeneratorOffcanvas({ id, initialData }) {
           )}
         </div>
       </div>
-      {/* {!id && currentQuestionType && (
+      {!id && currentQuestionType && (
         <GeminiScanner
           questionType={currentQuestionType}
           onScanComplete={handleAiContent}
         />
-      )} */}
+      )}
       {currentQuestionType && (
         <CompletionQGenerator
           ref={generatorRef}
