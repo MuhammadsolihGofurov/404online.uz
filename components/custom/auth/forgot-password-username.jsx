@@ -35,7 +35,7 @@ export default function ForgotPasswordUsername() {
         username,
       };
 
-      const response = await axios.post("/accounts/password/reset", payload);
+      const response = await axios.post("/accounts/password/reset/", payload);
 
       // localStorage.setItem(REGISTERPHONENUMBER, phone_number);
 
