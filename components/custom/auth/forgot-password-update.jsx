@@ -43,7 +43,7 @@ export default function ForgotPasswordUpdate() {
       };
 
       const response = await axios.post(
-        "/accounts/password/reset/confirm",
+        "/accounts/password/reset/confirm/",
         payload
       );
 
