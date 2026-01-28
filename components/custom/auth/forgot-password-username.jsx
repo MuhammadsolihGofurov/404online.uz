@@ -40,7 +40,9 @@ export default function ForgotPasswordUsername() {
       // localStorage.setItem(REGISTERPHONENUMBER, phone_number);
 
       toast.success(
-        intl.formatMessage({ id: "We have sent a link to your email. Please check your email" })
+        intl.formatMessage({
+          id: "We have sent a link to your email. Please check your email",
+        }),
       );
 
       // setTimeout(() => {

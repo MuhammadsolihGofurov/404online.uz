@@ -60,8 +60,8 @@ export default function TasksHomeworkLists({ role, loading }) {
       <div className="bg-white rounded-2xl p-5 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {datas?.results?.length > 0 ? (
-            datas?.results?.map((item) => (
-              <ExamResultItem item={item} key={item?.id} role={role} />
+            datas?.results?.map((item, index) => (
+              <ExamResultItem item={item} key={index} role={role} />
             ))
           ) : (
             <p className="text-sm text-center col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-textSecondary">

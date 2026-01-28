@@ -158,7 +158,7 @@ export const getDisplayQuestionNumber = (
   type,
   field,
   index,
-  watchText = ""
+  watchText = "",
 ) => {
   if (!field) return index + 1;
   const tokenId = String(field.id || "");
@@ -200,7 +200,7 @@ export const bulkSaveMCQ = async (
   questions,
   groupId,
   sectionType,
-  authAxios
+  authAxios,
 ) => {
   const requests = questions.map((q) => {
     // Backend kutilayotgan formatga o'tkazish
@@ -276,7 +276,7 @@ export const transformEditorData = (json) => {
 
       // Template ichiga answer='...' atributi qo'shildi
       return `<choice-group number='${questionNumber}' title='${title}' type='${type}' answer='${finalAnswer}'>${JSON.stringify(
-        options
+        options,
       )}</choice-group>`;
     }
 
@@ -367,7 +367,7 @@ export const transformEditorData = (json) => {
       ${words
         .map(
           (word) =>
-            `<span class="draggable-word" draggable="true">${word}</span>`
+            `<span class="draggable-word" draggable="true">${word}</span>`,
         )
         .join("")}
     </div>
@@ -410,7 +410,7 @@ export const transformEditorData = (json) => {
           answer="${l.answer || ""}" 
           style="position: absolute; left: ${l.x}%; top: ${l.y}%;"
         ></diagram-marker>
-      `
+      `,
         )
         .join("")}
     </div>`;
@@ -432,7 +432,7 @@ export const transformEditorData = (json) => {
       const optionsHtml = optionsArray
         .map(
           (opt) =>
-            `<div class="drag-item" draggable="true" data-word="${opt}">${opt}</div>`
+            `<div class="drag-item" draggable="true" data-word="${opt}">${opt}</div>`,
         )
         .join("");
 
@@ -523,14 +523,18 @@ export const prepareInitialData = (html) => {
 
     // Atributlarni ko'chiramiz
     const questionNumber =
-      oldNode.getAttribute("data-number") ||
       oldNode.getAttribute("number") ||
+      oldNode.getAttribute("q-num") ||
+      oldNode.getAttribute("data-number") ||
       "1";
+
     const title = oldNode.getAttribute("title") || "";
     const type = oldNode.getAttribute("type") || "single";
     const answerAttr = oldNode.getAttribute("answer") || ""; // "A" yoki "A,C" ko'rinishida
 
-    newNode.setAttribute("questionNumber", questionNumber);
+    console.error(questionNumber);
+
+    newNode.setAttribute("data-number", questionNumber);
     newNode.setAttribute("title", title);
     newNode.setAttribute("type", type);
 
@@ -567,15 +571,15 @@ export const prepareInitialData = (html) => {
     div.setAttribute("data-type", "matching-block");
     div.setAttribute(
       "type",
-      el.getAttribute("data-type") || "matching-headings"
+      el.getAttribute("data-type") || "matching-headings",
     );
     div.setAttribute(
       "title",
-      el.querySelector(".matching-title")?.textContent || ""
+      el.querySelector(".matching-title")?.textContent || "",
     );
     div.setAttribute(
       "options",
-      el.querySelector(".matching-options-box")?.textContent || ""
+      el.querySelector(".matching-options-box")?.textContent || "",
     );
 
     // Savollarni ko'chirish
@@ -585,7 +589,7 @@ export const prepareInitialData = (html) => {
       qDiv.setAttribute("number", q.querySelector(".q-num")?.textContent || "");
       qDiv.setAttribute(
         "answer",
-        q.querySelector("matching-answer-slot")?.getAttribute("answer") || ""
+        q.querySelector("matching-answer-slot")?.getAttribute("answer") || "",
       );
       qDiv.innerHTML = q.querySelector(".q-text")?.innerHTML || "";
       div.appendChild(qDiv);
@@ -595,27 +599,32 @@ export const prepareInitialData = (html) => {
 
   // 3. Boolean Block tahlili
   doc.querySelectorAll(".boolean-container").forEach((el) => {
-    const div = doc.createElement("div");
-    div.setAttribute("data-type", "boolean-block");
-    div.setAttribute("type", el.getAttribute("data-type") || "tfng");
-    div.setAttribute(
+    const newNode = doc.createElement("div");
+    newNode.setAttribute("data-type", "boolean-block");
+    newNode.setAttribute("type", el.getAttribute("data-type") || "tfng");
+    newNode.setAttribute(
       "title",
-      el.querySelector(".boolean-instruction")?.textContent || ""
+      el.querySelector(".boolean-instruction")?.textContent || "",
     );
 
-    el.querySelectorAll(".boolean-question-row").forEach((q) => {
+    // Savollarni aylanib chiqamiz
+    el.querySelectorAll(".boolean-question-row").forEach((qRow) => {
       const qDiv = doc.createElement("div");
       qDiv.setAttribute("data-type", "boolean-question");
-      qDiv.setAttribute("number", q.querySelector(".q-num")?.textContent || "");
 
-      const slot = q.querySelector("boolean-answer-slot");
+      // MUHIM: Raqamni .q-num dan olamiz
+      const rawNumber =
+        qRow.querySelector(".q-num")?.textContent?.trim() || "1";
+      qDiv.setAttribute("data-number", rawNumber); // Tiptap extension attrs.number ga mos kelishi kerak
+
+      const slot = qRow.querySelector("boolean-answer-slot");
       qDiv.setAttribute("answer", slot?.getAttribute("answer") || "");
       qDiv.setAttribute("type", slot?.getAttribute("type") || "tfng");
 
-      qDiv.innerHTML = q.querySelector(".q-text")?.innerHTML || "";
-      div.appendChild(qDiv);
+      qDiv.innerHTML = qRow.querySelector(".q-text")?.innerHTML || "";
+      newNode.appendChild(qDiv);
     });
-    el.replaceWith(div);
+    el.replaceWith(newNode);
   });
 
   // 4. Diagram Block (Eng muhimi!)
@@ -633,7 +642,7 @@ export const prepareInitialData = (html) => {
         answer: m.getAttribute("answer") || "", // <--- Answer endi atributdan olinadi
         x: parseFloat(m.style.left) || 0,
         y: parseFloat(m.style.top) || 0,
-      })
+      }),
     );
 
     // Tiptap extensionga JSON string ko'rinishida beramiz
@@ -660,7 +669,7 @@ export const prepareInitialData = (html) => {
     div.setAttribute("data-type", "summary-block");
     div.setAttribute(
       "title",
-      el.querySelector(".summary-header")?.textContent?.trim() || ""
+      el.querySelector(".summary-header")?.textContent?.trim() || "",
     );
     div.innerHTML = el.querySelector(".summary-body")?.innerHTML || "";
     el.replaceWith(div);
@@ -681,14 +690,14 @@ export const prepareInitialData = (html) => {
 
       newNode.setAttribute(
         "data-type",
-        isDragDropMode ? "dragDropSummary" : "summaryBlock"
+        isDragDropMode ? "dragDropSummary" : "summaryBlock",
       );
 
       // 2. Title (Sarlavha) ni olish - Xatolikdan himoyalangan holda
       const headerEl = el.querySelector(".summary-header, .summary-title");
       newNode.setAttribute(
         "title",
-        headerEl ? headerEl.textContent.trim() : "Summary"
+        headerEl ? headerEl.textContent.trim() : "Summary",
       );
 
       // 3. Words/Options (So'zlar banki) ni yig'ish

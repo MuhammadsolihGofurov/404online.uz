@@ -19,8 +19,8 @@ export default function ExamResultsOffcanvas({ submission_id, role }) {
         `${url}/${subId}/`,
         { headers: { "Accept-Language": locale } },
         {},
-        true
-      )
+        true,
+      ),
   );
 
   if (isLoading)
@@ -46,7 +46,7 @@ export default function ExamResultsOffcanvas({ submission_id, role }) {
           feedback_text: review?.feedback_text,
         },
       },
-      "big"
+      "big",
     );
     closeOffcanvas("examResultsOffcanvas");
   };
@@ -95,6 +95,10 @@ export default function ExamResultsOffcanvas({ submission_id, role }) {
                       return null;
                     }
 
+                    if (key == "feedback_text") {
+                      return null;
+                    }
+
                     return (
                       <div
                         key={key}
@@ -108,7 +112,7 @@ export default function ExamResultsOffcanvas({ submission_id, role }) {
                         </span>
                       </div>
                     );
-                  }
+                  },
                 )}
               </div>
 

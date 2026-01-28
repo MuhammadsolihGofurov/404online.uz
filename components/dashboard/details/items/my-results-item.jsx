@@ -51,6 +51,16 @@ const MyResultItem = ({ data, role }) => {
     },
   ];
 
+  const writingBandScore = data?.submissions?.find(
+    (item) => item.content_type === "WRITING",
+  )?.band_score;
+  const isExistReading = data?.submissions?.some(
+    (item) => item.content_type === "READING",
+  );
+  const isExistListening = data?.submissions?.some(
+    (item) => item.content_type === "LISTENING",
+  );
+
   // Sanani formatlash (8-yanvar, 2026)
   const formattedDate = new Date(data?.started_at).toLocaleDateString("uz-UZ", {
     day: "numeric",
@@ -83,42 +93,42 @@ const MyResultItem = ({ data, role }) => {
 
   const handleCheckWriting = (i) => {
     const currentWritingSubmissionId = data?.submissions?.find(
-      (item) => item.content_type === "WRITING"
+      (item) => item.content_type === "WRITING",
     )?.id;
 
     openOffcanvas(
       "examResultsOffcanvas",
       { submission_id: currentWritingSubmissionId, role },
-      "right"
+      "right",
     );
   };
 
   const handleCheckReading = () => {
     const currentReadingSubmissionId = data?.submissions?.find(
-      (item) => item.content_type === "READING"
+      (item) => item.content_type === "READING",
     )?.id;
 
     openOffcanvas(
       "examReadingResultsOffcanvas",
       { submission_id: currentReadingSubmissionId, role },
-      "right"
+      "right",
     );
   };
 
   const handleCheckListening = () => {
     const currentListeningSubmissionId = data?.submissions?.find(
-      (item) => item.content_type === "LISTENING"
+      (item) => item.content_type === "LISTENING",
     )?.id;
 
     openOffcanvas(
       "examReadingResultsOffcanvas",
       { submission_id: currentListeningSubmissionId, role },
-      "right"
+      "right",
     );
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+    <div className="bg-white relative rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
       {/* Yuqori qism: Sarlavha va Umumiy Band Score */}
       <div className="p-6 bg-gradient-to-br from-gray-50 to-white border-b border-gray-50">
         <div className="flex justify-between items-start">
@@ -175,11 +185,11 @@ const MyResultItem = ({ data, role }) => {
 
       {/* title */}
       <div className="px-6 pt-5 text-textPrimary font-semibold">
-        <h2>{data?.exam_task_title || data?.home_task_title}</h2>
+        <h2>{data?.exam_task_title || data?.homework_task_title}</h2>
       </div>
 
       {/* Markaziy qism: Rubrikalar ballari */}
-      <div className="p-6">
+      <div className="px-6 pt-3 pb-10">
         <div className="grid grid-cols-3 gap-2 mb-5">
           {data?.submissions?.map((sub) => (
             <div
@@ -200,39 +210,46 @@ const MyResultItem = ({ data, role }) => {
             </div>
           ))}
         </div>
-
-        {/* buttons */}
-        <div className="flex items-center justify-end">
-          <Dropdown
-            width="w-44"
-            buttonContent={<span className="text-sm">View details</span>}
-          >
-            {data?.overall_band_score ? (
-              <>
-                <DropdownBtn
-                  title={"Writing result"}
-                  icon={<CheckSquare size={14} className={``} />}
-                  onClick={() => handleCheckWriting()}
-                />
-
+      </div>
+      {/* buttons */}
+      <div className="flex items-center justify-end absolute bottom-3 right-6">
+        <Dropdown
+          width="w-44"
+          buttonContent={<span className="text-sm">View details</span>}
+        >
+          {writingBandScore && (
+            <DropdownBtn
+              title={"Writing result"}
+              icon={<CheckSquare size={14} className={``} />}
+              onClick={() => handleCheckWriting()}
+            />
+          )}
+          {!writingBandScore ||
+          !isExistReading ||
+          !isExistListening ||
+          !data?.is_graded ? (
+            <>
+              {isExistReading && (
                 <DropdownBtn
                   title="Reading result"
                   icon={<BookOpen size={14} />}
                   onClick={() => handleCheckReading()}
                 />
+              )}
+              {isExistListening && (
                 <DropdownBtn
                   title="Listening result"
                   icon={<Headphones size={14} />}
                   onClick={() => handleCheckListening()}
                 />
-              </>
-            ) : (
-              <p className="text-sm text-gray-500 p-2 italic">
-                Results are not available yet.
-              </p>
-            )}
-          </Dropdown>
-        </div>
+              )}
+            </>
+          ) : (
+            <p className="text-xs text-gray-500 p-2 italic">
+              Results are not available yet.
+            </p>
+          )}
+        </Dropdown>
       </div>
     </div>
   );

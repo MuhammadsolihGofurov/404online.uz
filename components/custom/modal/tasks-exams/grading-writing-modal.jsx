@@ -69,8 +69,9 @@ export default function GradingWritingModal({ submission_id, initialData }) {
           coherence_cohesion: parseFloat(data.coherence_cohesion),
           lexical_resource: parseFloat(data.lexical_resource),
           grammar_range_accuracy: parseFloat(data.grammar_range_accuracy),
+          feedback_text: data.feedback_text,
         },
-        feedback: data.feedback,
+        feedback_text: data.feedback_text,
       };
 
       let response;
@@ -78,7 +79,7 @@ export default function GradingWritingModal({ submission_id, initialData }) {
         // Update rejimi
         response = await authAxios.patch(
           `/reviews/${initialData.id}/`,
-          payload
+          payload,
         );
         toast.success(intl.formatMessage({ id: "Grade updated successfully" }));
       } else {

@@ -17,7 +17,7 @@ const hasQuestionIds = (mock) => {
   const isUuid = (value) =>
     typeof value === "string" &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      value
+      value,
     );
 
   const getQuestionId = (obj) =>
@@ -305,7 +305,7 @@ export default function TaskQuestionRunner({
           `/submissions/${currentSubmissionId}/`,
           {},
           {},
-          true
+          true,
         );
         const submissionMock =
           submissionData?.mock ||
@@ -323,7 +323,7 @@ export default function TaskQuestionRunner({
       } catch (error) {
         console.warn(
           "[TaskQuestionRunner] Failed to hydrate mock from submission:",
-          error
+          error,
         );
       }
     };
@@ -373,7 +373,7 @@ export default function TaskQuestionRunner({
             id: "Cannot leave",
             defaultMessage:
               "You cannot leave the homework while taking a question.",
-          })
+          }),
         );
       };
       window.addEventListener("popstate", handlePopState);
@@ -416,7 +416,7 @@ export default function TaskQuestionRunner({
           intl.formatMessage({
             id: "Failed to save",
             defaultMessage: "Failed to save draft",
-          })
+          }),
       );
       return;
     }
@@ -425,7 +425,7 @@ export default function TaskQuestionRunner({
       intl.formatMessage({
         id: "Saved",
         defaultMessage: "Saved",
-      })
+      }),
     );
     onExit?.();
   }, [
@@ -454,7 +454,7 @@ export default function TaskQuestionRunner({
             id: "Time up - auto submitted",
             defaultMessage:
               "Time is up! Your answers have been automatically submitted.",
-          })
+          }),
         );
       }
       // Use onTimeUpFinalize if provided, otherwise fall back to onFinalize
@@ -480,7 +480,7 @@ export default function TaskQuestionRunner({
   const handleSubmit = useCallback(async () => {
     if (!currentMock || !currentSubmissionId) {
       console.warn(
-        "[TaskQuestionRunner] handleSubmit aborted: missing mock or submissionId"
+        "[TaskQuestionRunner] handleSubmit aborted: missing mock or submissionId",
       );
       return;
     }
@@ -495,13 +495,14 @@ export default function TaskQuestionRunner({
           id: "At least one answer required",
           defaultMessage:
             "Please answer at least one question before submitting.",
-        })
+        }),
       );
       submitLockRef.current = false;
       return;
     }
 
     const answersObj = buildAnswersObject(currentMock);
+    console.log(answersObj);
     const result = await submitFn(answersObj, { force: false });
 
     if (result && result.success) {
@@ -509,13 +510,13 @@ export default function TaskQuestionRunner({
         intl.formatMessage({
           id: "Submitted successfully",
           defaultMessage: "Submitted successfully!",
-        })
+        }),
       );
       onFinalize?.();
     } else {
       console.error(
         "[TaskQuestionRunner] Submission failed or success not detected:",
-        result
+        result,
       );
     }
     submitLockRef.current = false;
@@ -670,14 +671,14 @@ export default function TaskQuestionRunner({
                   defaultMessage: "Submitting...",
                 })
               : mode === "homework"
-              ? intl.formatMessage({
-                  id: "Submit and Exit",
-                  defaultMessage: "Submit and Exit",
-                })
-              : intl.formatMessage({
-                  id: "Submit Section",
-                  defaultMessage: "Submit Section",
-                })}
+                ? intl.formatMessage({
+                    id: "Submit and Exit",
+                    defaultMessage: "Submit and Exit",
+                  })
+                : intl.formatMessage({
+                    id: "Submit Section",
+                    defaultMessage: "Submit Section",
+                  })}
           </button>
         </div>
       </div>

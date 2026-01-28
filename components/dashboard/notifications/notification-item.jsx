@@ -1,4 +1,5 @@
 import { NotificationItemSkeleton } from "@/components/skeleton";
+import { HOMEWORKS_URL } from "@/mock/router";
 import { authAxios } from "@/utils/axios";
 import { formatDateToShort } from "@/utils/funcs";
 import {
@@ -84,10 +85,10 @@ export default function NotificationItem({ item }) {
     if (!is_read) {
       try {
         const response = await authAxios.post(
-          `/notifications/${id}/mark_read/`
+          `/notifications/${id}/mark_read/`,
         );
         toast.success(
-          intl.formatMessage({ id: "Notification marked as read" })
+          intl.formatMessage({ id: "Notification marked as read" }),
         );
       } catch (error) {
         toast.error(intl.formatMessage({ id: "Failed to mark notification" }));
@@ -127,7 +128,7 @@ export default function NotificationItem({ item }) {
         {/* Link */}
         {item?.link && (
           <Link
-            href={item?.link}
+            href={HOMEWORKS_URL}
             className="text-blue-600 flex items-center gap-1 text-sm pt-1 hover:underline"
           >
             Open <MoveRight className="w-3" />
