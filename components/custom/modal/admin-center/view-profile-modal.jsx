@@ -20,23 +20,25 @@ export default function ViewProfileModal({ data }) {
         <div className="w-32 h-32 rounded-full flex items-center justify-center overflow-hidden bg-gray-50">
           {data?.avatar ? (
             <img
-              src={data.avatar}
-              alt={data.full_name}
+              src={data?.avatar}
+              alt={data?.full_name}
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-lg font-semibold text-textPrimary">{data?.full_name?.slice(0, 1)}</span>
+            <span className="text-lg font-semibold text-textPrimary">
+              {data?.full_name?.slice(0, 1)}
+            </span>
           )}
         </div>
         <h2 className="text-2xl font-bold text-textPrimary">
-          {data.full_name}
+          {data?.full_name}
         </h2>
         <span
           className={`px-4 py-1 text-sm font-semibold rounded-full ${
-            roleStyles[data.role]
+            roleStyles?.[data.role]
           }`}
         >
-          {data.role.replace("_", " ")}
+          {data?.role?.replace("_", " ")}
         </span>
       </div>
 
@@ -44,25 +46,26 @@ export default function ViewProfileModal({ data }) {
       <div className="mt-6 flex flex-col gap-4">
         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
           <Mail className="h-5 w-5 text-gray-500" />
-          <span className="text-textPrimary break-all">{data.email}</span>
+          <span className="text-textPrimary break-all">{data?.email}</span>
         </div>
 
         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
           <Users className="h-5 w-5 text-gray-500" />
           <span className="text-textPrimary">
-            {intl.formatMessage({ id: "Group" })}: {data.group || "-"}
+            {intl.formatMessage({ id: "Group" })}:{" "}
+            {data?.my_groups?.length + 1 || "-"}
           </span>
         </div>
 
         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-          {data.is_approved ? (
+          {data?.is_approved ? (
             <UserCheck className="h-5 w-5 text-green-500" />
           ) : (
             <UserX className="h-5 w-5 text-red-500" />
           )}
           <span className="text-textPrimary">
             {intl.formatMessage({ id: "Approved" })}:{" "}
-            {data.is_approved ? "Yes" : "No"}
+            {data?.is_approved ? "Yes" : "No"}
           </span>
         </div>
 
@@ -70,7 +73,7 @@ export default function ViewProfileModal({ data }) {
           <Calendar className="h-5 w-5 text-gray-500" />
           <span className="text-textPrimary">
             {intl.formatMessage({ id: "Created At" })}:{" "}
-            {formatDateToShort(data.created_at)}
+            {formatDateToShort(data?.created_at)}
           </span>
         </div>
 
@@ -78,7 +81,7 @@ export default function ViewProfileModal({ data }) {
           <Calendar className="h-5 w-5 text-gray-500" />
           <span className="text-textPrimary">
             {intl.formatMessage({ id: "Updated At" })}:{" "}
-            {formatDateToShort(data.updated_at)}
+            {formatDateToShort(data?.updated_at)}
           </span>
         </div>
       </div>

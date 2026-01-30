@@ -61,8 +61,7 @@ export default function InviteCodeListItem({ item }) {
       <td className="text-sm p-5 font-medium font-poppins">{item?.code}</td>
       <td className="text-sm p-5 font-medium">{item?.role}</td>
       <td className="text-sm p-5 font-medium">
-        {item?.target_user && (
-          <span
+        {item?.target_user ? <button
             type="button"
             className="cursor-pointer text-sm hover:text-main transition-colors duration-150"
             onClick={() =>
@@ -70,8 +69,7 @@ export default function InviteCodeListItem({ item }) {
             }
           >
             {intl.formatMessage({ id: "View user" })}
-          </span>
-        )}
+          </button> : intl.formatMessage({ id: "No user yet" })}
       </td>
       <td className="text-sm p-5 font-medium">
         <span

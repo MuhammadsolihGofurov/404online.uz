@@ -173,11 +173,14 @@ export default function ExamResultsReview({ submission_id }) {
                         key={ans.id}
                         className="hover:bg-slate-50 transition-colors"
                       >
-                        {user_answers?.length == 40 && (
+                        {/* {user_answers?.length == 40 && (
                           <td className="px-6 py-4 font-mono font-bold text-slate-400">
                             {String(index + 1).padStart(2, "0")}
                           </td>
-                        )}
+                        )} */}
+                        <td className="px-6 py-4 font-mono font-bold text-slate-400">
+                          {ans?.question_number}
+                        </td>
                         <td
                           className={`px-6 py-4 font-medium ${
                             ans.is_correct ? "text-slate-700" : "text-red-600"
