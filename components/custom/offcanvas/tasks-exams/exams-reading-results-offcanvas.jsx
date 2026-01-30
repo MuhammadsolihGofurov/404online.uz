@@ -20,8 +20,8 @@ export default function ExamResultsReview({ submission_id }) {
         `${url}/${subId}/`,
         { headers: { "Accept-Language": locale } },
         {},
-        true
-      )
+        true,
+      ),
   );
 
   if (isLoading)
@@ -142,7 +142,9 @@ export default function ExamResultsReview({ submission_id }) {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
-                    <th className="px-6 py-4"># No</th>
+                    {user_answers?.length == 40 && (
+                      <th className="px-6 py-4"># No</th>
+                    )}
                     <th className="px-6 py-4">Your Answer</th>
                     <th className="px-6 py-4">Correct Answer</th>
                     <th className="px-6 py-4 text-center">Status</th>
@@ -171,9 +173,11 @@ export default function ExamResultsReview({ submission_id }) {
                         key={ans.id}
                         className="hover:bg-slate-50 transition-colors"
                       >
-                        <td className="px-6 py-4 font-mono font-bold text-slate-400">
-                          {String(index + 1).padStart(2, "0")}
-                        </td>
+                        {user_answers?.length == 40 && (
+                          <td className="px-6 py-4 font-mono font-bold text-slate-400">
+                            {String(index + 1).padStart(2, "0")}
+                          </td>
+                        )}
                         <td
                           className={`px-6 py-4 font-medium ${
                             ans.is_correct ? "text-slate-700" : "text-red-600"

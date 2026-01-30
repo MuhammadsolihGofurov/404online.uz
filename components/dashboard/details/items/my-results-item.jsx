@@ -227,7 +227,7 @@ const MyResultItem = ({ data, role }) => {
           {!writingBandScore ||
           !isExistReading ||
           !isExistListening ||
-          !data?.is_graded ? (
+          data?.is_graded ? (
             <>
               {isExistReading && (
                 <DropdownBtn
